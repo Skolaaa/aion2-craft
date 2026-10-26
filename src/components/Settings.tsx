@@ -49,7 +49,15 @@ function groupByRegion(worlds: readonly World[]) {
   return [...groups]
 }
 
-export function Settings({ open, onClose, worlds, planning, setup, patch, onWorld, overrides }: Props) {
+export function Settings({ open, onClose, ...body }: Props) {
+  return (
+    <Dialog open={open} title="Settings" onClose={onClose} footer={<Button variant="primary" onClick={onClose}>Done</Button>}>
+      <SettingsBody {...body} />
+    </Dialog>
+  )
+}
+
+function SettingsBody({ worlds, planning, setup, patch, onWorld, overrides }: Omit<Props, 'open' | 'onClose'>) {
   const { world, catalog, market } = planning
   const list = worlds.status === 'ready' ? worlds.data.worlds : [world]
   const entries = [...overrides.prices]
@@ -82,7 +90,7 @@ export function Settings({ open, onClose, worlds, planning, setup, patch, onWorl
   ]
 
   return (
-    <Dialog open={open} title="Settings" onClose={onClose} footer={<Button variant="primary" onClick={onClose}>Done</Button>}>
+    <>
       <Field id="world" label="World" hint="Prices, recipes and your own prices follow the world and its faction.">
         <div className="select-box">
           <select
@@ -179,6 +187,6 @@ export function Settings({ open, onClose, worlds, planning, setup, patch, onWorl
           empty="None yet. Click a unit price in a table to set yours."
         />
       </section>
-    </Dialog>
+    </>
   )
 }
