@@ -129,7 +129,10 @@ function WhatToBuy({ plan, planning, overrides }: WhatToBuyProps) {
     { key: 'subtotal', header: 'Subtotal', numeric: true, render: (row) => (row.kind === 'buy' ? kina(row.subtotal) : null) },
   ]
 
-  const total = { item: 'Total', subtotal: Number.isFinite(plan.cost) ? kina(plan.cost) : <span className="meta">needs every price</span> }
+  const total = {
+    item: <strong>Total</strong>,
+    subtotal: <strong>{Number.isFinite(plan.cost) ? kina(plan.cost) : <span className="meta">needs every price</span>}</strong>,
+  }
 
   return (
     <Table
