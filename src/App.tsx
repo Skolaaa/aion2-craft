@@ -4,6 +4,7 @@ import { Calculator } from './components/Calculator.tsx'
 import { Footer } from './components/Footer.tsx'
 import { Glyph } from './components/Glyph.tsx'
 import { Notice } from './components/Notice.tsx'
+import { Scanner } from './components/Scanner.tsx'
 import { Settings } from './components/Settings.tsx'
 import { TopBar } from './components/TopBar.tsx'
 import { catalogFor } from './data/catalog.ts'
@@ -12,6 +13,7 @@ import type { ItemId, MarketQuote, PlanOptions } from './domain/types.ts'
 import type { World } from './market/exchangeClient.ts'
 import { craftIndexFor, remapItem } from './state/craftables.ts'
 import type { Planning } from './state/planning.ts'
+import { scanCraftables, type ScanRow } from './state/scan.ts'
 import { DEFAULT_SETUP, parseSetup, type Setup } from './state/setup.ts'
 import { DEFAULT_TARGET, DEFAULT_VIEW, parseTarget, parseView, type Target, type View } from './state/target.ts'
 import { useNow } from './state/useNow.ts'
@@ -21,6 +23,7 @@ import { usePrices } from './state/usePrices.ts'
 import { useWorlds, type WorldsState } from './state/useWorlds.ts'
 
 const NO_QUOTES: ReadonlyMap<ItemId, MarketQuote> = new Map()
+const NO_ROWS: readonly ScanRow[] = []
 
 function pickWorld(worlds: WorldsState, saved: World | null): World | null {
   if (worlds.status !== 'ready') return saved
@@ -103,6 +106,8 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
     [world, catalog, index, setup.mastery, options, prices],
   )
 
+  const scan = useMemo(() => (view === 'scanner' ? scanCraftables(planning) : NO_ROWS), [view, planning])
+
   const patchSetup = (change: Partial<Setup>) => updateSetup((previous) => ({ ...previous, ...change }))
   const patchTarget = (change: Partial<Target>) => updateTarget((previous) => ({ ...previous, ...change }))
 
@@ -112,6 +117,12 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
       updateTarget((previous) => ({ ...previous, itemId: previous.itemId === null ? null : remapItem(catalog, nextCatalog, previous.itemId) }))
     }
     patchSetup({ world: next })
+  }
+
+  const openItem = (itemId: ItemId) => {
+    updateTarget((previous) => ({ ...previous, itemId }))
+    onView('calculator')
+    window.scrollTo({ top: 0 })
   }
 
   return (
@@ -127,6 +138,7 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
         {view === 'calculator' && (
           <Calculator planning={planning} feed={feed} target={target} overrides={overrides} now={now} onTarget={patchTarget} />
         )}
+        {view === 'scanner' && <Scanner rows={scan} planning={planning} feed={feed} now={now} onOpen={openItem} />}
       </main>
       <Footer />
       <Settings

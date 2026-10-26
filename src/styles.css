@@ -890,6 +890,31 @@ input[type='range'] {
   max-width: 72ch;
 }
 
+/* Scanner */
+.stack-tight {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.filter-name {
+  flex: 0 1 280px;
+}
+
+.hidden-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
 /* Settings */
 .settings-group {
   display: grid;
