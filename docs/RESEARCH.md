@@ -157,3 +157,20 @@ cheapest unit price    = min(buy, craft from inputs, morph from Odyle)
 - https://gamewith.ai/aion2/en/items/110150015 (and sibling item pages)
 - https://gamerant.com/aion-2-how-to-trade-auction-house-market/
 - https://space4games.com/en/games-en/aion-2-marketplace-guide/
+
+## 8. Recipe validation
+
+`scripts/validate-recipes.mjs` cross-checks the aion2t.com recipes in `.cache/a2t/` against every
+independent source in the cache and exits non-zero on any mismatch. Run on 27 Oct 2026:
+
+| Check | Source | Result |
+|---|---|---|
+| ingredients and counts, product, output count, mastery level, combo chance | metabot.gg, all 512 craft and transfer recipes | 512 of 512 match |
+| material craft routes (ingot, decoration, wood, crystal) | aion2.exchange game-file model | 12 of 12 match |
+| combo chance and output count | gamewith.ai, 76 equipment products | 76 of 76 match |
+| success curves by level difference | gamewith.ai tables against metabot.gg curves, 79 products | all within 0.1 percentage points |
+| Odyle morph routes | aion2.exchange game-file model, 10 routes | 10 of 10 match, product is the Bound variant |
+
+What this does not cover: the 248 Substance Morph recipes beyond those 10 routes have no second
+source, and neither do the 20 profession tool recipes' success curves. metabot.gg omits the donor
+item from transfer recipes, so the comparison ignores ingredients flagged `is_donor`.

@@ -40,6 +40,8 @@ node scripts/verify-model.mjs
 
 `npm test` runs the vitest suite for the planner in `src/domain/`.
 
+`node scripts/validate-recipes.mjs` cross-checks every cached recipe against metabot.gg, aion2.exchange's game-file model and gamewith.ai, and fails on the first disagreement. The result table is in `docs/RESEARCH.md`.
+
 `verify-model.mjs` needs network access. It asks aion2.exchange for its cost breakdown of every Artisan's Splendent item on server 11304, gives our planner the same unit prices at mastery 100 with crafting and morphing of materials turned off, and fails if our cost or any step's attempts differ by more than 0.5%. It also compares the gamewith.ai success tables in `.cache/gw/` with the metabot.gg curves, and the Orichalcum Ingot rate with the one aion2.exchange takes from the game files.
 
 ## How the cost is computed
