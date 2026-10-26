@@ -64,7 +64,7 @@ interface BestProps {
 }
 
 function BestMargins({ planning, scan, loading, onOpen }: BestProps) {
-  const { catalog, mastery, world, options } = planning
+  const { world, options } = planning
   return (
     <section className="stack" aria-labelledby="best-title">
       <div className="stack-tight">
@@ -73,7 +73,7 @@ function BestMargins({ planning, scan, loading, onOpen }: BestProps) {
       </div>
       <Table
         label={`Best margins on ${world.name}`}
-        columns={scanColumns(catalog, mastery, onOpen)}
+        columns={scanColumns(onOpen)}
         rows={loading ? [] : bestMargins(scan, 5)}
         rowKey={(row) => String(row.item.id)}
         rowTitle={rowTitle}

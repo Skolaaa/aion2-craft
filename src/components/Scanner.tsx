@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { Catalog, ItemId, Mastery, Profession } from '../domain/types.ts'
-import { answerOf } from '../state/answer.ts'
+import type { ItemId, Profession } from '../domain/types.ts'
 import { kina, percent, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
 import { DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanKey, type ScanRow, type ScanSort } from '../state/scan.ts'
@@ -13,11 +12,10 @@ import { PriceStatus } from './PriceStatus.tsx'
 import { Table, type Column } from './Table.tsx'
 
 
-function needs(row: ScanRow, catalog: Catalog, mastery: Mastery) {
-  if (row.status === 'unpriced') return 'needs a price'
-  if (row.status !== 'locked') return null
-  const { verdict } = answerOf(row.plan, { catalog, mastery })
-  return verdict.kind === 'blocked' && verdict.profession ? `needs ${verdict.profession} ${verdict.level}` : 'needs more mastery'
+function needs({ verdict }: ScanRow) {
+  if (verdict.kind === 'missing') return 'needs a price'
+  if (verdict.kind !== 'blocked') return null
+  return verdict.profession ? `needs ${verdict.profession} ${verdict.level}` : 'needs more mastery'
 }
 
 export function rowTitle(row: ScanRow) {
@@ -26,14 +24,14 @@ export function rowTitle(row: ScanRow) {
   return `${row.listings} ${plural(row.listings, 'listing', 'listings')}, ${sold}`
 }
 
-export function scanColumns(catalog: Catalog, mastery: Mastery, onOpen: (itemId: ItemId) => void): Column<ScanRow, ScanKey>[] {
+export function scanColumns(onOpen: (itemId: ItemId) => void): Column<ScanRow, ScanKey>[] {
   return [
     {
       key: 'item',
       header: 'Item',
       sortable: true,
       render: (row) => {
-        const meta = [row.profession ?? 'Any profession', `level ${row.level}`, needs(row, catalog, mastery)].filter(Boolean).join(', ')
+        const meta = [row.profession ?? 'Any profession', `level ${row.level}`, needs(row)].filter(Boolean).join(', ')
         return (
           <ItemCell
             item={row.item}
@@ -81,13 +79,13 @@ interface Props {
 }
 
 export function Scanner({ rows, planning, feed, now, onOpen }: Props) {
-  const { catalog, mastery, world, options } = planning
+  const { world, options } = planning
   const [profession, setProfession] = useState<Profession | null>(null)
   const [name, setName] = useState('')
   const [showHidden, setShowHidden] = useState(false)
   const [sort, setSort] = useState<ScanSort>(DEFAULT_SCAN_SORT)
   const view = useMemo(() => viewScan(rows, { profession, name, showHidden, sort }), [rows, profession, name, showHidden, sort])
-  const columns = scanColumns(catalog, mastery, onOpen)
+  const columns = scanColumns(onOpen)
 
   const chips: readonly { id: Profession | null; label: string }[] = [{ id: null, label: 'All' }, ...PROFESSIONS]
 
