@@ -7,7 +7,6 @@ export interface Column<Row, Key extends string = string> {
   header: string
   render(row: Row): ReactNode
   numeric?: boolean
-  // Dropped under 720px; the row's item meta carries the value there instead.
   wide?: boolean
   sortable?: boolean
 }

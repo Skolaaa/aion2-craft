@@ -26,7 +26,6 @@ function write(key: string, value: unknown) {
   }
 }
 
-// The value follows `key`, so per-world records swap when the world changes.
 export function usePersistentState<T>(key: string, fallback: T, parse: Parse<T>) {
   const [entry, setEntry] = useState(() => ({ key, value: read(key, fallback, parse) }))
   if (entry.key !== key) setEntry({ key, value: read(key, fallback, parse) })

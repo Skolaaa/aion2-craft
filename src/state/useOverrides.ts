@@ -21,7 +21,6 @@ function parseEntries(raw: unknown): Entries | null {
   return entries
 }
 
-// Prices differ by world, so each world keeps its own list.
 export function useOverrides(worldId: number): PriceOverrides {
   const [entries, update] = usePersistentState<Entries>(`overrides:${worldId}`, NONE, parseEntries)
   const prices = useMemo(() => new Map(entries), [entries])

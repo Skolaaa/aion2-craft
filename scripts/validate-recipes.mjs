@@ -1,6 +1,3 @@
-// Cross-checks the aion2t.com recipes against independent sources:
-//   metabot.gg (all craft + succession recipes), aion2.exchange's game-file model (ladder steps + material routes),
-//   gamewith.ai (combo chance + quantity for 79 products).
 // Usage: node scripts/validate-recipes.mjs [repo-root]
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
@@ -20,7 +17,6 @@ const partsOf = r => new Map(r.ingredients.filter(i => !i.is_donor).map(i => [i.
 const comboPct = r => r.combo_probability ?? 0
 const sameParts = (a, b) => a.size === b.size && [...a].every(([k, v]) => b.get(k) === v)
 
-// 1. aion2t vs metabot, every craft + succession recipe
 for (const r of a2t) {
   if (r.section === 'conversion') continue
   const m = mb[r.id]
@@ -38,10 +34,8 @@ for (const r of a2t) {
     if (!ok) issues.push(`${r.id} ${r.name} [${r.section}] ${k}: a2t=${JSON.stringify(k === 'parts' ? [...partsOf(r)] : k === 'product' ? r.product_item_id : k === 'qty' ? r.product_count : k === 'mastery' ? r.mastery_level : r.combo_probability)} metabot=${JSON.stringify(k === 'parts' ? m.parts : m[k])}`)
   }
 }
-// metabot recipes that aion2t lacks
 for (const id of Object.keys(mb)) if (!byId.has(+id)) issues.push(`aion2t missing metabot recipe ${id}`)
 
-// 2. aion2t vs aion2.exchange game-file model: ladder steps (materials per attempt, mastery) and material routes
 const prodByItem = new Map()
 for (const r of a2t) if (r.section === 'craft') prodByItem.set(`${r.race}:${r.product_item_id}`, r)
 let exSteps = 0
@@ -58,7 +52,6 @@ for (const route of ex.routes) for (const opt of route.options) {
   if (!ok) issues.push(`exchange route ${route.name}: a2t recipe ${opt.recipe_id} makes ${r.product_item_id} not ${route.material_key}`)
 }
 
-// 3. gamewith: combo chance and quantity made, by product id
 const gwDir = join(C, 'gw')
 for (const f of readdirSync(gwDir)) {
   if (!/^\d+\.html$/.test(f)) continue
@@ -75,7 +68,6 @@ for (const f of readdirSync(gwDir)) {
   }
 }
 
-// 4. rate curves: gamewith table vs metabot curve for recipes that have both
 const rateCodes = new Map(Object.entries(mb).map(([id, m]) => [+id, m.rate]))
 for (const f of readdirSync(gwDir)) {
   if (!/^\d+\.html$/.test(f)) continue
@@ -97,14 +89,12 @@ for (const f of readdirSync(gwDir)) {
   if (!ok) issues.push(`${r.id} ${r.name} curve ${code} differs from gamewith by up to ${maxDiff.toFixed(2)} pp over ${n} points`)
 }
 
-// 5. conversion recipes: only cross-check is the exchange morph routes (1 Odyle -> 1 material)
 for (const route of ex.routes) for (const opt of route.options) {
   if (opt.method !== 'morph') continue
   const r = byId.get(opt.recipe_id)
   if (!r) { count('exchange:morph', false); issues.push(`morph recipe ${opt.recipe_id} (${route.name}) missing in a2t`); continue }
   const leaf = opt.leaves[0]
   const ing = r.ingredients.find(i => i.item_id === leaf.item_key)
-  // a morph makes the Bound variant, which recipes accept in place of the unbound material
   const bound = r.name === `${route.name} (Bound)`
   const ok = bound && !!ing && ing.count / r.product_count === leaf.per_unit
   count('exchange:morph', ok)

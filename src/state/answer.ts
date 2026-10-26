@@ -68,7 +68,6 @@ export interface Names {
   taxRate: number
 }
 
-// Crafting for yourself compares with the lowest listing; crafting to sell compares with the sale after tax.
 function sellClause(margin: number, taxRate: number): string {
   const tax = `${taxLabel(taxRate)} tax`
   if (Math.round(margin) === 0) return ` Selling one would break even after ${tax}.`
@@ -134,7 +133,6 @@ export type BuyLine =
   | { kind: 'buy'; itemId: ItemId; expected: number; unit: number; subtotal: number }
   | { kind: 'missing'; itemId: ItemId; expected: number }
 
-// The credit is what turns the sum of the lines into plan.cost.
 export function buyList(plan: PlanResult): { lines: BuyLine[]; credit: number } {
   const missing = new Map<ItemId, number>()
   let credit = 0
@@ -152,6 +150,5 @@ export function buyList(plan: PlanResult): { lines: BuyLine[]; credit: number } 
   return { lines: [...unpriced, ...bought], credit }
 }
 
-// Per item, so it compares with aion2.exchange's estimate for one.
 export const estimateGap = (plan: PlanResult, theirs: number): number | null =>
   Number.isFinite(plan.unitCost) ? plan.unitCost - theirs : null

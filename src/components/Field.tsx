@@ -30,7 +30,6 @@ interface NumberInputProps {
   onChange(value: number): void
 }
 
-// Keeps the typed text while it is not a number yet, so the field can be cleared and retyped.
 export function NumberInput({ id, value, min, max, step = 1, className, describedBy, onChange }: NumberInputProps) {
   const [text, setText] = useState(String(value))
   useEffect(() => setText(String(value)), [value])

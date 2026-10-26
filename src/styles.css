@@ -1,4 +1,3 @@
-/* Tokens. docs/DESIGN.md owns these values. */
 :root {
   color-scheme: dark;
   --bg: #15181d;
@@ -395,7 +394,6 @@ input[type='range'] {
   accent-color: var(--accent);
 }
 
-/* Segmented control and chips share one look: line border, accent when chosen. */
 .chips,
 .segmented-options {
   display: flex;
@@ -587,7 +585,6 @@ input[type='range'] {
 }
 
 .price-value {
-  /* A taller hit area than the text, without moving the row. */
   padding: 10px 0;
   margin: -10px 0;
   border: 0;
@@ -940,7 +937,6 @@ input[type='range'] {
   gap: var(--space-3);
 }
 
-/* Motion only for people who have not asked for less. */
 @media (prefers-reduced-motion: no-preference) {
   .button,
   .chip,

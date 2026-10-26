@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import type { ItemId } from '../domain/types.ts'
 import { fetchExchangeCraft, type ExchangeCraft } from '../market/exchangeClient.ts'
 
-// Answers stay cached, a 404's null included, and a failed request is dropped.
 const requests = new Map<string, Promise<ExchangeCraft | null>>()
 
 function request(itemId: ItemId, worldId: number, key: string) {

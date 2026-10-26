@@ -91,8 +91,6 @@ function compare(sort: ScanSort) {
   }
 }
 
-// Rows that need a price or more mastery have no margin to rank, so they stay out of the
-// table unless asked for; `hidden` counts them either way.
 export function viewScan(rows: readonly ScanRow[], { profession, name, showHidden, sort }: ScanQuery) {
   const terms = termsOf(name)
   const matching = rows.filter((row) => (profession === null || row.profession === profession) && matches(row.item.name, terms))
