@@ -21,7 +21,7 @@ interface Props<Row, Key extends string> {
   onRowClick?(row: Row): void
   sort?: Sort<Key>
   onSort?(key: Key): void
-  footer?: Partial<Record<Key, ReactNode>>
+  footer?: readonly Partial<Record<Key, ReactNode>>[]
   empty?: ReactNode
 }
 
@@ -76,15 +76,17 @@ export function Table<Row, Key extends string>({
       </tbody>
       {footer && (
         <tfoot>
-          <tr>
-            {columns.map((column, index) =>
-              index === 0 ? (
-                <th key={column.key} scope="row" className={cellClass(column)}>{footer[column.key]}</th>
-              ) : (
-                <td key={column.key} className={cellClass(column)}>{footer[column.key]}</td>
-              ),
-            )}
-          </tr>
+          {footer.map((cells, row) => (
+            <tr key={row}>
+              {columns.map((column, index) =>
+                index === 0 ? (
+                  <th key={column.key} scope="row" className={cellClass(column)}>{cells[column.key]}</th>
+                ) : (
+                  <td key={column.key} className={cellClass(column)}>{cells[column.key]}</td>
+                ),
+              )}
+            </tr>
+          ))}
         </tfoot>
       )}
     </table>

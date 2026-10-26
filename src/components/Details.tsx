@@ -74,9 +74,15 @@ export function Details({ plan, planning, overrides, tab, onTab }: Props) {
   )
 }
 
-
-
-type BuyRow = BuyLine | { kind: 'credit'; credit: number }
+const creditFooter = (credit: number, note: string) => ({
+  item: (
+    <div className="item-text">
+      <span>Leftover normal items</span>
+      <span className="meta">{note}</span>
+    </div>
+  ),
+  subtotal: signedKina(-credit),
+})
 
 interface WhatToBuyProps {
   plan: PlanResult
@@ -89,7 +95,6 @@ const MISSING = <span className="is-warn">no price yet</span>
 function WhatToBuy({ plan, planning, overrides }: WhatToBuyProps) {
   const { catalog, prices, market } = planning
   const { lines, credit } = buyList(plan)
-  const rows: BuyRow[] = credit > 0 ? [...lines, { kind: 'credit', credit }] : lines
 
   const source = (itemId: ItemId) => {
     const quote = prices.quote(itemId)
@@ -100,49 +105,40 @@ function WhatToBuy({ plan, planning, overrides }: WhatToBuyProps) {
     return lowest == null ? 'not on the Market' : `Market lowest ${kina(lowest)}`
   }
 
-  const columns: Column<BuyRow>[] = [
+  const columns: Column<BuyLine>[] = [
     {
       key: 'item',
       header: 'Item',
-      render: (row) =>
-        row.kind === 'credit' ? (
-          <div className="item-text"><span>Leftover normal items</span><span className="meta">credited at the lowest listing after tax</span></div>
-        ) : (
-          <ItemCell item={catalog.items.get(row.itemId)} meta={source(row.itemId)} narrowMeta={`${decimal(row.expected)} needed`} />
-        ),
+      render: (row) => <ItemCell item={catalog.items.get(row.itemId)} meta={source(row.itemId)} narrowMeta={`${decimal(row.expected)} needed`} />,
     },
-    { key: 'expected', header: 'Expected', numeric: true, wide: true, render: (row) => (row.kind === 'credit' ? null : decimal(row.expected)) },
+    { key: 'expected', header: 'Expected', numeric: true, wide: true, render: (row) => decimal(row.expected) },
     {
       key: 'unit',
       header: 'Unit price',
       numeric: true,
-      render: (row) =>
-        row.kind === 'credit' ? null : (
-          <PriceCell
-            itemName={itemName(catalog, row.itemId)}
-            unit={row.kind === 'buy' ? row.unit : null}
-            own={overrides.prices.has(row.itemId)}
-            missing={row.kind === 'missing'}
-            onSave={(price) => overrides.save(row.itemId, price)}
-          />
-        ),
+      render: (row) => (
+        <PriceCell
+          itemName={itemName(catalog, row.itemId)}
+          unit={row.kind === 'buy' ? row.unit : null}
+          own={overrides.prices.has(row.itemId)}
+          missing={row.kind === 'missing'}
+          onSave={(price) => overrides.save(row.itemId, price)}
+        />
+      ),
     },
-    {
-      key: 'subtotal',
-      header: 'Subtotal',
-      numeric: true,
-      render: (row) => (row.kind === 'buy' ? kina(row.subtotal) : row.kind === 'credit' ? signedKina(-row.credit) : null),
-    },
+    { key: 'subtotal', header: 'Subtotal', numeric: true, render: (row) => (row.kind === 'buy' ? kina(row.subtotal) : null) },
   ]
+
+  const total = { item: 'Total', subtotal: Number.isFinite(plan.cost) ? kina(plan.cost) : <span className="meta">needs every price</span> }
 
   return (
     <Table
       label="What to buy"
       columns={columns}
-      rows={rows}
-      rowKey={(row) => (row.kind === 'credit' ? 'credit' : String(row.itemId))}
+      rows={lines}
+      rowKey={(row) => String(row.itemId)}
       empty="Nothing to buy until the recipe is within your mastery."
-      footer={rows.length === 0 ? undefined : { item: 'Total', subtotal: Number.isFinite(plan.cost) ? kina(plan.cost) : <span className="meta">needs every price</span> }}
+      footer={lines.length === 0 ? undefined : credit > 0 ? [creditFooter(credit, 'credited at the lowest listing after tax'), total] : [total]}
     />
   )
 }
@@ -152,52 +148,41 @@ interface LadderRow {
   depth: number
   itemId: ItemId
   expected: number
-  unit: number
   subtotal: number
-  acquisition: Acquisition | null
-  step: StepPlan | null
-  credit: boolean
+  acquisition: Acquisition
 }
-
 
 function flatten(plan: PlanResult, open: ReadonlySet<string>): LadderRow[] {
   const rows: LadderRow[] = []
   const walk = (step: StepPlan, key: string, depth: number) => {
-    for (const line of step.materials) {
-      const child = childStep(line.acquisition)
-      const lineKey = `${key}/${line.itemId}`
-      const unit = line.acquisition.method === 'none' ? Infinity : line.acquisition.unit
-      rows.push({ key: lineKey, depth, itemId: line.itemId, expected: line.expected, unit, subtotal: line.subtotal, acquisition: line.acquisition, step: child, credit: false })
+    for (const { itemId, expected, subtotal, acquisition } of step.materials) {
+      const lineKey = `${key}/${itemId}`
+      rows.push({ key: lineKey, depth, itemId, expected, subtotal, acquisition })
+      const child = childStep(acquisition)
       if (child && open.has(lineKey)) walk(child, lineKey, depth + 1)
-    }
-    for (const byproduct of step.byproducts) {
-      if (byproduct.credit <= 0) continue
-      rows.push({ key: `${key}#${byproduct.itemId}`, depth, itemId: byproduct.itemId, expected: byproduct.expected, unit: Infinity, subtotal: -byproduct.credit, acquisition: null, step: null, credit: true })
     }
   }
   const { root } = plan
-  rows.push({ key: 'root', depth: 0, itemId: root.itemId, expected: root.outputs, unit: plan.unitCost, subtotal: plan.cost, acquisition: null, step: root, credit: false })
+  const made: Acquisition = { method: 'craft', unit: plan.unitCost, step: root }
+  rows.push({ key: 'root', depth: 0, itemId: root.itemId, expected: root.outputs, subtotal: plan.cost, acquisition: made })
   if (open.has('root')) walk(root, 'root', 1)
   return rows
 }
 
 const BUY_FROM = { market: 'Buy on the Market', manual: 'Buy at your price', npc: 'Buy from an NPC shop' } as const
 
-function howText(row: LadderRow, recipeOf: (step: StepPlan) => Recipe | undefined, planning: Planning) {
-  if (row.credit) return 'Left over by combo attempts, credited at the lowest listing after tax'
-  if (row.step) {
-    const verb = row.acquisition?.method === 'morph' ? 'Morph from Odyle' : 'Craft'
-    return `${verb}, ${stepSummary(row.step, recipeOf(row.step), planning.mastery)}`
-  }
-  const acquisition = row.acquisition
-  if (acquisition?.method === 'buy') return BUY_FROM[acquisition.quote.kind]
-  return <span className="is-warn">No price yet</span>
+function howText({ acquisition }: LadderRow, recipeOf: (step: StepPlan) => Recipe | undefined, planning: Planning) {
+  if (acquisition.method === 'buy') return BUY_FROM[acquisition.quote.kind]
+  if (acquisition.method === 'none') return <span className="is-warn">No price yet</span>
+  const verb = acquisition.method === 'morph' ? 'Morph from Odyle' : 'Craft'
+  return `${verb}, ${stepSummary(acquisition.step, recipeOf(acquisition.step), planning.mastery)}`
 }
 
 function HowItIsMade({ plan, planning, overrides }: { plan: PlanResult; planning: Planning; overrides: PriceOverrides }) {
   const { catalog } = planning
   const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(['root']))
   const rows = flatten(plan, open)
+  const { credit } = buyList(plan)
   const recipeOf = (step: StepPlan) => catalog.recipes.get(step.recipeId)
 
   const toggle = (key: string) =>
@@ -213,7 +198,8 @@ function HowItIsMade({ plan, planning, overrides }: { plan: PlanResult; planning
       header: 'Item',
       render: (row) => {
         const name = itemName(catalog, row.itemId)
-        const expandable = row.step !== null && row.step.materials.length > 0
+        const step = childStep(row.acquisition)
+        const expandable = step !== null && step.materials.length > 0
         return (
           <ItemCell
             item={catalog.items.get(row.itemId)}
@@ -242,31 +228,33 @@ function HowItIsMade({ plan, planning, overrides }: { plan: PlanResult; planning
       key: 'unit',
       header: 'Unit price',
       numeric: true,
-      render: (row) => {
-        const method = row.acquisition?.method
-        if (method === 'buy' || method === 'none') {
+      render: ({ itemId, acquisition }) => {
+        if (acquisition.method === 'buy' || acquisition.method === 'none') {
           return (
             <PriceCell
-              itemName={itemName(catalog, row.itemId)}
-              unit={method === 'buy' ? row.unit : null}
-              own={overrides.prices.has(row.itemId)}
-              missing={method === 'none'}
-              onSave={(price) => overrides.save(row.itemId, price)}
+              itemName={itemName(catalog, itemId)}
+              unit={acquisition.method === 'buy' ? acquisition.unit : null}
+              own={overrides.prices.has(itemId)}
+              missing={acquisition.method === 'none'}
+              onSave={(price) => overrides.save(itemId, price)}
             />
           )
         }
-        return Number.isFinite(row.unit) ? kina(row.unit) : null
+        return Number.isFinite(acquisition.unit) ? kina(acquisition.unit) : null
       },
     },
-    {
-      key: 'subtotal',
-      header: 'Subtotal',
-      numeric: true,
-      render: (row) => (row.credit ? signedKina(row.subtotal) : Number.isFinite(row.subtotal) ? kina(row.subtotal) : null),
-    },
+    { key: 'subtotal', header: 'Subtotal', numeric: true, render: (row) => (Number.isFinite(row.subtotal) ? kina(row.subtotal) : null) },
   ]
 
-  return <Table label="How it is made" columns={columns} rows={rows} rowKey={(row) => row.key} />
+  return (
+    <Table
+      label="How it is made"
+      columns={columns}
+      rows={rows}
+      rowKey={(row) => row.key}
+      footer={credit > 0 ? [creditFooter(credit, 'credited at the lowest listing after tax, already in the costs above')] : undefined}
+    />
+  )
 }
 
 interface RateRow {
@@ -275,7 +263,6 @@ interface RateRow {
   value: string
   note: string
 }
-
 
 function Rates({ plan, planning }: { plan: PlanResult; planning: Planning }) {
   const now = useNow()
@@ -287,7 +274,6 @@ function Rates({ plan, planning }: { plan: PlanResult; planning: Planning }) {
   const blocked = root.successRate === 0
   const profession = recipe?.profession ?? null
   const rows: RateRow[] = []
-
 
   rows.push({
     key: 'success',

@@ -487,8 +487,11 @@ input[type='range'] {
   white-space: nowrap;
 }
 
-.table tfoot th,
-.table tfoot td {
+.table tfoot th {
+  font-weight: 400;
+}
+
+.table tfoot tr:last-child > * {
   font-weight: 700;
   border-bottom: 0;
 }
