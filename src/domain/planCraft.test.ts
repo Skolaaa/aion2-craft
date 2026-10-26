@@ -67,7 +67,6 @@ describe('planCraft', () => {
     expect(result.root.successRate).toBe(0.8)
     expect(result.root.attempts).toBeCloseTo(1.25)
     expect(result.cost).toBeCloseTo(50)
-    expect(result.costAllBuy).toBeCloseTo(50)
     expect(result.root.materials.map((m) => [m.itemId, m.expected, m.acquisition.method])).toEqual([
       [10, 2.5, 'buy'],
       [11, 1.25, 'buy'],
@@ -75,7 +74,7 @@ describe('planCraft', () => {
     expect(result.shopping.map((s) => [s.itemId, s.subtotal])).toEqual([[10, 25], [11, 25]])
   })
 
-  it('crafts an ingredient when that is cheaper than its listing, and buys it in the all-buy cost', () => {
+  it('crafts an ingredient when that is cheaper than its listing, and buys it with crafting and morphing off', () => {
     const world = { recipes: [craft(1, 100, [[200, 1]]), craft(2, 200, [[300, 2]])] }
     const result = plan(world, { 200: 100, 300: 10 }, { target: 100 })
 
@@ -83,8 +82,10 @@ describe('planCraft', () => {
     expect(ingot.acquisition.method).toBe('craft')
     expect(ingot.subtotal).toBeCloseTo(20)
     expect(result.cost).toBeCloseTo(20)
-    expect(result.costAllBuy).toBeCloseTo(100)
-    expect(plan(world, { 200: 100, 300: 10 }, { target: 100, options: { ...OPTIONS, allowCraft: false } }).cost).toBeCloseTo(100)
+    const allBuy = plan(world, { 200: 100, 300: 10 }, { target: 100, options: { ...OPTIONS, allowCraft: false, allowMorph: false } })
+    expect(allBuy.root.materials[0].acquisition.method).toBe('buy')
+    expect(allBuy.cost).toBeCloseTo(100)
+    expect(result.cost).toBeLessThan(allBuy.cost)
   })
 
   it('morphs Odyle into the Bound variant of a material the recipe lists unbound', () => {
@@ -101,7 +102,6 @@ describe('planCraft', () => {
     expect(ore.acquisition.method).toBe('morph')
     expect(ore.acquisition.method === 'morph' && ore.acquisition.step.itemId).toBe(301)
     expect(result.cost).toBeCloseTo(40)
-    expect(result.costAllBuy).toBeCloseTo(50)
     expect(plan(world, { 300: 50, 400: 20 }, { target: 100, options: { ...OPTIONS, allowMorph: false } }).cost).toBeCloseTo(50)
   })
 

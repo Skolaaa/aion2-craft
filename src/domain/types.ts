@@ -116,7 +116,6 @@ export interface PlanResult {
   target: { itemId: ItemId; quantity: number }
   root: StepPlan
   cost: number
-  costAllBuy: number
   unitCost: number
   market: { lowest: number; soldAvg: number | null; listings: number } | null
   margin: number | null

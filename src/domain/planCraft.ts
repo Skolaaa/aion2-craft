@@ -147,8 +147,6 @@ function collectLeaves(step: StepPlan, leaves: Leaves) {
 export function planCraft({ target, mastery, options, world, prices }: PlanInput): PlanResult | null {
   const root = planner(world, mastery, options, prices)(target.itemId, target.quantity)
   if (!root) return null
-  const allBuy = { ...options, allowCraft: false, allowMorph: false }
-  const costAllBuy = planner(world, mastery, allBuy, prices)(target.itemId, target.quantity)?.cost ?? Infinity
 
   const quote = prices.quote(target.itemId)
   const market =
@@ -166,7 +164,6 @@ export function planCraft({ target, mastery, options, world, prices }: PlanInput
     target,
     root,
     cost: root.cost,
-    costAllBuy,
     unitCost: root.cost / target.quantity,
     market,
     margin,

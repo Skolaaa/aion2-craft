@@ -17,7 +17,7 @@ const plan = planCraft({
   prices,                  // PriceBook: manual > market > npc > none
 })                         // null when no recipe of this race makes the target
 plan.cost            // expected Kina to get 1 Splendent at mastery 42, Infinity while a price is missing
-plan.costAllBuy      // same with every material bought at its listing
+
 plan.market          // { lowest, soldAvg, listings } for the target, or null
 plan.margin          // lowest * (1 - tax) * quantity - cost
 plan.root            // step tree: each step's attempts, rates, materials, acquisition
@@ -169,7 +169,6 @@ export interface PlanResult {
   target: { itemId: ItemId; quantity: number }
   root: StepPlan
   cost: number
-  costAllBuy: number
   unitCost: number
   market: { lowest: number; soldAvg: number | null; listings: number } | null
   margin: number | null
@@ -204,7 +203,7 @@ export interface PlanResult {
   morph route in aion2.exchange's model), and the planner offers the morph for the unbound item.
 - `allowCraft` and `allowMorph` only decide whether crafting or morphing competes with buying.
   An item with no price is still crafted or morphed when a recipe exists, which is how the
-  ladder's intermediate Splendent items get made in the all-buy cost.
+  ladder's intermediate Splendent items still get made with both turned off.
 - An item with no price and no recipe is `{ method: 'none' }`, costs `Infinity`, and is listed
   in `plan.missing`.
 - Byproduct credit values the other results of a step (normal items left by combo crafts) at
