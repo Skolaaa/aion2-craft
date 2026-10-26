@@ -269,8 +269,7 @@ function Rates({ plan, planning }: { plan: PlanResult; planning: Planning }) {
   const { catalog, mastery, world } = planning
   const { root } = plan
   const recipe = catalog.recipes.get(root.recipeId)
-  const item = catalog.items.get(plan.target.itemId)
-  const estimate = useExchangeEstimate(item, world.id)
+  const estimate = useExchangeEstimate(plan.target.itemId, world.id)
   const blocked = root.successRate === 0
   const profession = recipe?.profession ?? null
   const rows: RateRow[] = []
@@ -314,9 +313,8 @@ function Rates({ plan, planning }: { plan: PlanResult; planning: Planning }) {
     })
   }
 
-  if (estimate.status === 'ready') {
-    const { craft } = estimate
-    const gap = estimateGap(plan, craft.cost)
+  if (estimate !== null) {
+    const gap = estimateGap(plan, estimate.cost)
     const compare =
       gap === null || Math.round(gap) === 0
         ? ''
@@ -324,11 +322,9 @@ function Rates({ plan, planning }: { plan: PlanResult; planning: Planning }) {
     rows.push({
       key: 'exchange',
       label: 'aion2.exchange estimate',
-      value: kina(craft.cost),
-      note: `Their expected cost for one at mastery 100, crafting every step, from prices captured ${age(craft.capturedAt, now)} ago.${compare}`,
+      value: kina(estimate.cost),
+      note: `Their expected cost for one at mastery 100, crafting every step, from prices captured ${age(estimate.capturedAt, now)} ago.${compare}`,
     })
-  } else if (estimate.status === 'loading') {
-    rows.push({ key: 'exchange', label: 'aion2.exchange estimate', value: '', note: 'Loading their estimate.' })
   }
 
   const columns: Column<RateRow>[] = [

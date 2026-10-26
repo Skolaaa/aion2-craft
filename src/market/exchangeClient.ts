@@ -66,10 +66,17 @@ function str(value: unknown, what: string): string {
   return value
 }
 
-async function getJson(path: string): Promise<Json> {
+async function findJson(path: string): Promise<Json | null> {
   const res = await fetch(`${API}${path}`, { headers: { Accept: 'application/json' } })
+  if (res.status === 404) return null
   if (!res.ok) throw new Error(`aion2.exchange ${path}: HTTP ${res.status}`)
   return record(await res.json(), path)
+}
+
+async function getJson(path: string): Promise<Json> {
+  const body = await findJson(path)
+  if (body === null) throw new Error(`aion2.exchange ${path}: HTTP 404`)
+  return body
 }
 
 export async function fetchWorlds(): Promise<WorldList> {
@@ -125,8 +132,11 @@ export async function fetchPriceHistory(itemId: ItemId, serverId: number, range 
   })
 }
 
-export async function fetchExchangeCraft(targetId: ItemId, serverId: number): Promise<ExchangeCraft> {
-  const latest = record((await getJson(`/crafts/${targetId}?server=${serverId}`)).latest, 'latest')
+// aion2.exchange models a few items only and answers 404 for the rest.
+export async function fetchExchangeCraft(targetId: ItemId, serverId: number): Promise<ExchangeCraft | null> {
+  const body = await findJson(`/crafts/${targetId}?server=${serverId}`)
+  if (body === null) return null
+  const latest = record(body.latest, 'latest')
   return {
     cost: num(latest.cost, 'cost'),
     marketPrice: numOrNull(latest.market_price, 'market_price'),

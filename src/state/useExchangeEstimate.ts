@@ -1,37 +1,41 @@
 import { useEffect, useState } from 'react'
-import type { Item } from '../domain/types.ts'
+import type { ItemId } from '../domain/types.ts'
 import { fetchExchangeCraft, type ExchangeCraft } from '../market/exchangeClient.ts'
 
-export type Estimate = { status: 'none' } | { status: 'loading' } | { status: 'ready'; craft: ExchangeCraft }
-
+// Answers stay cached, a 404's null included, and a failed request is dropped.
 const requests = new Map<string, Promise<ExchangeCraft | null>>()
 
-// aion2.exchange models the Artisan's Splendent items only; asking for anything else is a 404.
-const modelled = (item: Item | undefined): item is Item => item?.name.startsWith("Artisan's Splendent ") === true
-
-export function useExchangeEstimate(item: Item | undefined, worldId: number): Estimate {
-  const key = `${worldId}:${item?.id}`
-  const [result, setResult] = useState<{ key: string; craft: ExchangeCraft | null } | null>(null)
-  const wanted = modelled(item)
-  const itemId = item?.id
-
-  useEffect(() => {
-    if (!wanted || itemId === undefined) return
-    let live = true
-    let request = requests.get(key)
-    if (!request) {
-      request = fetchExchangeCraft(itemId, worldId).catch(() => null)
-      requests.set(key, request)
-    }
-    void request.then((craft) => {
-      if (live) setResult({ key, craft })
+function request(itemId: ItemId, worldId: number, key: string) {
+  let pending = requests.get(key)
+  if (!pending) {
+    pending = fetchExchangeCraft(itemId, worldId).catch((error: unknown) => {
+      requests.delete(key)
+      throw error
     })
+    requests.set(key, pending)
+  }
+  return pending
+}
+
+export function useExchangeEstimate(itemId: ItemId, worldId: number): ExchangeCraft | null {
+  const key = `${worldId}:${itemId}`
+  const [result, setResult] = useState<{ key: string; craft: ExchangeCraft | null } | null>(null)
+  const answered = result?.key === key
+
+  // Runs after every render until this key has an answer, so a failed request is retried on the next render.
+  useEffect(() => {
+    if (answered) return
+    let live = true
+    request(itemId, worldId, key).then(
+      (craft) => {
+        if (live) setResult({ key, craft })
+      },
+      () => undefined,
+    )
     return () => {
       live = false
     }
-  }, [wanted, key, itemId, worldId])
+  })
 
-  if (!wanted) return { status: 'none' }
-  if (result?.key !== key) return { status: 'loading' }
-  return result.craft ? { status: 'ready', craft: result.craft } : { status: 'none' }
+  return answered ? result.craft : null
 }

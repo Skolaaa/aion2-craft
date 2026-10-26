@@ -2,7 +2,7 @@
 
 This fork turns the Grachy/aion2-craft starter into a calculator that runs on your own computer. For a craftable item, it computes the expected Kina to craft it at your mastery and compares that with the item's price on the Market of one world. Recipes and success rates ship with the repository. Market prices come live from [aion2.exchange](https://aion2.exchange).
 
-Pick an item and the page answers in one sentence whether to craft it or buy it, with three figures under it: the expected crafting cost, the lowest listing, and the margin after the Market tax. Three tabs hold the detail: what to buy, how each step is made, and the success rates, next to aion2.exchange's own estimate for the Artisan's Splendent items. Click any unit price to enter your own, per world. The scanner ranks every recipe on your world by margin. Settings holds the world, your mastery per profession (100 until you change it, and shown in the top bar), the tax, and the prices you entered.
+Pick an item and the page answers in one sentence whether to craft it or buy it, with three figures under it: the expected crafting cost, the lowest listing, and the margin after the Market tax. Three tabs hold the detail: what to buy, how each step is made, and the success rates, next to aion2.exchange's own estimate for the items it models. Click any unit price to enter your own, per world. The scanner ranks every recipe on your world by margin. Settings holds the world, your mastery per profession (100 until you change it, and shown in the top bar), the tax, and the prices you entered.
 
 ![The calculator in the dark theme](docs/screenshots/calculator-desktop-dark.png)
 
