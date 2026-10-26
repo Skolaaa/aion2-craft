@@ -8,6 +8,7 @@ export type RefreshOutcome = 'updated' | 'recent' | 'failed'
 export interface PriceFeed {
   status: 'loading' | 'ready' | 'failed'
   snapshot: QuoteSnapshot | null
+  pending: boolean
   message: string | null
   refresh(): Promise<RefreshOutcome>
 }
@@ -56,5 +57,6 @@ export function usePrices(world: World, catalog: Catalog): PriceFeed {
     }
   }, [current, world.id, itemIds])
 
-  return { status: current.status, snapshot: current.snapshot, message: current.message, refresh }
+  const { status, snapshot, message } = current
+  return { status, snapshot, pending: status === 'loading' && snapshot === null, message, refresh }
 }

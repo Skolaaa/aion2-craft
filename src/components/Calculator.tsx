@@ -32,13 +32,12 @@ export function Calculator({ planning, feed, target, scan, overrides, now, onTar
     () => (craftable ? planOne(planning, craftable.item.id, target.quantity) : null),
     [planning, craftable, target.quantity],
   )
-  const loading = feed.status === 'loading' && feed.snapshot === null
 
   return (
     <>
       <h1 className="sr-only">Calculator</h1>
       <Search craftables={index.craftables} autoFocus={craftable === null} onPick={(itemId) => onTarget({ itemId })} />
-      {craftable === null && <BestMargins planning={planning} scan={scan} loading={loading} onOpen={(itemId) => onTarget({ itemId })} />}
+      {craftable === null && <BestMargins planning={planning} scan={scan} loading={feed.pending} onOpen={(itemId) => onTarget({ itemId })} />}
       {craftable && (
         <>
           <AnswerPanel
@@ -51,7 +50,7 @@ export function Calculator({ planning, feed, target, scan, overrides, now, onTar
             now={now}
             onTarget={onTarget}
           />
-          {plan && !loading && <Details plan={plan} planning={planning} overrides={overrides} market={feed.snapshot?.quotes ?? NO_QUOTES} tab={tab} now={now} onTab={setTab} />}
+          {plan && !feed.pending && <Details plan={plan} planning={planning} overrides={overrides} market={feed.snapshot?.quotes ?? NO_QUOTES} tab={tab} now={now} onTab={setTab} />}
         </>
       )}
     </>

@@ -15,7 +15,7 @@ export function PriceStatus({ feed, now, worldName }: Props) {
   const captured = feed.snapshot?.capturedAt ?? null
   const refreshing = feed.status === 'loading'
 
-  if (refreshing && feed.snapshot === null) {
+  if (feed.pending) {
     return <p className="price-status meta" role="status">Loading prices from aion2.exchange.</p>
   }
 

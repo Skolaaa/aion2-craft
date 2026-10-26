@@ -50,7 +50,7 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
   const pair = index.pairOf.get(item.id)
   const profession = recipe?.profession ?? craftable.profession
   const level = recipe?.masteryLevel ?? craftable.level
-  const loading = feed.status === 'loading' && feed.snapshot === null
+
   const facts = [profession ?? 'Any profession', `recipe level ${level}`, item.grade, recipe?.section === 'succession' ? 'transfer' : null]
 
   return (
@@ -90,7 +90,7 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
         <p className="verdict">
           No {FACTION[world.race]} recipe makes {item.name}. Pick another item or a world of the other faction.
         </p>
-      ) : loading ? null : (
+      ) : feed.pending ? null : (
         <Figures
           answer={answerOf(plan, { catalog, mastery })}
           plan={plan}

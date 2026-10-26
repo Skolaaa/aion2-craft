@@ -89,7 +89,7 @@ export function Scanner({ rows, planning, feed, now, onOpen }: Props) {
   const [sort, setSort] = useState<ScanSort>(DEFAULT_SCAN_SORT)
   const view = useMemo(() => viewScan(rows, { profession, name, showHidden, sort }), [rows, profession, name, showHidden, sort])
   const columns = scanColumns(catalog, mastery, onOpen)
-  const loading = feed.status === 'loading' && feed.snapshot === null
+
   const chips: readonly { id: Profession | null; label: string }[] = [{ id: null, label: 'All' }, ...PROFESSIONS]
 
   return (
@@ -137,7 +137,7 @@ export function Scanner({ rows, planning, feed, now, onOpen }: Props) {
         onRowClick={(row) => onOpen(row.item.id)}
         sort={sort}
         onSort={(key) => setSort((previous) => nextSort(previous, key))}
-        empty={loading ? 'Prices are loading.' : 'No recipe matches these filters.'}
+        empty={feed.pending ? 'Prices are loading.' : 'No recipe matches these filters.'}
       />
 
       {view.hidden > 0 && (
