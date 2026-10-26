@@ -1,12 +1,6 @@
 import type { ReactNode } from 'react'
+import type { Sort } from '../state/scan.ts'
 import { Glyph } from './Glyph.tsx'
-
-export type Direction = 'asc' | 'desc'
-
-export interface Sort<Key extends string = string> {
-  key: Key
-  direction: Direction
-}
 
 export interface Column<Row, Key extends string = string> {
   key: Key

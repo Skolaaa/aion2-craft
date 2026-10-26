@@ -43,10 +43,12 @@ export function scanCraftables(planning: Planning): ScanRow[] {
 
 export type ScanKey = 'item' | 'cost' | 'lowest' | 'margin' | 'marginPct'
 
-export interface ScanSort {
-  key: ScanKey
+export interface Sort<Key extends string> {
+  key: Key
   direction: 'asc' | 'desc'
 }
+
+export type ScanSort = Sort<ScanKey>
 
 export interface ScanQuery {
   profession: Profession | null
