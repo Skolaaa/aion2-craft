@@ -1,102 +1,219 @@
-import { useEffect, useState } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
+import { Calculator } from './components/Calculator.tsx'
+import { Header } from './components/Header.tsx'
+import { Icon } from './components/Icon.tsx'
+import { Notice } from './components/Notice.tsx'
+import { Scanner } from './components/Scanner.tsx'
+import { SetupPanel } from './components/SetupPanel.tsx'
+import { ago, isStale } from './components/format.ts'
 import { catalogFor } from './data/catalog.ts'
-import { tradeableItems } from './domain/catalog.ts'
-import { planCraft } from './domain/planCraft.ts'
 import { makePriceBook } from './domain/priceBook.ts'
-import type { Catalog, Mastery, PlanResult, StepPlan } from './domain/types.ts'
-import { fetchExchangeCraft, fetchWorlds, refreshSnapshot, type ExchangeCraft, type QuoteSnapshot, type World } from './market/exchangeClient.ts'
+import type { ItemId, MarketQuote, PlanOptions } from './domain/types.ts'
+import type { World } from './market/exchangeClient.ts'
+import { craftIndexFor, remapItem } from './state/craftables.ts'
+import type { Planning } from './state/planning.ts'
+import { scanCraftables, type ScanRow } from './state/scan.ts'
+import { DEFAULT_SETUP, FACTION, parseSetup, type Setup } from './state/setup.ts'
+import { DEFAULT_TARGET, DEFAULT_VIEW, parseTarget, parseView, type Target, type View } from './state/target.ts'
+import { useNow } from './state/useNow.ts'
+import { useOverrides } from './state/useOverrides.ts'
+import { usePersistentState } from './state/usePersistentState.ts'
+import { usePrices } from './state/usePrices.ts'
+import { useWorlds, type WorldsState } from './state/useWorlds.ts'
 
-const TARGET = 110130013
-const MASTERY: Mastery = { Blacksmithing: 100, Tailoring: 100, Jewelcrafting: 100, Alchemy: 100, Cooking: 100 }
-const OPTIONS = { allowCraft: true, allowMorph: true, byproductCredit: false, taxRate: 0.05 }
+const NO_QUOTES: ReadonlyMap<ItemId, MarketQuote> = new Map()
+const NO_ROWS: readonly ScanRow[] = []
 
-interface Smoke {
-  world: World
-  catalog: Catalog
-  snapshot: QuoteSnapshot
-  plan: PlanResult | null
-  theirs: ExchangeCraft | null
-}
-
-type State = { kind: 'loading' } | { kind: 'failed'; message: string } | { kind: 'ready'; smoke: Smoke }
-
-async function load(): Promise<Smoke> {
-  const { defaultId, worlds } = await fetchWorlds()
-  const wanted = Number(new URLSearchParams(window.location.search).get('world')) || defaultId
-  const world = worlds.find((w) => w.id === wanted)
-  if (!world) throw new Error(`world ${wanted} is not in aion2.exchange's list`)
-  const catalog = catalogFor(world.race)
-  const snapshot = await refreshSnapshot(world.id, tradeableItems(catalog))
-  const prices = makePriceBook({ manual: new Map(), market: snapshot.quotes, npc: catalog.npcPrices })
-  const plan = planCraft({ target: { itemId: TARGET, quantity: 1 }, mastery: MASTERY, options: OPTIONS, world: catalog, prices })
-  const theirs = await fetchExchangeCraft(TARGET, world.id).catch(() => null)
-  return { world, catalog, snapshot, plan, theirs }
-}
-
-const kina = (value: number | null | undefined) =>
-  value === null || value === undefined || !Number.isFinite(value) ? 'n/a' : Math.round(value).toLocaleString('en-US')
-
-function Step({ step, catalog }: { step: StepPlan; catalog: Catalog }) {
-  const name = (id: number) => catalog.items.get(id)?.name ?? String(id)
-  return (
-    <li>
-      {name(step.itemId)} (recipe {step.recipeId}): {step.attempts.toFixed(4)} attempts, success {step.successRate},
-      combo {step.comboRate.toFixed(4)}, cost {kina(step.cost)}
-      <ul>
-        {step.materials.map((m) => (
-          <li key={m.itemId}>
-            {name(m.itemId)}: {m.expected.toFixed(2)} by {m.acquisition.method}
-            {m.acquisition.method === 'none' ? '' : ` at ${kina(m.acquisition.unit)}`}, {kina(m.subtotal)}
-            {(m.acquisition.method === 'craft' || m.acquisition.method === 'morph') && (
-              <ul><Step step={m.acquisition.step} catalog={catalog} /></ul>
-            )}
-          </li>
-        ))}
-      </ul>
-    </li>
-  )
+function pickWorld(worlds: WorldsState, saved: World | null): World | null {
+  if (worlds.status !== 'ready') return saved
+  const { defaultId, worlds: list } = worlds.data
+  return list.find((w) => w.id === saved?.id) ?? list.find((w) => w.id === defaultId) ?? list[0] ?? null
 }
 
 export function App() {
-  const [state, setState] = useState<State>({ kind: 'loading' })
-  useEffect(() => {
-    load().then(
-      (smoke) => setState({ kind: 'ready', smoke }),
-      (error: unknown) => setState({ kind: 'failed', message: String(error) }),
-    )
-  }, [])
+  const { state: worlds, retry } = useWorlds()
+  const [setup, updateSetup] = usePersistentState('setup', DEFAULT_SETUP, parseSetup)
+  const [view, updateView] = usePersistentState<View>('view', DEFAULT_VIEW, parseView)
+  const [target, updateTarget] = usePersistentState('target', DEFAULT_TARGET, parseTarget)
+  const world = pickWorld(worlds, setup.world)
 
-  if (state.kind === 'loading') return <p>Loading worlds and prices...</p>
-  if (state.kind === 'failed') return <p>Failed: {state.message}</p>
-  const { world, catalog, snapshot, plan, theirs } = state.smoke
-  const gap = plan && theirs ? (plan.cost - theirs.cost) / theirs.cost : null
+  if (world === null) {
+    return (
+      <div className="app">
+        <Header view={view} world={null} onView={(next) => updateView(() => next)} />
+        <main className="main solo" id="main">
+          {worlds.status === 'failed' ? (
+            <Notice
+              tone="error"
+              live
+              title="Can't reach aion2.exchange"
+              actions={<button type="button" className="btn" onClick={retry}><Icon name="refresh" size={14} />Try again</button>}
+            >
+              <p>The app reads the world list through the local dev server. Start it with <code>npm run dev</code> and keep it running. {worlds.message}</p>
+            </Notice>
+          ) : (
+            <div className="skeleton" role="status">
+              <span className="skeleton-bar" />
+              <p>Loading the world list from aion2.exchange.</p>
+            </div>
+          )}
+        </main>
+      </div>
+    )
+  }
+
   return (
-    <main>
-      <h1>{catalog.items.get(TARGET)?.name}</h1>
-      <p>
-        World {world.name} ({world.regionName}, id {world.id}, {world.race}). Mastery 100. Prices captured{' '}
-        {snapshot.capturedAt ?? 'never'}, fetched {snapshot.fetchedAt}, {snapshot.quotes.size} items.
-      </p>
-      {plan === null ? (
-        <p>No {world.race} recipe makes this item.</p>
-      ) : (
-        <>
-          <p>Expected cost: {kina(plan.cost)}</p>
-          <p>All-buy cost: {kina(plan.costAllBuy)}</p>
-          <p>Market lowest: {kina(plan.market?.lowest)} ({plan.market?.listings ?? 0} listings)</p>
-          <p>Margin after {OPTIONS.taxRate * 100}% tax: {kina(plan.margin)} ({plan.marginPct === null ? 'n/a' : `${(plan.marginPct * 100).toFixed(1)}%`})</p>
-          <p>
-            aion2.exchange cost: {kina(theirs?.cost)} captured {theirs?.capturedAt ?? 'n/a'}
-            {gap === null ? '' : `, ours is ${(gap * 100).toFixed(2)}% off`}
-          </p>
-          <p>Missing prices: {plan.missing.length}. Blocked recipes: {plan.blocked.length}.</p>
-          <ul><Step step={plan.root} catalog={catalog} /></ul>
-        </>
-      )}
-      <p>
-        Prices from <a href="https://aion2.exchange">aion2.exchange</a>, recipes from aion2t.com, rates from
-        metabot.gg.
-      </p>
-    </main>
+    <Workspace
+      world={world}
+      worlds={worlds}
+      retryWorlds={retry}
+      setup={setup}
+      updateSetup={updateSetup}
+      view={view}
+      updateView={updateView}
+      target={target}
+      updateTarget={updateTarget}
+    />
+  )
+}
+
+interface WorkspaceProps {
+  world: World
+  worlds: WorldsState
+  retryWorlds(): void
+  setup: Setup
+  updateSetup(change: (previous: Setup) => Setup): void
+  view: View
+  updateView(change: (previous: View) => View): void
+  target: Target
+  updateTarget(change: (previous: Target) => Target): void
+}
+
+function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, updateView, target, updateTarget }: WorkspaceProps) {
+  const catalog = catalogFor(world.race)
+  const index = craftIndexFor(catalog)
+  const feed = usePrices(world, catalog)
+  const overrides = useOverrides(world.id)
+  const now = useNow()
+  const [setupOpen, setSetupOpen] = useState(false)
+
+  useLayoutEffect(() => {
+    document.documentElement.dataset.race = world.race
+  }, [world.race])
+
+  const options = useMemo<PlanOptions>(
+    () => ({ allowCraft: setup.allowCraft, allowMorph: setup.allowMorph, byproductCredit: setup.byproductCredit, taxRate: setup.taxRate }),
+    [setup.allowCraft, setup.allowMorph, setup.byproductCredit, setup.taxRate],
+  )
+  const prices = useMemo(
+    () => makePriceBook({ manual: overrides.prices, market: feed.snapshot?.quotes ?? NO_QUOTES, npc: catalog.npcPrices }),
+    [overrides.prices, feed.snapshot, catalog],
+  )
+  const planning = useMemo<Planning>(
+    () => ({ world, catalog, index, mastery: setup.mastery, options, prices }),
+    [world, catalog, index, setup.mastery, options, prices],
+  )
+  const scan = useMemo(
+    () => (view === 'scanner' || target.itemId === null ? scanCraftables(planning) : NO_ROWS),
+    [view, target.itemId, planning],
+  )
+
+  const patchSetup = (change: Partial<Setup>) => updateSetup((previous) => ({ ...previous, ...change }))
+  const patchTarget = (change: Partial<Target>) => updateTarget((previous) => ({ ...previous, ...change }))
+
+  const chooseWorld = (next: World) => {
+    if (next.race !== world.race) {
+      const nextCatalog = catalogFor(next.race)
+      updateTarget((previous) => ({ ...previous, itemId: previous.itemId === null ? null : remapItem(catalog, nextCatalog, previous.itemId) }))
+    }
+    patchSetup({ world: next })
+  }
+
+  const openItem = (itemId: ItemId) => {
+    patchTarget({ itemId })
+    updateView(() => 'calculator')
+    window.scrollTo({ top: 0 })
+  }
+
+  const worldList = worlds.status === 'ready' ? worlds.data.worlds : []
+  const captured = feed.snapshot?.capturedAt ?? null
+  const stale = feed.status !== 'failed' && isStale(captured, now)
+
+  return (
+    <div className="app">
+      <a className="skip-link" href="#main">Skip to the content</a>
+      <Header view={view} world={world} onView={(next) => updateView(() => next)} />
+      <div className="shell">
+        <aside className={`rail ${setupOpen ? 'is-open' : ''}`} aria-label="Your setup">
+          <button
+            type="button"
+            className="rail-toggle"
+            aria-expanded={setupOpen}
+            aria-controls="rail-body"
+            onClick={() => setSetupOpen((open) => !open)}
+          >
+            <span><strong>{world.name}</strong>, {FACTION[world.race]}</span>
+            <span className="rail-toggle-label">Your setup <Icon name="chevron" size={14} /></span>
+          </button>
+          <div className="rail-body" id="rail-body">
+            <SetupPanel
+              worlds={worldList}
+              worldsLoading={worlds.status === 'loading'}
+              world={world}
+              setup={setup}
+              catalog={catalog}
+              overrides={overrides}
+              patch={patchSetup}
+              onWorld={chooseWorld}
+            />
+          </div>
+        </aside>
+
+        <main className="main" id="main">
+          {worlds.status === 'failed' && (
+            <Notice
+              tone="warn"
+              live
+              title="The world list did not load"
+              actions={<button type="button" className="btn" onClick={retryWorlds}><Icon name="refresh" size={14} />Try again</button>}
+            >
+              <p>You are working with {world.name}, the world you used last. {worlds.message}</p>
+            </Notice>
+          )}
+          {feed.status === 'failed' && (
+            <Notice
+              tone="error"
+              live
+              title="Can't reach aion2.exchange"
+              actions={<button type="button" className="btn" onClick={() => void feed.refresh()}><Icon name="refresh" size={14} />Try again</button>}
+            >
+              <p>
+                The app reads prices through the local dev server, so <code>npm run dev</code> has to be running.{' '}
+                {feed.snapshot
+                  ? `Showing the prices captured ${ago(captured, now)}. Prices you entered still apply.`
+                  : 'There is no saved copy for this world yet. Prices you enter still apply.'}
+              </p>
+              {feed.message && <p className="field-hint">{feed.message}</p>}
+            </Notice>
+          )}
+          {stale && (
+            <Notice
+              tone="warn"
+              live
+              title={`These prices are ${ago(captured, now).replace(' ago', '')} old`}
+              actions={<button type="button" className="btn" onClick={() => void feed.refresh()}><Icon name="refresh" size={14} />Refresh prices</button>}
+            >
+              <p>The exchange takes a snapshot of each world every hour, so this world may have stopped updating. Refresh to check.</p>
+            </Notice>
+          )}
+
+          {view === 'calculator' ? (
+            <Calculator planning={planning} feed={feed} target={target} scan={scan} overrides={overrides} now={now} onTarget={patchTarget} />
+          ) : (
+            <Scanner rows={scan} feed={feed} now={now} worldName={world.name} onOpen={openItem} />
+          )}
+        </main>
+      </div>
+    </div>
   )
 }
