@@ -8,19 +8,34 @@ export function matches(text: string, terms: readonly string[]) {
   return terms.every((term) => haystack.includes(term))
 }
 
+interface Entry {
+  craftable: Craftable
+  name: string
+  haystack: string
+}
+
+const entries = new WeakMap<readonly Craftable[], Entry[]>()
+
+function entriesOf(craftables: readonly Craftable[]): Entry[] {
+  const known = entries.get(craftables)
+  if (known) return known
+  const built = craftables.map((craftable) => {
+    const name = normal(craftable.item.name)
+    return { craftable, name, haystack: `${name} ${normal(craftable.profession ?? '')} ${normal(craftable.item.grade)}` }
+  })
+  entries.set(craftables, built)
+  return built
+}
+
 export function searchCraftables(craftables: readonly Craftable[], query: string): Craftable[] {
   const whole = normal(query).trim()
   const terms = termsOf(query)
   const [first] = terms
   if (first === undefined) return []
   const rank = (name: string) => (name.startsWith(whole) ? 0 : name.split(' ').some((word) => word.startsWith(first)) ? 1 : 2)
-  return craftables
-    .map((craftable) => {
-      const name = normal(craftable.item.name)
-      const haystack = `${name} ${normal(craftable.profession ?? '')} ${normal(craftable.item.grade)}`
-      return { craftable, name, hit: terms.every((term) => haystack.includes(term)) }
-    })
-    .filter((entry) => entry.hit)
-    .sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name) || a.craftable.item.id - b.craftable.item.id)
+  return entriesOf(craftables)
+    .filter((entry) => terms.every((term) => entry.haystack.includes(term)))
+    .map((entry) => ({ ...entry, rank: rank(entry.name) }))
+    .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name) || a.craftable.item.id - b.craftable.item.id)
     .map((entry) => entry.craftable)
 }
