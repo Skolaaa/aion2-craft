@@ -20,7 +20,7 @@ import { DEFAULT_TARGET, DEFAULT_VIEW, parseTarget, parseView, type Target, type
 import { useNow } from './state/useNow.ts'
 import { useOverrides } from './state/useOverrides.ts'
 import { usePersistentState } from './state/usePersistentState.ts'
-import { usePrices } from './state/usePrices.ts'
+import { usePrices, type PriceFeed } from './state/usePrices.ts'
 import { useWorlds, type WorldsState } from './state/useWorlds.ts'
 
 const NO_QUOTES: ReadonlyMap<ItemId, MarketQuote> = new Map()
@@ -73,6 +73,19 @@ export function App() {
   )
 }
 
+function FeedNotice({ feed, worldName }: { feed: PriceFeed; worldName: string }) {
+  const now = useNow()
+  const captured = feed.snapshot?.capturedAt
+  return (
+    <Notice title="Can't reach aion2.exchange" action={<Button onClick={() => void feed.refresh()}><Glyph name="refresh" />Try again</Button>}>
+      {captured
+        ? `The plan uses the copy saved on this computer, captured ${age(captured, now)} ago.`
+        : `There is no saved copy for ${worldName} yet, so only NPC prices and yours count.`}{' '}
+      The app reaches aion2.exchange through the local dev server, so <code>npm run dev</code> has to be running.
+    </Notice>
+  )
+}
+
 interface WorkspaceProps {
   world: World
   worlds: WorldsState
@@ -90,7 +103,7 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
   const index = craftIndexFor(catalog)
   const feed = usePrices(world, catalog)
   const overrides = useOverrides(world.id)
-  const now = useNow()
+
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const options = useMemo<PlanOptions>(
@@ -140,18 +153,11 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
             You can keep working on {world.name}, the world you used last. Settings lists other worlds once the list loads.
           </Notice>
         )}
-        {feed.status === 'failed' && (
-          <Notice title="Can't reach aion2.exchange" action={<Button onClick={() => void feed.refresh()}><Glyph name="refresh" />Try again</Button>}>
-            {feed.snapshot?.capturedAt
-              ? `The plan uses the copy saved on this computer, captured ${age(feed.snapshot.capturedAt, now)} ago.`
-              : `There is no saved copy for ${world.name} yet, so only NPC prices and yours count.`}{' '}
-            The app reaches aion2.exchange through the local dev server, so <code>npm run dev</code> has to be running.
-          </Notice>
-        )}
+        {feed.status === 'failed' && <FeedNotice feed={feed} worldName={world.name} />}
         {view === 'calculator' && (
-          <Calculator planning={planning} feed={feed} target={target} scan={scan} overrides={overrides} now={now} onTarget={patchTarget} />
+          <Calculator planning={planning} feed={feed} target={target} scan={scan} overrides={overrides} onTarget={patchTarget} />
         )}
-        {view === 'scanner' && <Scanner rows={scan} planning={planning} feed={feed} now={now} onOpen={openItem} />}
+        {view === 'scanner' && <Scanner rows={scan} planning={planning} feed={feed} onOpen={openItem} />}
       </main>
       <Footer />
       <Settings

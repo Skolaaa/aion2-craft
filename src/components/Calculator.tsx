@@ -18,11 +18,10 @@ interface Props {
   target: Target
   scan: readonly ScanRow[]
   overrides: PriceOverrides
-  now: number
   onTarget(change: Partial<Target>): void
 }
 
-export function Calculator({ planning, feed, target, scan, overrides, now, onTarget }: Props) {
+export function Calculator({ planning, feed, target, scan, overrides, onTarget }: Props) {
   const { index } = planning
   const [tab, setTab] = useState<DetailTab>('buy')
   const craftable = target.itemId === null ? null : (index.byId.get(target.itemId) ?? null)
@@ -45,10 +44,9 @@ export function Calculator({ planning, feed, target, scan, overrides, now, onTar
             feed={feed}
             quantity={target.quantity}
             overrides={overrides}
-            now={now}
             onTarget={onTarget}
           />
-          {plan && !feed.pending && <Details plan={plan} planning={planning} overrides={overrides} tab={tab} now={now} onTab={setTab} />}
+          {plan && !feed.pending && <Details plan={plan} planning={planning} overrides={overrides} tab={tab} onTab={setTab} />}
         </>
       )}
     </>

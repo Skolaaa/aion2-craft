@@ -7,6 +7,7 @@ import type { Planning } from '../state/planning.ts'
 import { MAX_MASTERY } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import { useExchangeEstimate } from '../state/useExchangeEstimate.ts'
+import { useNow } from '../state/useNow.ts'
 import { Glyph } from './Glyph.tsx'
 import { ItemCell } from './ItemCell.tsx'
 import { PriceCell } from './PriceCell.tsx'
@@ -25,11 +26,10 @@ interface Props {
   planning: Planning
   overrides: PriceOverrides
   tab: DetailTab
-  now: number
   onTab(tab: DetailTab): void
 }
 
-export function Details({ plan, planning, overrides, tab, now, onTab }: Props) {
+export function Details({ plan, planning, overrides, tab, onTab }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
 
@@ -68,7 +68,7 @@ export function Details({ plan, planning, overrides, tab, now, onTab }: Props) {
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
         {tab === 'buy' && <WhatToBuy plan={plan} planning={planning} overrides={overrides} />}
         {tab === 'made' && <HowItIsMade key={plan.target.itemId} plan={plan} planning={planning} overrides={overrides} />}
-        {tab === 'rates' && <Rates plan={plan} planning={planning} now={now} />}
+        {tab === 'rates' && <Rates plan={plan} planning={planning} />}
       </div>
     </section>
   )
@@ -285,7 +285,8 @@ const FAMILY_NOTE: Record<string, string> = {
   material: 'the material curve',
 }
 
-function Rates({ plan, planning, now }: { plan: PlanResult; planning: Planning; now: number }) {
+function Rates({ plan, planning }: { plan: PlanResult; planning: Planning }) {
+  const now = useNow()
   const { catalog, mastery, world } = planning
   const { root } = plan
   const recipe = catalog.recipes.get(root.recipeId)

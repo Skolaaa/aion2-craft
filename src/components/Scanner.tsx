@@ -14,11 +14,10 @@ interface Props {
   rows: readonly ScanRow[]
   planning: Planning
   feed: PriceFeed
-  now: number
   onOpen(itemId: ItemId): void
 }
 
-export function Scanner({ rows, planning, feed, now, onOpen }: Props) {
+export function Scanner({ rows, planning, feed, onOpen }: Props) {
   const { world, options } = planning
   const [profession, setProfession] = useState<Profession | null>(null)
   const [name, setName] = useState('')
@@ -35,7 +34,7 @@ export function Scanner({ rows, planning, feed, now, onOpen }: Props) {
       <div className="stack-tight">
         <h1 className="section-title" id="scanner-title">Every recipe on {world.name}</h1>
         <p className="meta">Margins after {taxLabel(options.taxRate)} tax at your mastery. Click a row to open it in the calculator.</p>
-        <PriceStatus feed={feed} now={now} worldName={world.name} />
+        <PriceStatus feed={feed} worldName={world.name} />
       </div>
 
       <div className="filters">

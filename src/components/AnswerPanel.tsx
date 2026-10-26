@@ -20,7 +20,6 @@ interface Props {
   feed: PriceFeed
   quantity: number
   overrides: PriceOverrides
-  now: number
   onTarget(change: Partial<Target>): void
 }
 
@@ -43,7 +42,7 @@ function Figure({ label, value, empty, tone, children }: FigureProps) {
 }
 
 
-export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrides, now, onTarget }: Props) {
+export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrides, onTarget }: Props) {
   const { catalog, world, index, mastery, prices } = planning
   const { item } = craftable
   const recipe = plan ? catalog.recipes.get(plan.root.recipeId) : undefined
@@ -101,7 +100,7 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
         />
       )}
 
-      <PriceStatus feed={feed} now={now} worldName={world.name} />
+      <PriceStatus feed={feed} worldName={world.name} />
     </section>
   )
 }

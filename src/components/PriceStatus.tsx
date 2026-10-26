@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { age, isStale } from '../state/format.ts'
+import { useNow } from '../state/useNow.ts'
 import type { PriceFeed } from '../state/usePrices.ts'
 import { Button } from './Button.tsx'
 import { Glyph } from './Glyph.tsx'
 
 interface Props {
   feed: PriceFeed
-  now: number
   worldName: string
 }
 
-export function PriceStatus({ feed, now, worldName }: Props) {
+export function PriceStatus({ feed, worldName }: Props) {
+  const now = useNow()
   const [note, setNote] = useState<string | null>(null)
   const captured = feed.snapshot?.capturedAt ?? null
   const refreshing = feed.status === 'loading'
