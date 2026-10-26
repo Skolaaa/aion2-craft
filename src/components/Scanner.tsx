@@ -27,7 +27,6 @@ export function Scanner({ planning, feed, onOpen }: Props) {
   const filter = useDeferredValue(name)
   const view = useMemo(() => viewScan(rows, { profession, name: filter, showHidden, sort }), [rows, profession, filter, showHidden, sort])
 
-
   const chips: readonly { id: Profession | null; label: string }[] = [{ id: null, label: 'All' }, ...PROFESSIONS]
 
   return (

@@ -21,7 +21,6 @@ interface Feed {
   message: string | null
 }
 
-
 export function usePrices(world: World, catalog: Catalog): PriceFeed {
   const itemIds = useMemo(() => tradeableItems(catalog), [catalog])
   const [feed, setFeed] = useState<Feed>(() => ({ worldId: world.id, status: 'loading', snapshot: loadSnapshot(world.id), message: null }))

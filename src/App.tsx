@@ -12,9 +12,8 @@ import { makePriceBook } from './domain/priceBook.ts'
 import type { ItemId, MarketQuote, PlanOptions } from './domain/types.ts'
 import type { World } from './market/exchangeClient.ts'
 import { craftIndexFor, remapItem } from './state/craftables.ts'
-import type { Planning } from './state/planning.ts'
-
 import { age } from './state/format.ts'
+import type { Planning } from './state/planning.ts'
 import { DEFAULT_SETUP, parseSetup, type Setup } from './state/setup.ts'
 import { DEFAULT_TARGET, DEFAULT_VIEW, parseTarget, parseView, type Target, type View } from './state/target.ts'
 import { useNow } from './state/useNow.ts'
@@ -24,7 +23,6 @@ import { usePrices, type PriceFeed } from './state/usePrices.ts'
 import { useWorlds, type WorldsState } from './state/useWorlds.ts'
 
 const NO_QUOTES: ReadonlyMap<ItemId, MarketQuote> = new Map()
-
 
 function pickWorld(worlds: WorldsState, saved: World | null): World | null {
   if (worlds.status !== 'ready') return saved
@@ -111,7 +109,6 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
   const index = craftIndexFor(catalog)
   const feed = usePrices(world, catalog)
   const overrides = useOverrides(world.id)
-
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const options = useMemo<PlanOptions>(
@@ -127,7 +124,6 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
     () => ({ world, catalog, index, mastery: setup.mastery, options, prices, market }),
     [world, catalog, index, setup.mastery, options, prices, market],
   )
-
 
   const patchSetup = (change: Partial<Setup>) => updateSetup((previous) => ({ ...previous, ...change }))
   const patchTarget = (change: Partial<Target>) => updateTarget((previous) => ({ ...previous, ...change }))

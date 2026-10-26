@@ -12,7 +12,6 @@ import { Details, type DetailTab } from './Details.tsx'
 import { ScanTable } from './ScanTable.tsx'
 import { Search } from './Search.tsx'
 
-
 interface Props {
   planning: Planning
   feed: PriceFeed

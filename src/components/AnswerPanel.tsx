@@ -41,7 +41,6 @@ function Figure({ label, value, empty, tone, children }: FigureProps) {
   )
 }
 
-
 export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrides, onTarget }: Props) {
   const { catalog, world, index, mastery, prices } = planning
   const { item } = craftable
@@ -49,7 +48,6 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
   const pair = index.pairOf.get(item.id)
   const profession = recipe?.profession ?? craftable.profession
   const level = recipe?.masteryLevel ?? craftable.level
-
   const facts = [profession ?? 'Any profession', `recipe level ${level}`, item.grade, recipe?.section === 'succession' ? 'transfer' : null]
 
   return (
@@ -147,7 +145,6 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
         {market.listings === 1 ? 'the only listing' : `lowest of ${market.listings} listings`}
       </>
     )
-
 
   const marginNote =
     marginPct !== null
