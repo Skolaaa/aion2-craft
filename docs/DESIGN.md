@@ -26,7 +26,7 @@ All text pairs reach 4.5:1 and control edges reach 3:1 in all four palettes. A s
 
 - **Marcellus** for names: the app title, the item being priced, panel titles. A flared Roman face that reads like an inscription on an item tooltip. Sentence case, never all caps.
 - **Barlow Semi Condensed** for everything else, and for every figure, set with tabular lining numerals. Its narrow set fits seven-figure Kina amounts into table columns and phone screens.
-- Scale in px: 13 (notes, column heads), 16 (body, rows), 20 (panel titles), 28 (item name), 44 (the three headline figures). Weights 400, 500, 600. Body line height 1.4, figures 1.1.
+- Scale in px: 13 (notes, column heads), 16 (body, rows), 20 (panel titles, rate values), 24 on phones and 28 on desktop (the item being priced), 30 on phones and 38 on desktop (the three headline figures). Weights 400, 500, 600. Body line height 1.4, figures 1.1.
 
 ## Layout
 
@@ -76,7 +76,7 @@ Alignment is left for words and right for figures. Nothing is centered except th
 
 ## Principles
 
-1. **Figures are the hero.** Large tabular numerals, right-aligned, three importance steps (44, 20, 16). Labels stay small and quiet.
+1. **Figures are the hero.** Large tabular numerals, right-aligned, three importance steps (38, 20, 16). Labels stay small and quiet.
 2. **The room follows the faction.** Switching to an Asmodian world re-tints the canvas and the accent. The recipe sets differ by race, so the player should see which one they are in without reading.
 3. **Structure encodes data.** The tree rail encodes depth. The ribbon encodes cost share. Inline bars in the shopping list encode each line's share of the total. A manual price carries an accent underline and the words "your price". There are no decorative rules, gradients, or shadows.
 4. **One memorable thing, the cost ribbon.** A single bar whose segments are the root materials, sized by their share of the cost, on the same axis as two notches: the market lowest, and the sale price after tax. The gap between the end of the ribbon and the second notch is the margin, drawn exactly. Everything else stays quiet.
@@ -103,3 +103,29 @@ I wrote a first draft, then checked it against the generic output for "dark Aion
 - **Recipe list as a permanent second pane.** Costs a third of the width for something used once per session. A search box with a results list does the job, and the scanner is the browse view.
 - **Bar chart comparing craft, all-buy, market and sold average.** Reads clearly but adds nothing the figures do not say. The ribbon adds composition and the margin gap.
 - **Light and dark theme toggle.** The brief asks for `prefers-color-scheme`. A toggle is one more control that has to persist and be tested.
+
+## What changed while building
+
+- The ladder has no separate source column. How an item is acquired (Buy on the Market, Buy at your price, Craft, Morph) sits under the item name, so the name column keeps room at 650px, the width it gets beside the shopping list on a 1440px screen.
+- The ladder, shopping list and scanner pick their layout from the width of their own container (`@container`), not from the viewport, because the rail takes 320px on desktop and the available width differs per view.
+- The scanner puts the grade under the profession and drops the sort select on desktop, since the column heads sort. Below 760px the table becomes cards, the profession chips become a select, and the sort select returns.
+- Each world has its own saved manual prices. A price set for one world never leaks into another.
+- Switching faction keeps the selected item by matching its name in the other race's catalog, because the two races use different item ids for the same name.
+- The target item can take a manual price too. That is how the margin works for an item nobody lists.
+
+## Browser check
+
+Run on 27 Oct 2026 in Chrome with a clean profile, dev server on port 5175, world Kaisinel (Europe, Elyos, id 11304).
+
+| Step | Seen |
+|---|---|
+| Search "Artisan's Splendent Orichalcum Greatsword", Enter | Item 110130013, Splendent selected in the Normal and Splendent switch |
+| Blacksmithing mastery 40 | Success 87.20%, cost 21,360,167 |
+| Blacksmithing mastery 100 | Success 96.84%, combo 24.21%, 4.13 attempts, cost 19,234,191, market lowest 17,999,870, margin after 5% tax -2,134,314 |
+| aion2.exchange `/api/crafts/110130013?server=11304` | Cost 19,472,361 and market 17,999,870, same snapshot (captured 18:07:55Z). The exchange always crafts the whole three-step ladder. This app buys the Expert's Splendent Greatsword at 1,595,999 each because that is cheaper than crafting it at about 1,653,661 |
+| Own price of 99m on the Expert's Splendent Greatsword, which forces the full ladder | Cost 19,472,373. The gap to the exchange is 12 Kina in 19.5 million |
+| Scanner, sorted by Margin | 272 items shown, 43 need prices. Top row Artisan's Splendent Orichalcum Helm, +8,669,564 and +83.9% |
+| 390px wide, calculator, scanner and setup open | `scrollWidth` 390, no element past the right edge |
+| Console | No errors or warnings. Only Vite debug lines |
+
+Screenshots are in `docs/screenshots/`.
