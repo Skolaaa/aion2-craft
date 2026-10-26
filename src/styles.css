@@ -431,7 +431,7 @@ th[aria-sort='ascending'] .sort-btn, th[aria-sort='descending'] .sort-btn { colo
 .scan-row:hover td { background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
 .col-name { min-width: 260px; }
 .name-facts { display: none; font-size: 13px; color: var(--faint); }
-.col-name .grade { font-size: 13px; color: var(--faint); margin-left: 8px; white-space: nowrap; }
+.col-profession .grade { display: block; font-size: 13px; color: var(--faint); line-height: 1.2; }
 .item-link { display: inline-flex; align-items: center; gap: 10px; background: transparent; border: 0; padding: 2px 0; text-align: left; font-weight: 500; color: var(--text); min-height: 32px; }
 .item-link:hover .item-link-name { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 .muted-note { font-size: 13px; color: var(--faint); }

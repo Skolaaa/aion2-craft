@@ -2,10 +2,10 @@ import { useMemo, useState, type CSSProperties } from 'react'
 import type { Catalog, ItemId, MaterialLine, PlanResult, StepPlan } from '../domain/types.ts'
 import type { Planning } from '../state/planning.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
-import { segmentColor } from './CostRibbon.tsx'
 import { Icon } from './Icon.tsx'
 import { ItemIcon } from './ItemIcon.tsx'
 import { PriceEditor, type Editing } from './PriceEditor.tsx'
+import { segmentColor } from './segments.ts'
 import { attemptsText, expected, isStale, kina, rate } from './format.ts'
 
 type Row =
@@ -170,6 +170,7 @@ export function Ladder({ plan, planning, overrides, editing, ranks, quantity, no
           const lineItem = item(line.itemId)
           const a = line.acquisition
           const isEditing = editing?.rowKey === row.key
+          const ownPrice = overrides.prices.get(line.itemId)
           const manual = a.method === 'buy' && a.quote.kind === 'manual'
           const stale = a.method === 'buy' && a.quote.kind === 'market' && isStale(a.quote.capturedAt, now)
           return (
@@ -204,6 +205,7 @@ export function Ladder({ plan, planning, overrides, editing, ranks, quantity, no
                       {a.method === 'craft' && child && <><span className="how how-craft">Craft</span> {stepSummary(child, catalog)}</>}
                       {a.method === 'morph' && child && <><span className="how how-craft">Morph</span> from Odyle{child.successRate === 0 ? `, ${stepSummary(child, catalog)}` : ''}</>}
                       {a.method === 'none' && <span className="how how-missing">No price</span>}
+                      {a.method !== 'buy' && ownPrice !== undefined && <span className="tag">your price is higher</span>}
                     </span>
                   </span>
                 </div>

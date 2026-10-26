@@ -220,11 +220,13 @@ export function Scanner({ rows, feed, now, worldName, onOpen }: Props) {
                         <button type="button" className="item-link" onClick={() => onOpen(row.item.id)}>
                           <ItemIcon item={row.item} size={28} />
                           <span className="item-link-name">{row.item.name}</span>
-                          <span className="grade">{row.item.grade}</span>
                         </button>
-                        <span className="name-facts">{row.profession ?? 'Any profession'}, level {row.level}</span>
+                        <span className="name-facts">{row.profession ?? 'Any profession'}, level {row.level}, {row.item.grade}</span>
                       </td>
-                      <td role="cell" className="col-profession" data-label="Profession">{row.profession ?? 'n/a'}</td>
+                      <td role="cell" className="col-profession" data-label="Profession">
+                        {row.profession ?? 'n/a'}
+                        <span className="grade">{row.item.grade}</span>
+                      </td>
                       <td role="cell" className="col-level r num" data-label="Level">{row.level}</td>
                       <td role="cell" className="col-cost r num" data-label="Cost">
                         {row.cost !== null ? kina(row.cost) : <span className="muted-note">{row.status === 'locked' ? 'Needs mastery' : 'Needs prices'}</span>}
