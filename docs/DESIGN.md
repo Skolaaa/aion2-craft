@@ -1,131 +1,99 @@
-# Interface design plan
+# Design spec, second pass
 
-The interface answers three questions for one player on one Mac. Is it cheaper to craft an item or buy it on the Market. What do I need to buy or craft, and what do the failed attempts cost. Which craftable item has the best margin right now. Every design choice below serves one of those questions or gets cut.
+Reading: a desktop-first tool for one Aion 2 player who checks it a few times a day. The first pass
+showed every figure at once and the page read as a spreadsheet. This pass shows one answer, then
+details on request. Uniform means one type family, one spacing scale, one radius, one border, one
+accent, and the same table everywhere.
 
-## Subject and reader
+## Tokens
 
-The reader is an Aion 2 crafter who already knows the vocabulary (Splendent, Odyle, Kina, mastery) and stares at numbers for a living. The tool lives in a second window. Density matters more than first-visit friendliness, but every number has to be readable at a glance and trustworthy at a second look.
+Color, dark theme (default), light under `prefers-color-scheme: light`:
 
-## Palette
+| Token | Dark | Light | Use |
+|---|---|---|---|
+| `--bg` | `#15181D` | `#F6F5F2` | page |
+| `--panel` | `#1C2026` | `#FFFFFF` | the one answer panel, dialogs |
+| `--line` | `#2E343D` | `#DDD9D2` | every border and table rule |
+| `--text` | `#EDEAE3` | `#1C1F24` | text |
+| `--muted` | `#9AA1AB` | `#646B75` | labels, secondary |
+| `--accent` | `#D9A441` | `#9A6B12` | focus rings, links, selected tab, primary button. Brass, because the game's currency is Kina and the tool is about money |
+| `--gain` | `#7FC98A` | `#2E7D3E` | positive margin only |
+| `--loss` | `#E8847A` | `#B3382C` | negative margin only |
+| `--warn` | `#D9A441` | `#9A6B12` | stale and missing-price notices (same hue as accent, never a fourth color) |
 
-Four palettes share one structure. The faction of the selected world picks the hue. The OS picks dark or light. Dark is the default.
+Rules: no gradients, no shadows, no grade colors anywhere (grade is a word). Icons: the game's
+item icons only, inside a 1px `--line` frame; the UI itself uses no icon font and at most three
+inline SVG glyphs (search, chevron, refresh).
 
-| Name | Role | Elyos dark | Asmodian dark | Elyos light | Asmodian light |
-|---|---|---|---|---|---|
-| Nightfall | page | `#061226` | `#170d23` | `#e7effb` | `#f0ecf9` |
-| Bulwark | panels | `#0d1c33` | `#21162f` | `#f8fafe` | `#fbf9ff` |
-| Rivet | rules, tree rails | `#2b3c56` | `#413552` | `#c7d4e7` | `#d6cee4` |
-| Moonlight | text | `#eaf1fa` | `#f2eef8` | `#132032` | `#231a2f` |
-| Aether and Orchid | the one accent | `#62cbfe` | `#e7a0ed` | `#076c92` | `#8d3b96` |
+Type: one family, `Manrope` (Google Fonts, weights 400/600/700), `font-variant-numeric: tabular-nums`
+on everything numeric. Scale: 13 (meta), 15 (body, table), 17 (section titles), 22 (item name),
+40 (the two answer figures). Line height 1.45 body, 1.1 figures. No uppercase labels, no letterspacing.
 
-Supporting values exist only to carry meaning. Gain `#6de18b` and loss `#ff9183` on dark, `#00672d` and `#ac2722` on light, always paired with a sign or a word. A fourth value, warn, marks stale prices and always comes with an icon and text. Muted and faint text steps, the raised surface, and the control edge are derived from the same hue in `src/styles.css`.
+Space: 4, 8, 12, 16, 24, 32, 48. Section gap 32. Panel padding 24. Table row height 44.
+Radius: 8 everywhere (inputs, buttons, panel, chips). Buttons: one primary (accent fill, dark text),
+one secondary (1px line). Inputs: 1px line, accent ring on focus, label above.
 
-All text pairs reach 4.5:1 and control edges reach 3:1 in all four palettes. A script computed the ratios from the same OKLCH values the hex codes come from.
-
-## Type
-
-- **Marcellus** for names: the app title, the item being priced, panel titles. A flared Roman face that reads like an inscription on an item tooltip. Sentence case, never all caps.
-- **Barlow Semi Condensed** for everything else, and for every figure, set with tabular lining numerals. Its narrow set fits seven-figure Kina amounts into table columns and phone screens.
-- Scale in px: 13 (notes, column heads), 16 (body, rows), 20 (panel titles, rate values), 24 on phones and 28 on desktop (the item being priced), 30 on phones and 38 on desktop (the three headline figures). Weights 400, 500, 600. Body line height 1.4, figures 1.1.
-
-## Layout
-
-One persistent rail holds the player's setup, because the interaction that matters is turning a dial (mastery, tax, a manual price) and watching the cost change. The main column holds one view at a time.
+## Layout (desktop, max-width 1040 centered; one column always)
 
 ```
-desktop 1440
-+--------------------------------------------------------------------------------+
-| mark  Crafting Ledger   Calculator  Profit scanner              Kaisinel, Elyos |
-+---------------+----------------------------------------------------------------+
-| Your setup    | [ search items ................ ] Qty [ 1 ]  (Normal|Splendent) |
-| World       v |                                                                |
-| Mastery x5    | [icon] Artisan's Splendent Orichalcum Greatsword               |
-|  slider+num   |        Blacksmithing, needs 30, Unique                         |
-| Market tax 5% |                                                                |
-| Options x3    | Craft it          Buy it now        Margin after tax            |
-| Your prices   | 19,472,361        17,999,870        -2,372,486  -12.2%          |
-|  (n)          | Buying is cheaper by 1,472,491                                 |
-|               | [segments of cost ........................ |  |]  ribbon           |
-|               | Success 96.84%  Combo 25%  Attempts 4.13  All-buy 21.0M ...     |
-|               | Prices 14 min old  [Refresh]  from aion2.exchange               |
-|               +------------------------------------+---------------------------+
-|               | Ladder (tree, expandable)          | Shopping list (leaf buys) |
-+---------------+------------------------------------+---------------------------+
-
-mobile 390
-+----------------------------+
-| mark  Crafting Ledger      |
-| Calculator | Profit scanner|
-| Kaisinel, Elyos      Setup v|
-| [ search items ..........] |
-| Qty [1]  (Normal|Splendent)|
-| [icon] Item name           |
-| Craft it     19,472,361    |
-| Buy it now   17,999,870    |
-| Margin       -2,372,486    |
-| ribbon                     |
-| rates in two columns       |
-| Ladder, one line per item  |
-| Shopping list              |
-+----------------------------+
++------------------------------------------------------------------------------+
+| Craft or buy          [Calculator] [Scanner]        Siel, Elyos v   Settings |   top bar 56px
++------------------------------------------------------------------------------+
+| [ Search an item to craft ........................................... ]       |   48px input
+|                                                                              |
+| +--------------------------------------------------------------------------+ |
+| | [icon] Artisan's Splendent Orichalcum Greatsword     Normal | Splendent  | |   answer panel
+| |        Blacksmithing, recipe level 30, Unique                 Qty [ 1 ]  | |
+| |                                                                          | |
+| |   Craft it. Expected cost is 1,467,378 Kina under the lowest listing.    | |   one sentence, 17px
+| |                                                                          | |
+| |   Craft                         Buy                        Margin        | |
+| |   18,532,622                    20,000,000                 +467,378      | |   40px figures
+| |   4.1 attempts at 96.8%         lowest of 8 listings       +2.5% after 5% tax |
+| |                                                                          | |
+| |   Prices from aion2.exchange, captured 35 min ago   [Refresh]            | |   13px meta
+| +--------------------------------------------------------------------------+ |
+|                                                                              |
+|   What to buy   |   How it is made   |   Rates                              |   detail tabs
+|   ---------------------------------------------------------------------     |
+|   Item                       Expected      Unit price        Subtotal        |   one table style
+|   Artisan's Refining Stone      20.65        510,000      10,533,142         |
+|   ...                                                                        |
+|   Total                                                  18,532,622          |
++------------------------------------------------------------------------------+
 ```
 
-The scanner is a table at 760px and wider. Below that each row becomes a two-line entry with the margin on the first line, and a sort select replaces the column heads.
+- The answer panel is the only raised surface. Everything else sits on `--bg` with `--line` rules.
+- "What to buy" is the default detail: the aggregated shopping list. "How it is made" is the ladder,
+  collapsed to the top step, each step expandable. "Rates" shows success, combo, attempts and
+  the level difference, and the aion2.exchange estimate when one exists, each with a one-line
+  explanation.
+- Any unit price in a table is editable in place (click, type, Enter), shown with a dotted
+  underline and the word "yours" after it when overridden. Overrides are per world. Settings
+  lists them with a reset.
+- Settings is a dialog (not a rail): world, mastery per profession (number input + slider),
+  market tax, three plan options with one-line explanations. The top bar shows the world and
+  a summary "Mastery 100 / 0 / 0 / 0 / 0" so the player sees what the plan assumes.
+- First load with nothing chosen: the search input is focused and under it sit the five best
+  margins on this world as plain rows, so the page is never empty.
 
-Alignment is left for words and right for figures. Nothing is centered except the empty states.
+Scanner view: profession chips, name filter, then one table with five columns:
+Item (icon, name, profession and level as meta), Craft cost, Market lowest, Margin, Margin %.
+Listings and 28-day average go into a row tooltip/expanded row, not columns. Rows that need a
+price or more mastery are hidden by default with a count and a toggle. Click a row to open it
+in the calculator. Sort by clicking a header; sorted header is accent colored.
+
+Mobile (under 720px): same one column, the three figures stack, tables keep four columns by
+dropping "Expected" into the item meta line. No horizontal scroll at 390px.
+
+States: loading (text line in the panel, no spinner), stale prices (warn line in the panel meta
+with a refresh button), proxy down (warn notice above the panel, plan still runs on the saved
+copy), world list failed (notice with retry), missing price (the row shows an input in the unit
+price cell and the panel sentence says "Enter the missing prices to compare"), mastery too low
+(sentence says which profession and level), no listing (sentence says so, cost still shown).
 
 ## Principles
-
-1. **Figures are the hero.** Large tabular numerals, right-aligned, three importance steps (38, 20, 16). Labels stay small and quiet.
-2. **The room follows the faction.** Switching to an Asmodian world re-tints the canvas and the accent. The recipe sets differ by race, so the player should see which one they are in without reading.
-3. **Structure encodes data.** The tree rail encodes depth. The ribbon encodes cost share. Inline bars in the shopping list encode each line's share of the total. A manual price carries an accent underline and the words "your price". There are no decorative rules, gradients, or shadows.
-4. **One memorable thing, the cost ribbon.** A single bar whose segments are the root materials, sized by their share of the cost, on the same axis as two notches: the market lowest, and the sale price after tax. The gap between the end of the ribbon and the second notch is the margin, drawn exactly. Everything else stays quiet.
-5. **Say what is wrong and what fixes it.** A missing price becomes an input in the notice itself. A blocked recipe names the mastery it needs. A dead proxy names the command that starts it.
-
-## Review against the brief
-
-I wrote a first draft, then checked it against the generic output for "dark Aion 2 crafting dashboard". The first draft was a navy page, a blue accent, a row of four KPI cards, Inter, and a plain table. That is the default, so these parts changed.
-
-| First draft | Revised | Why |
-|---|---|---|
-| Row of KPI cards | Three bare figures plus a one-line verdict, then the ribbon | Cards say nothing about how the numbers relate. The ribbon shows cost, market, tax, and margin on one axis |
-| One fixed blue accent | Accent and canvas hue follow the faction | The faction is the subject's own axis, and it tells the player which recipe set they are reading |
-| Inter or system sans for everything | Marcellus names over Barlow Semi Condensed figures | Item names are proper nouns in the game's world. The condensed face fits long Kina amounts |
-| Uppercase tracked section labels | Sentence-case labels, none above content that needs none | The skill's list of tells |
-| Gold for Kina | No gold | Gold is the fantasy default and the starter's look. It also collides with the stale-price warning |
-| Monospace for numbers | Tabular numerals of the sans | Same alignment, no data-label look |
-| Identical rounded cards with soft shadows | Flat panels, radii that grow with the size of the thing (3, 6, 10), no shadows | Hierarchy through surface steps and rules that carry information |
-| Tabs for ladder and shopping list | Side by side at 1200px, stacked below | Both answer question two, and tabs hide one |
-
-## Alternatives rejected
-
-- **Top HUD strip for world and mastery.** It frees width but crowds seven controls into one row, and the hints and the persisted-prices list have no home. The rail wins for a tool where the player edits those inputs while watching a result.
-- **Recipe list as a permanent second pane.** Costs a third of the width for something used once per session. A search box with a results list does the job, and the scanner is the browse view.
-- **Bar chart comparing craft, all-buy, market and sold average.** Reads clearly but adds nothing the figures do not say. The ribbon adds composition and the margin gap.
-- **Light and dark theme toggle.** The brief asks for `prefers-color-scheme`. A toggle is one more control that has to persist and be tested.
-
-## What changed while building
-
-- The ladder has no separate source column. How an item is acquired (Buy on the Market, Buy at your price, Craft, Morph) sits under the item name, so the name column keeps room at 650px, the width it gets beside the shopping list on a 1440px screen.
-- The ladder, shopping list and scanner pick their layout from the width of their own container (`@container`), not from the viewport, because the rail takes 320px on desktop and the available width differs per view.
-- The scanner puts the grade under the profession and drops the sort select on desktop, since the column heads sort. Below 760px the table becomes cards, the profession chips become a select, and the sort select returns.
-- Each world has its own saved manual prices. A price set for one world never leaks into another.
-- Switching faction keeps the selected item by matching its name in the other race's catalog, because the two races use different item ids for the same name.
-- The target item can take a manual price too. That is how the margin works for an item nobody lists.
-
-## Browser check
-
-Run on 27 Oct 2026 in Chrome with a clean profile, dev server on port 5175, world Kaisinel (Europe, Elyos, id 11304).
-
-| Step | Seen |
-|---|---|
-| Search "Artisan's Splendent Orichalcum Greatsword", Enter | Item 110130013, Splendent selected in the Normal and Splendent switch |
-| Blacksmithing mastery 40 | Success 87.20%, cost 21,360,167 |
-| Blacksmithing mastery 100 | Success 96.84%, combo 24.21%, 4.13 attempts, cost 19,234,191, market lowest 17,999,870, margin after 5% tax -2,134,314 |
-| aion2.exchange `/api/crafts/110130013?server=11304` | Cost 19,472,361 and market 17,999,870, same snapshot (captured 18:07:55Z). The exchange always crafts the whole three-step ladder. This app buys the Expert's Splendent Greatsword at 1,595,999 each because that is cheaper than crafting it at about 1,653,661 |
-| Own price of 99m on the Expert's Splendent Greatsword, which forces the full ladder | Cost 19,472,373. The gap to the exchange is 12 Kina in 19.5 million |
-| Scanner, sorted by Margin | 272 items shown, 43 need prices. Top row Artisan's Splendent Orichalcum Helm, +8,669,564 and +83.9% |
-| 390px wide, calculator, scanner and setup open | `scrollWidth` 390, no element past the right edge |
-| Console | No errors or warnings. Only Vite debug lines |
-
-Screenshots are in `docs/screenshots/`.
+- One answer first, then details on request. Nothing competes with the answer panel.
+- Every number has a label and a unit or a comparison beside it.
+- Same table component for shopping list, ladder, rates and scanner.
+- No decoration: borders encode grouping, nothing else.
