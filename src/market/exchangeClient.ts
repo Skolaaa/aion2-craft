@@ -1,0 +1,180 @@
+import type { ItemId, MarketQuote, Race } from '../domain/types.ts'
+
+const API = '/ex/api'
+const BATCH = 100
+const MIN_REFRESH_MS = 60_000
+const STORAGE_KEY = (serverId: number) => `aion2-craft:quotes:${serverId}`
+const FACTION_RACE: Record<string, Race> = { Elyos: 'Light', Asmodian: 'Dark' }
+
+export interface World {
+  id: number
+  name: string
+  region: string
+  regionName: string
+  race: Race
+  hasData: boolean
+}
+
+export interface WorldList {
+  defaultId: number
+  worlds: World[]
+}
+
+export interface QuoteSnapshot {
+  serverId: number
+  fetchedAt: string
+  capturedAt: string | null
+  quotes: Map<ItemId, MarketQuote>
+}
+
+export interface PricePoint {
+  ts: string
+  low: number | null
+  high: number | null
+  avg: number | null
+  close: number | null
+  listings: number | null
+}
+
+export interface ExchangeCraft {
+  cost: number
+  marketPrice: number | null
+  capturedAt: string
+}
+
+type Json = Record<string, unknown>
+
+function record(value: unknown, what: string): Json {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error(`aion2.exchange: ${what} is not an object`)
+  return value as Json
+}
+
+function list(value: unknown, what: string): unknown[] {
+  if (!Array.isArray(value)) throw new Error(`aion2.exchange: ${what} is not a list`)
+  return value
+}
+
+function num(value: unknown, what: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error(`aion2.exchange: ${what} is not a number`)
+  return value
+}
+
+const numOrNull = (value: unknown, what: string) => (value === null || value === undefined ? null : num(value, what))
+
+function str(value: unknown, what: string): string {
+  if (typeof value !== 'string') throw new Error(`aion2.exchange: ${what} is not text`)
+  return value
+}
+
+async function getJson(path: string): Promise<Json> {
+  const res = await fetch(`${API}${path}`, { headers: { Accept: 'application/json' } })
+  if (!res.ok) throw new Error(`aion2.exchange ${path}: HTTP ${res.status}`)
+  return record(await res.json(), path)
+}
+
+export async function fetchWorlds(): Promise<WorldList> {
+  const body = await getJson('/servers')
+  const worlds = list(body.servers, 'servers').map((raw) => {
+    const s = record(raw, 'server')
+    const race = FACTION_RACE[str(s.faction, 'faction')]
+    if (!race) throw new Error(`aion2.exchange: unknown faction ${String(s.faction)}`)
+    return {
+      id: num(s.server_id, 'server_id'),
+      name: str(s.name, 'name'),
+      region: str(s.region, 'region'),
+      regionName: str(s.region_name, 'region_name'),
+      race,
+      hasData: s.has_data === true,
+    }
+  })
+  return { defaultId: num(body.default, 'default'), worlds }
+}
+
+function parseQuote(raw: unknown): [ItemId, MarketQuote] {
+  const item = record(raw, 'item')
+  return [num(item.item_key, 'item_key'), {
+    lowest: numOrNull(item.price, 'price'),
+    listings: numOrNull(item.listings, 'listings') ?? 0,
+    soldAvg: numOrNull(item.sold_avg_price, 'sold_avg_price'),
+    capturedAt: str(item.captured_at, 'captured_at'),
+  }]
+}
+
+export async function fetchQuotes(serverId: number, itemIds: readonly ItemId[]): Promise<Map<ItemId, MarketQuote>> {
+  const quotes = new Map<ItemId, MarketQuote>()
+  for (let i = 0; i < itemIds.length; i += BATCH) {
+    const keys = itemIds.slice(i, i + BATCH).join(',')
+    const body = await getJson(`/items?keys=${keys}&server=${serverId}&limit=${BATCH}`)
+    for (const raw of list(body.items, 'items')) quotes.set(...parseQuote(raw))
+  }
+  return quotes
+}
+
+export async function fetchPriceHistory(itemId: ItemId, serverId: number, range = '7d', bucket = '6h'): Promise<PricePoint[]> {
+  const body = await getJson(`/items/${itemId}/prices?range=${range}&bucket=${bucket}&server=${serverId}`)
+  return list(body.points, 'points').map((raw) => {
+    const p = record(raw, 'point')
+    return {
+      ts: str(p.ts, 'ts'),
+      low: numOrNull(p.low, 'low'),
+      high: numOrNull(p.high, 'high'),
+      avg: numOrNull(p.avg, 'avg'),
+      close: numOrNull(p.close, 'close'),
+      listings: numOrNull(p.listings, 'listings'),
+    }
+  })
+}
+
+export async function fetchExchangeCraft(targetId: ItemId, serverId: number): Promise<ExchangeCraft> {
+  const latest = record((await getJson(`/crafts/${targetId}?server=${serverId}`)).latest, 'latest')
+  return {
+    cost: num(latest.cost, 'cost'),
+    marketPrice: numOrNull(latest.market_price, 'market_price'),
+    capturedAt: str(latest.captured_at, 'captured_at'),
+  }
+}
+
+const newest = (quotes: Map<ItemId, MarketQuote>) =>
+  [...quotes.values()].reduce<string | null>((latest, q) => (latest === null || q.capturedAt > latest ? q.capturedAt : latest), null)
+
+export function loadSnapshot(serverId: number): QuoteSnapshot | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY(serverId))
+    if (!stored) return null
+    const { fetchedAt, quotes } = JSON.parse(stored) as { fetchedAt: string; quotes: [ItemId, MarketQuote][] }
+    const map = new Map(quotes)
+    return { serverId, fetchedAt, capturedAt: newest(map), quotes: map }
+  } catch {
+    return null
+  }
+}
+
+function storeSnapshot(snapshot: QuoteSnapshot) {
+  try {
+    const { fetchedAt, quotes } = snapshot
+    localStorage.setItem(STORAGE_KEY(snapshot.serverId), JSON.stringify({ fetchedAt, quotes: [...quotes] }))
+  } catch {
+    // A full or blocked storage only costs the offline copy.
+  }
+}
+
+const inFlight = new Map<number, Promise<QuoteSnapshot>>()
+
+// aion2.exchange snapshots each world hourly, so a fetch younger than a minute is reused.
+export function refreshSnapshot(serverId: number, itemIds: readonly ItemId[]): Promise<QuoteSnapshot> {
+  const stored = loadSnapshot(serverId)
+  if (stored && Date.now() - Date.parse(stored.fetchedAt) < MIN_REFRESH_MS) return Promise.resolve(stored)
+  const running = inFlight.get(serverId)
+  if (running) return running
+  const request = fetchQuotes(serverId, itemIds)
+    .then((quotes) => {
+      const snapshot = { serverId, fetchedAt: new Date().toISOString(), capturedAt: newest(quotes), quotes }
+      storeSnapshot(snapshot)
+      return snapshot
+    })
+    .finally(() => inFlight.delete(serverId))
+  inFlight.set(serverId, request)
+  return request
+}
+
+export const nextRefreshAt = (snapshot: QuoteSnapshot) => Date.parse(snapshot.fetchedAt) + MIN_REFRESH_MS
