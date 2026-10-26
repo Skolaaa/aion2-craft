@@ -2,23 +2,24 @@ import { useDeferredValue, useMemo, useState } from 'react'
 import type { ItemId, Profession } from '../domain/types.ts'
 import { plural, taxLabel } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
-import { DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanRow, type ScanSort } from '../state/scan.ts'
+import { DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanSort } from '../state/scan.ts'
 import { PROFESSIONS } from '../state/setup.ts'
 import type { PriceFeed } from '../state/usePrices.ts'
+import { useScan } from '../state/useScan.ts'
 import { Button } from './Button.tsx'
 import { Field } from './Field.tsx'
 import { PriceStatus } from './PriceStatus.tsx'
 import { ScanTable } from './ScanTable.tsx'
 
 interface Props {
-  rows: readonly ScanRow[]
   planning: Planning
   feed: PriceFeed
   onOpen(itemId: ItemId): void
 }
 
-export function Scanner({ rows, planning, feed, onOpen }: Props) {
+export function Scanner({ planning, feed, onOpen }: Props) {
   const { world, options } = planning
+  const rows = useScan(planning)
   const [profession, setProfession] = useState<Profession | null>(null)
   const [name, setName] = useState('')
   const [showHidden, setShowHidden] = useState(false)

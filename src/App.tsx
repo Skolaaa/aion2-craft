@@ -13,7 +13,7 @@ import type { ItemId, MarketQuote, PlanOptions } from './domain/types.ts'
 import type { World } from './market/exchangeClient.ts'
 import { craftIndexFor, remapItem } from './state/craftables.ts'
 import type { Planning } from './state/planning.ts'
-import { scanCraftables, type ScanRow } from './state/scan.ts'
+
 import { age } from './state/format.ts'
 import { DEFAULT_SETUP, parseSetup, type Setup } from './state/setup.ts'
 import { DEFAULT_TARGET, DEFAULT_VIEW, parseTarget, parseView, type Target, type View } from './state/target.ts'
@@ -24,7 +24,7 @@ import { usePrices, type PriceFeed } from './state/usePrices.ts'
 import { useWorlds, type WorldsState } from './state/useWorlds.ts'
 
 const NO_QUOTES: ReadonlyMap<ItemId, MarketQuote> = new Map()
-const NO_ROWS: readonly ScanRow[] = []
+
 
 function pickWorld(worlds: WorldsState, saved: World | null): World | null {
   if (worlds.status !== 'ready') return saved
@@ -120,8 +120,6 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
     [world, catalog, index, setup.mastery, options, prices, market],
   )
 
-  const picked = target.itemId !== null && index.byId.has(target.itemId)
-  const scan = useMemo(() => (view === 'scanner' || !picked ? scanCraftables(planning) : NO_ROWS), [view, picked, planning])
 
   const patchSetup = (change: Partial<Setup>) => updateSetup((previous) => ({ ...previous, ...change }))
   const patchTarget = (change: Partial<Target>) => updateTarget((previous) => ({ ...previous, ...change }))
@@ -155,9 +153,9 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
         )}
         {feed.status === 'failed' && <FeedNotice feed={feed} worldName={world.name} />}
         {view === 'calculator' && (
-          <Calculator planning={planning} feed={feed} target={target} scan={scan} overrides={overrides} onTarget={patchTarget} />
+          <Calculator planning={planning} feed={feed} target={target} overrides={overrides} onTarget={patchTarget} />
         )}
-        {view === 'scanner' && <Scanner rows={scan} planning={planning} feed={feed} onOpen={openItem} />}
+        {view === 'scanner' && <Scanner planning={planning} feed={feed} onOpen={openItem} />}
       </main>
       <Footer />
       <Settings
