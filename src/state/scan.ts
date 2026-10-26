@@ -101,7 +101,15 @@ export function viewScan(rows: readonly ScanRow[], { profession, name, showHidde
   return { rows: [...shown].sort(compare(sort)), hidden }
 }
 
-export const bestMargins = (rows: readonly ScanRow[], count: number) =>
-  viewScan(rows, { profession: null, name: '', showHidden: false, sort: DEFAULT_SCAN_SORT }).rows
-    .filter((row) => row.margin !== null)
-    .slice(0, count)
+export function bestMargins(rows: readonly ScanRow[], count: number): ScanRow[] {
+  const order = compare(DEFAULT_SCAN_SORT)
+  const best: ScanRow[] = []
+  for (const row of rows) {
+    if (row.status !== 'ready' || row.margin === null) continue
+    const at = best.findIndex((other) => order(row, other) < 0)
+    if (at !== -1) best.splice(at, 0, row)
+    else if (best.length < count) best.push(row)
+    if (best.length > count) best.pop()
+  }
+  return best
+}

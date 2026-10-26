@@ -62,6 +62,7 @@ interface BestProps {
 function BestMargins({ planning, loading, onOpen }: BestProps) {
   const { world, options } = planning
   const scan = useScan(planning)
+  const best = useMemo(() => bestMargins(scan, 5), [scan])
   return (
     <section className="stack" aria-labelledby="best-title">
       <div className="stack-tight">
@@ -70,7 +71,7 @@ function BestMargins({ planning, loading, onOpen }: BestProps) {
       </div>
       <ScanTable
         label={`Best margins on ${world.name}`}
-        rows={loading ? [] : bestMargins(scan, 5)}
+        rows={loading ? [] : best}
         onOpen={onOpen}
         empty={loading ? 'Loading prices from aion2.exchange.' : 'No recipe has a margin with these prices yet.'}
       />
