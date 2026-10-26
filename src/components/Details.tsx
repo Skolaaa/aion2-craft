@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { Acquisition, ItemId, MarketQuote, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
-import { buyList, estimateGap, stepSummary, type BuyLine } from '../state/answer.ts'
+import { buyList, childStep, estimateGap, stepSummary, type BuyLine } from '../state/answer.ts'
 import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
@@ -160,8 +160,6 @@ interface LadderRow {
   credit: boolean
 }
 
-const childStep = (acquisition: Acquisition) =>
-  acquisition.method === 'craft' || acquisition.method === 'morph' ? acquisition.step : null
 
 function flatten(plan: PlanResult, open: ReadonlySet<string>): LadderRow[] {
   const rows: LadderRow[] = []

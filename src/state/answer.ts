@@ -1,4 +1,4 @@
-import type { Catalog, ItemId, Mastery, PlanResult, Profession, Recipe, RecipeId, StepPlan } from '../domain/types.ts'
+import type { Acquisition, Catalog, ItemId, Mastery, PlanResult, Profession, Recipe, RecipeId, StepPlan } from '../domain/types.ts'
 import { decimal, kina, plural, rate, taxLabel } from './format.ts'
 
 export type Verdict =
@@ -22,13 +22,13 @@ export interface AnswerContext {
   mastery: Mastery
 }
 
-const childStep = (line: StepPlan['materials'][number]) =>
-  line.acquisition.method === 'craft' || line.acquisition.method === 'morph' ? line.acquisition.step : null
+export const childStep = (acquisition: Acquisition): StepPlan | null =>
+  acquisition.method === 'craft' || acquisition.method === 'morph' ? acquisition.step : null
 
 function findStep(step: StepPlan, recipeId: RecipeId): StepPlan | null {
   if (step.recipeId === recipeId) return step
   for (const line of step.materials) {
-    const child = childStep(line)
+    const child = childStep(line.acquisition)
     const found = child && findStep(child, recipeId)
     if (found) return found
   }
@@ -121,7 +121,7 @@ export function buyList(plan: PlanResult): { lines: BuyLine[]; credit: number } 
   const walk = (step: StepPlan) => {
     for (const byproduct of step.byproducts) credit += byproduct.credit
     for (const line of step.materials) {
-      const child = childStep(line)
+      const child = childStep(line.acquisition)
       if (child) walk(child)
       else if (line.acquisition.method === 'none') missing.set(line.itemId, (missing.get(line.itemId) ?? 0) + line.expected)
     }
