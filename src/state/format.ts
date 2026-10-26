@@ -16,6 +16,12 @@ export function percent(fraction: number, digits = 1, signed = false) {
   return `${sign}${text}%`
 }
 
+// 0.968 reads 96.8%, a whole 1 reads 100%.
+export function rate(fraction: number) {
+  const text = (fraction * 100).toFixed(1)
+  return `${text.endsWith('.0') ? text.slice(0, -2) : text}%`
+}
+
 export const decimal = (value: number, digits = 2) =>
   value.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(value) ? 0 : digits, maximumFractionDigits: digits })
 
