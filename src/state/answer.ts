@@ -90,14 +90,17 @@ export function sentenceOf(verdict: Verdict, { itemName, worldName }: Names): st
   }
 }
 
-// "4.13 attempts at 96.8% with a 25% combo", or what the step is missing to be attempted at all.
+// "4.13 attempts at 96.8% with a 25% combo" when the combo result is the one wanted, ", 25% combo
+// instead" when combos make the other result, or what the step lacks to be attempted at all.
 export function stepSummary(step: StepPlan, recipe: Recipe | undefined, mastery: Mastery, digits = 2): string {
   if (step.successRate === 0) {
     if (!recipe?.profession) return 'needs more mastery'
     return `needs ${recipe.profession} ${recipe.masteryLevel}, yours is ${mastery[recipe.profession]}`
   }
-  const combo = step.wantCombo && recipe?.combo ? ` with a ${rate(recipe.combo.chance)} combo` : ''
-  return `${decimal(step.attempts, digits)} ${plural(step.attempts, 'attempt', 'attempts')} at ${rate(step.successRate)}${combo}`
+  const combo = recipe?.combo
+  const note =
+    !combo || combo.itemId === recipe.product.itemId ? '' : step.wantCombo ? ` with a ${rate(combo.chance)} combo` : `, ${rate(combo.chance)} combo instead`
+  return `${decimal(step.attempts, digits)} ${plural(step.attempts, 'attempt', 'attempts')} at ${rate(step.successRate)}${note}`
 }
 
 export type BuyLine =

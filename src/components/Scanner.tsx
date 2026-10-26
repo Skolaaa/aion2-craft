@@ -40,13 +40,15 @@ export function scanColumns(catalog: Catalog, mastery: Mastery, onOpen: (itemId:
           <ItemCell
             item={row.item}
             meta={meta}
-            narrowMeta={row.lowest === null ? 'no listing' : `lowest ${kina(row.lowest)}`}
+            narrowMeta={[row.cost === null ? null : `cost ${kina(row.cost)}`, row.lowest === null ? 'no listing' : `lowest ${kina(row.lowest)}`]
+              .filter(Boolean)
+              .join(', ')}
             onOpen={() => onOpen(row.item.id)}
           />
         )
       },
     },
-    { key: 'cost', header: 'Craft cost', numeric: true, sortable: true, render: (row) => (row.cost === null ? null : kina(row.cost)) },
+    { key: 'cost', header: 'Craft cost', numeric: true, wide: true, sortable: true, render: (row) => (row.cost === null ? null : kina(row.cost)) },
     {
       key: 'lowest',
       header: 'Market lowest',

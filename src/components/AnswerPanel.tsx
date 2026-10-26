@@ -130,13 +130,14 @@ function Figures({ answer, plan, planning, stepNote, taxRate, ownPrice, onPrice 
     verdict.kind === 'blocked'
       ? `needs ${verdict.profession ?? 'mastery'} ${verdict.level}`
       : craft === null
-        ? `${plan.missing.length} ${plural(plan.missing.length, 'price', 'prices')} missing`
+        ? <span className="is-warn">{plan.missing.length} {plural(plan.missing.length, 'price', 'prices')} missing</span>
         : each
           ? `${kina(plan.unitCost)} each, ${stepNote}`
           : stepNote
 
+  // One keyed editor across the three notes, so focus returns to it after a save.
   const priceEditor = (trigger: string) => (
-    <PriceCell itemName={targetName} unit={market?.lowest ?? null} own={ownPrice} onSave={onPrice} trigger={trigger} />
+    <PriceCell key="price" itemName={targetName} unit={market?.lowest ?? null} own={ownPrice} onSave={onPrice} trigger={trigger} />
   )
 
   const buyNote =

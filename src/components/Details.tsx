@@ -1,5 +1,5 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
-import type { Acquisition, Catalog, ItemId, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
+import type { Acquisition, Catalog, ItemId, MarketQuote, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
 import { buyList, estimateGap, stepSummary, type BuyLine } from '../state/answer.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
@@ -22,12 +22,13 @@ interface Props {
   plan: PlanResult
   planning: Planning
   overrides: PriceOverrides
+  market: ReadonlyMap<ItemId, MarketQuote>
   tab: DetailTab
   now: number
   onTab(tab: DetailTab): void
 }
 
-export function Details({ plan, planning, overrides, tab, now, onTab }: Props) {
+export function Details({ plan, planning, overrides, market, tab, now, onTab }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
 
@@ -64,7 +65,7 @@ export function Details({ plan, planning, overrides, tab, now, onTab }: Props) {
         ))}
       </div>
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
-        {tab === 'buy' && <WhatToBuy plan={plan} planning={planning} overrides={overrides} />}
+        {tab === 'buy' && <WhatToBuy plan={plan} planning={planning} overrides={overrides} market={market} />}
         {tab === 'made' && <HowItIsMade key={plan.target.itemId} plan={plan} planning={planning} overrides={overrides} />}
         {tab === 'rates' && <Rates plan={plan} planning={planning} now={now} />}
       </div>
@@ -80,7 +81,16 @@ const nameOf = (catalog: Catalog, itemId: ItemId) => catalog.items.get(itemId)?.
 
 type BuyRow = BuyLine | { kind: 'credit'; credit: number }
 
-function WhatToBuy({ plan, planning, overrides }: { plan: PlanResult; planning: Planning; overrides: PriceOverrides }) {
+interface WhatToBuyProps {
+  plan: PlanResult
+  planning: Planning
+  overrides: PriceOverrides
+  market: ReadonlyMap<ItemId, MarketQuote>
+}
+
+const MISSING = <span className="is-warn">no price yet</span>
+
+function WhatToBuy({ plan, planning, overrides, market }: WhatToBuyProps) {
   const { catalog, prices } = planning
   const { lines, credit } = buyList(plan)
   const rows: BuyRow[] = credit > 0 ? [...lines, { kind: 'credit', credit }] : lines
@@ -89,7 +99,9 @@ function WhatToBuy({ plan, planning, overrides }: { plan: PlanResult; planning: 
     const quote = prices.quote(itemId)
     if (quote.kind === 'market') return `Market, ${quote.listings} ${plural(quote.listings, 'listing', 'listings')}`
     if (quote.kind === 'npc') return 'NPC shop'
-    return quote.kind === 'manual' ? 'your price' : 'no price yet'
+    if (quote.kind === 'none') return MISSING
+    const lowest = market.get(itemId)?.lowest
+    return lowest == null ? 'not on the Market' : `Market lowest ${kina(lowest)}`
   }
 
   const columns: Column<BuyRow>[] = [
@@ -132,9 +144,9 @@ function WhatToBuy({ plan, planning, overrides }: { plan: PlanResult; planning: 
       label="What to buy"
       columns={columns}
       rows={rows}
-      rowKey={(row) => (row.kind === 'credit' ? 'credit' : `${row.kind}:${row.itemId}`)}
+      rowKey={(row) => (row.kind === 'credit' ? 'credit' : String(row.itemId))}
       empty="Nothing to buy until the recipe is within your mastery."
-      footer={{ item: 'Total', subtotal: Number.isFinite(plan.cost) ? kina(plan.cost) : <span className="meta">needs every price</span> }}
+      footer={rows.length === 0 ? undefined : { item: 'Total', subtotal: Number.isFinite(plan.cost) ? kina(plan.cost) : <span className="meta">needs every price</span> }}
     />
   )
 }
@@ -185,7 +197,7 @@ function howText(row: LadderRow, recipeOf: (step: StepPlan) => Recipe | undefine
   }
   const acquisition = row.acquisition
   if (acquisition?.method === 'buy') return BUY_FROM[acquisition.quote.kind]
-  return 'No price yet'
+  return <span className="is-warn">No price yet</span>
 }
 
 function HowItIsMade({ plan, planning, overrides }: { plan: PlanResult; planning: Planning; overrides: PriceOverrides }) {

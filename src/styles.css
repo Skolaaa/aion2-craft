@@ -87,6 +87,11 @@ select {
   color: inherit;
 }
 
+code {
+  font: inherit;
+  font-weight: 600;
+}
+
 a {
   color: var(--accent);
   text-underline-offset: 3px;
@@ -141,6 +146,10 @@ a {
 
 .is-loss {
   color: var(--loss);
+}
+
+.is-warn {
+  color: var(--warn);
 }
 
 /* Shell */
@@ -219,6 +228,11 @@ a {
   gap: var(--space-6);
   align-content: start;
   flex: 1;
+}
+
+.page > *,
+.stack > * {
+  min-width: 0;
 }
 
 .stack {
@@ -326,6 +340,11 @@ legend.label {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
   border-color: var(--accent);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--loss);
+  outline-color: var(--loss);
 }
 
 .input::placeholder {
@@ -567,8 +586,8 @@ input[type='range'] {
 .toggle,
 .toggle-gap {
   flex: none;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
 }
 
 .toggle {
@@ -592,7 +611,9 @@ input[type='range'] {
 
 /* Prices you can change in place */
 .price-value {
-  padding: 0;
+  /* A taller hit area than the text, without moving the row. */
+  padding: 10px 0;
+  margin: -10px 0;
   border: 0;
   background: none;
   color: inherit;
@@ -1008,9 +1029,37 @@ input[type='range'] {
   }
 
   .top-bar-inner {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'brand settings'
+      'status status'
+      'nav nav';
     padding: var(--space-2) var(--space-4) 0;
-    gap: 0 var(--space-4);
+    gap: var(--space-1) var(--space-4);
+  }
+
+  .brand {
+    grid-area: brand;
+  }
+
+  .settings-button {
+    grid-area: settings;
+  }
+
+  .status {
+    grid-area: status;
+    margin-left: 0;
+    justify-items: start;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-2);
+  }
+
+  .nav {
+    grid-area: nav;
+    min-height: var(--row);
   }
 
   .page {

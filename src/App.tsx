@@ -14,6 +14,7 @@ import type { World } from './market/exchangeClient.ts'
 import { craftIndexFor, remapItem } from './state/craftables.ts'
 import type { Planning } from './state/planning.ts'
 import { scanCraftables, type ScanRow } from './state/scan.ts'
+import { age } from './state/format.ts'
 import { DEFAULT_SETUP, parseSetup, type Setup } from './state/setup.ts'
 import { DEFAULT_TARGET, DEFAULT_VIEW, parseTarget, parseView, type Target, type View } from './state/target.ts'
 import { useNow } from './state/useNow.ts'
@@ -106,7 +107,8 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
     [world, catalog, index, setup.mastery, options, prices],
   )
 
-  const scan = useMemo(() => (view === 'scanner' ? scanCraftables(planning) : NO_ROWS), [view, planning])
+  const picked = target.itemId !== null && index.byId.has(target.itemId)
+  const scan = useMemo(() => (view === 'scanner' || !picked ? scanCraftables(planning) : NO_ROWS), [view, picked, planning])
 
   const patchSetup = (change: Partial<Setup>) => updateSetup((previous) => ({ ...previous, ...change }))
   const patchTarget = (change: Partial<Target>) => updateTarget((previous) => ({ ...previous, ...change }))
@@ -135,8 +137,16 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
             You can keep working on {world.name}, the world you used last. Settings lists other worlds once the list loads.
           </Notice>
         )}
+        {feed.status === 'failed' && (
+          <Notice title="Can't reach aion2.exchange" action={<Button onClick={() => void feed.refresh()}><Glyph name="refresh" />Try again</Button>}>
+            {feed.snapshot?.capturedAt
+              ? `The plan uses the copy saved on this computer, captured ${age(feed.snapshot.capturedAt, now)} ago.`
+              : `There is no saved copy for ${world.name} yet, so only NPC prices and yours count.`}{' '}
+            The app reaches aion2.exchange through the local dev server, so <code>npm run dev</code> has to be running.
+          </Notice>
+        )}
         {view === 'calculator' && (
-          <Calculator planning={planning} feed={feed} target={target} overrides={overrides} now={now} onTarget={patchTarget} />
+          <Calculator planning={planning} feed={feed} target={target} scan={scan} overrides={overrides} now={now} onTarget={patchTarget} />
         )}
         {view === 'scanner' && <Scanner rows={scan} planning={planning} feed={feed} now={now} onOpen={openItem} />}
       </main>

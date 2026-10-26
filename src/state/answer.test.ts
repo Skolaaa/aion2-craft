@@ -134,6 +134,9 @@ describe('stepSummary', () => {
     const ready = answer(ONE_STEP, { [IRON]: 1 })
     expect(stepSummary(ready.plan.root, ready.catalog.recipes.get(100), MASTERY)).toBe('1 attempt at 100%')
 
+    const withCombo = answer([recipe(100, SWORD, [[IRON, 1]], { combo: { itemId: BLADE, count: 1, chance: 0.25 } })], { [IRON]: 1 })
+    expect(stepSummary(withCombo.plan.root, withCombo.catalog.recipes.get(100), MASTERY)).toBe('1.33 attempts at 100%, 25% combo instead')
+
     const locked = answer([recipe(100, SWORD, [[IRON, 2]], { masteryLevel: 30 })], {})
     expect(stepSummary(locked.plan.root, locked.catalog.recipes.get(100), MASTERY)).toBe('needs Blacksmithing 30, yours is 10')
   })

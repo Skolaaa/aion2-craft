@@ -102,7 +102,7 @@ export function Search({ craftables, autoFocus, onPick }: Props) {
               </li>
             ))}
           </ul>
-          {shown.length === 0 && <p className="search-note">No craftable item matches "{query.trim()}".</p>}
+          {expanded && shown.length === 0 && <p className="search-note">No craftable item matches "{query.trim()}".</p>}
           {matches.length > LIMIT && <p className="search-note">Showing {LIMIT} of {matches.length}. Keep typing to narrow it down.</p>}
         </div>
       </div>
