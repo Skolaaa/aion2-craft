@@ -4,6 +4,7 @@ import { buyList, childStep, estimateGap, stepSummary, type BuyLine } from '../s
 import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
+import { MAX_MASTERY } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import { useExchangeEstimate } from '../state/useExchangeEstimate.ts'
 import { Glyph } from './Glyph.tsx'
@@ -348,7 +349,7 @@ function Rates({ plan, planning, now }: { plan: PlanResult; planning: Planning; 
     const compare =
       gap === null || Math.round(gap) === 0
         ? ''
-        : ` This plan is ${kina(Math.abs(gap))} Kina ${gap < 0 ? 'lower' : 'higher'} per item, because it buys a part when the listing is cheaper than crafting it${profession && mastery[profession] !== 100 ? ' and uses your mastery' : ''}.`
+        : ` This plan is ${kina(Math.abs(gap))} Kina ${gap < 0 ? 'lower' : 'higher'} per item, because it buys a part when the listing is cheaper than crafting it${profession && mastery[profession] !== MAX_MASTERY ? ' and uses your mastery' : ''}.`
     rows.push({
       key: 'exchange',
       label: 'aion2.exchange estimate',
