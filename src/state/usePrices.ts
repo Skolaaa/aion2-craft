@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { tradeableItems } from '../domain/catalog.ts'
 import type { Catalog } from '../domain/types.ts'
 import { loadSnapshot, refreshSnapshot, type QuoteSnapshot, type World } from '../market/exchangeClient.ts'
+import { messageOf } from './feedError.ts'
 
 export type RefreshOutcome = 'updated' | 'recent' | 'failed'
 
@@ -20,7 +21,6 @@ interface Feed {
   message: string | null
 }
 
-export const messageOf = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
 export function usePrices(world: World, catalog: Catalog): PriceFeed {
   const itemIds = useMemo(() => tradeableItems(catalog), [catalog])

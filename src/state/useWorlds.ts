@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchWorlds, type WorldList } from '../market/exchangeClient.ts'
-import { messageOf } from './usePrices.ts'
+import { messageOf } from './feedError.ts'
 
 export type WorldsState =
   | { status: 'loading' }

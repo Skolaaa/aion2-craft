@@ -46,8 +46,12 @@ export function App() {
         <TopBar view={view} onView={onView} world={null} mastery={setup.mastery} />
         <main className="page" id="main">
           {worlds.status === 'failed' ? (
-            <Notice title="The world list did not load" action={<Button onClick={retry}><Glyph name="refresh" />Try again</Button>}>
-              The app reads it from aion2.exchange through the local dev server, so <code>npm run dev</code> has to be running.
+            <Notice
+              title="The world list did not load"
+              detail={worlds.message}
+              action={<Button onClick={retry}><Glyph name="refresh" />Try again</Button>}
+            >
+              The app reads the world list through the local dev server, so it has to be running.
             </Notice>
           ) : (
             <p className="meta" role="status">Loading the world list from aion2.exchange.</p>
@@ -77,11 +81,15 @@ function FeedNotice({ feed, worldName }: { feed: PriceFeed; worldName: string })
   const now = useNow()
   const captured = feed.snapshot?.capturedAt
   return (
-    <Notice title="Can't reach aion2.exchange" action={<Button onClick={() => void feed.refresh()}><Glyph name="refresh" />Try again</Button>}>
+    <Notice
+      title="Can't reach aion2.exchange"
+      detail={feed.message}
+      action={<Button onClick={() => void feed.refresh()}><Glyph name="refresh" />Try again</Button>}
+    >
       {captured
         ? `The plan uses the copy saved on this computer, captured ${age(captured, now)} ago.`
         : `There is no saved copy for ${worldName} yet, so only NPC prices and yours count.`}{' '}
-      The app reaches aion2.exchange through the local dev server, so <code>npm run dev</code> has to be running.
+      The app reads prices through the local dev server, so it has to be running.
     </Notice>
   )
 }
@@ -147,7 +155,11 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
       <TopBar view={view} onView={onView} world={world} mastery={setup.mastery} onSettings={() => setSettingsOpen(true)} />
       <main className="page" id="main">
         {worlds.status === 'failed' && (
-          <Notice title="The world list did not load" action={<Button onClick={retryWorlds}><Glyph name="refresh" />Try again</Button>}>
+          <Notice
+            title="The world list did not load"
+            detail={worlds.message}
+            action={<Button onClick={retryWorlds}><Glyph name="refresh" />Try again</Button>}
+          >
             You can keep working on {world.name}, the world you used last. Settings lists other worlds once the list loads.
           </Notice>
         )}
