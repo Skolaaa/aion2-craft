@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { clamp } from '../state/number.ts'
 
 interface FieldProps {
   id: string
@@ -29,7 +30,6 @@ interface NumberInputProps {
   onChange(value: number): void
 }
 
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
 // Keeps the typed text while it is not a number yet, so the field can be cleared and retyped.
 export function NumberInput({ id, value, min, max, step = 1, className, describedBy, onChange }: NumberInputProps) {

@@ -1,5 +1,6 @@
 import type { ItemId } from '../domain/types.ts'
-import { clamp, isFiniteNumber, isRecord } from './usePersistentState.ts'
+import { clamp } from './number.ts'
+import { isFiniteNumber, isRecord } from './usePersistentState.ts'
 
 export type View = 'calculator' | 'scanner'
 

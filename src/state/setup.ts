@@ -1,6 +1,7 @@
 import type { Mastery, Profession, Race } from '../domain/types.ts'
 import type { World } from '../market/exchangeClient.ts'
-import { clamp, isFiniteNumber, isRecord } from './usePersistentState.ts'
+import { clamp } from './number.ts'
+import { isFiniteNumber, isRecord } from './usePersistentState.ts'
 
 export const PROFESSIONS: readonly { id: Profession; label: string; inGame: string | null }[] = [
   { id: 'Blacksmithing', label: 'Blacksmithing', inGame: null },

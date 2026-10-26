@@ -9,8 +9,6 @@ export const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 export const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
 
-export const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value))
-
 function read<T>(key: string, fallback: T, parse: Parse<T>): T {
   try {
     const stored = localStorage.getItem(PREFIX + key)
