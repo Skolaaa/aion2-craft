@@ -61,20 +61,21 @@ function answer(recipes: Recipe[], market: Record<number, number>, quantity = 1,
 }
 
 const sentence = (result: ReturnType<typeof answer>) =>
-  sentenceOf(result.answer.verdict, { itemName: (id) => NAMES[id] ?? String(id), worldName: 'Siel' })
+  sentenceOf(result.answer.verdict, { itemName: (id) => NAMES[id] ?? String(id), worldName: 'Siel', taxRate: 0.05 })
 
 describe('answerOf', () => {
   it('says craft when the expected cost is under the lowest listing, with the spec sentence', () => {
     const result = answer(ONE_STEP, { [IRON]: 9_266_311, [SWORD]: 20_000_000 })
     expect(result.answer).toMatchObject({ craft: 18_532_622, buy: 20_000_000, verdict: { kind: 'craft', gap: 1_467_378 } })
+    expect(result.answer.verdict).toMatchObject({ margin: expect.closeTo(467_378, 6) })
     expect(result.answer.margin).toBeCloseTo(467_378, 6)
-    expect(sentence(result)).toBe('Craft it. Expected cost is 1,467,378 Kina under the lowest listing.')
+    expect(sentence(result)).toBe('Craft it if you need one. Expected cost is 1,467,378 Kina under the lowest listing. Selling one earns 467,378 Kina after 5% tax.')
   })
 
   it('says buy when the lowest listing is under the expected cost', () => {
     const result = answer(ONE_STEP, { [IRON]: 600, [SWORD]: 1000 })
-    expect(result.answer.verdict).toEqual({ kind: 'buy', gap: 200 })
-    expect(sentence(result)).toBe('Buy it. The lowest listing is 200 Kina under the expected cost.')
+    expect(result.answer.verdict).toEqual({ kind: 'buy', gap: 200, margin: -250 })
+    expect(sentence(result)).toBe('Buy it if you need one. The lowest listing is 200 Kina under the expected cost. Selling one would lose 250 Kina after 5% tax.')
   })
 
   it('calls a gap under half a Kina even', () => {

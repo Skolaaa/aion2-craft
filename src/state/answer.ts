@@ -1,9 +1,9 @@
 import type { Catalog, ItemId, Mastery, PlanResult, Profession, Recipe, RecipeId, StepPlan } from '../domain/types.ts'
-import { decimal, kina, plural, rate } from './format.ts'
+import { decimal, kina, plural, rate, taxLabel } from './format.ts'
 
 export type Verdict =
-  | { kind: 'craft'; gap: number }
-  | { kind: 'buy'; gap: number }
+  | { kind: 'craft'; gap: number; margin: number }
+  | { kind: 'buy'; gap: number; margin: number }
   | { kind: 'even' }
   | { kind: 'no-listing'; cost: number }
   | { kind: 'missing'; items: readonly ItemId[] }
@@ -52,7 +52,8 @@ function verdictOf(plan: PlanResult, craft: number | null, buy: number | null, {
   if (buy === null) return { kind: 'no-listing', cost: craft }
   const gap = buy - craft
   if (Math.round(gap) === 0) return { kind: 'even' }
-  return gap > 0 ? { kind: 'craft', gap } : { kind: 'buy', gap: -gap }
+  const margin = plan.margin ?? 0
+  return gap > 0 ? { kind: 'craft', gap, margin } : { kind: 'buy', gap: -gap, margin }
 }
 
 export function answerOf(plan: PlanResult, context: AnswerContext): Answer {
@@ -64,14 +65,22 @@ export function answerOf(plan: PlanResult, context: AnswerContext): Answer {
 export interface Names {
   itemName(itemId: ItemId): string
   worldName: string
+  taxRate: number
 }
 
-export function sentenceOf(verdict: Verdict, { itemName, worldName }: Names): string {
+// Crafting for yourself compares with the lowest listing; crafting to sell compares with the sale after tax.
+function sellClause(margin: number, taxRate: number): string {
+  const tax = `${taxLabel(taxRate)} tax`
+  if (Math.round(margin) === 0) return ` Selling one would break even after ${tax}.`
+  return margin > 0 ? ` Selling one earns ${kina(margin)} Kina after ${tax}.` : ` Selling one would lose ${kina(-margin)} Kina after ${tax}.`
+}
+
+export function sentenceOf(verdict: Verdict, { itemName, worldName, taxRate }: Names): string {
   switch (verdict.kind) {
     case 'craft':
-      return `Craft it. Expected cost is ${kina(verdict.gap)} Kina under the lowest listing.`
+      return `Craft it if you need one. Expected cost is ${kina(verdict.gap)} Kina under the lowest listing.${sellClause(verdict.margin, taxRate)}`
     case 'buy':
-      return `Buy it. The lowest listing is ${kina(verdict.gap)} Kina under the expected cost.`
+      return `Buy it if you need one. The lowest listing is ${kina(verdict.gap)} Kina under the expected cost.${sellClause(verdict.margin, taxRate)}`
     case 'even':
       return 'Either works. Crafting costs the same as the lowest listing.'
     case 'no-listing':

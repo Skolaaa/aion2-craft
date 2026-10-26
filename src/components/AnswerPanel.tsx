@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { ItemId, PlanResult } from '../domain/types.ts'
 import { answerOf, sentenceOf, stepSummary, type Answer } from '../state/answer.ts'
 import type { Craftable } from '../state/craftables.ts'
-import { kina, percent, plural, signedKina } from '../state/format.ts'
+import { kina, percent, plural, signedKina, taxLabel } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
 import { FACTION } from '../state/setup.ts'
 import { MAX_QUANTITY, type Target } from '../state/target.ts'
@@ -42,7 +42,6 @@ function Figure({ label, value, empty, tone, children }: FigureProps) {
   )
 }
 
-const taxLabel = (taxRate: number) => `${Math.round(taxRate * 1000) / 10}%`
 
 export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrides, now, onTarget }: Props) {
   const { catalog, world, index, mastery, options, prices } = planning
@@ -164,7 +163,7 @@ function Figures({ answer, plan, planning, stepNote, taxRate, ownPrice, onPrice 
 
   return (
     <>
-      <p className="verdict" aria-live="polite">{sentenceOf(verdict, { itemName, worldName: world.name })}</p>
+      <p className="verdict" aria-live="polite">{sentenceOf(verdict, { itemName, worldName: world.name, taxRate })}</p>
       <dl className="figures">
         <Figure label="Craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
         <Figure label="Buy" value={buy === null ? null : kina(buy)} empty="No listing">{buyNote}</Figure>
