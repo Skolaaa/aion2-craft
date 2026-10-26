@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 const PREFIX = 'aion2-craft:ui:'
 
@@ -31,7 +31,9 @@ export function usePersistentState<T>(key: string, fallback: T, parse: Parse<T>)
   const [entry, setEntry] = useState(() => ({ key, value: read(key, fallback, parse) }))
   if (entry.key !== key) setEntry({ key, value: read(key, fallback, parse) })
   useEffect(() => write(entry.key, entry.value), [entry])
-  const update = (change: (previous: T) => T) =>
-    setEntry((previous) => ({ key: previous.key, value: change(previous.value) }))
+  const update = useCallback(
+    (change: (previous: T) => T) => setEntry((previous) => ({ key: previous.key, value: change(previous.value) })),
+    [],
+  )
   return [entry.key === key ? entry.value : read(key, fallback, parse), update] as const
 }

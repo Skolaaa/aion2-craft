@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Button } from './components/Button.tsx'
 import { Calculator } from './components/Calculator.tsx'
 import { Footer } from './components/Footer.tsx'
@@ -38,7 +38,7 @@ export function App() {
   const [view, updateView] = usePersistentState<View>('view', DEFAULT_VIEW, parseView)
   const [target, updateTarget] = usePersistentState('target', DEFAULT_TARGET, parseTarget)
   const world = pickWorld(worlds, setup.world)
-  const onView = (next: View) => updateView(() => next)
+  const onView = useCallback((next: View) => updateView(() => next), [updateView])
 
   if (world === null) {
     return (
@@ -121,11 +121,14 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
     patchSetup({ world: next })
   }
 
-  const openItem = (itemId: ItemId) => {
-    updateTarget((previous) => ({ ...previous, itemId }))
-    onView('calculator')
-    window.scrollTo({ top: 0 })
-  }
+  const openItem = useCallback(
+    (itemId: ItemId) => {
+      updateTarget((previous) => ({ ...previous, itemId }))
+      onView('calculator')
+      window.scrollTo({ top: 0 })
+    },
+    [updateTarget, onView],
+  )
 
   return (
     <div className="app">
