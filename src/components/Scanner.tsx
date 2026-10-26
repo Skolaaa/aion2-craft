@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { Catalog, ItemId, Mastery, Profession } from '../domain/types.ts'
 import { answerOf } from '../state/answer.ts'
-import { kina, percent, plural, signedKina, taxLabel } from '../state/format.ts'
+import { kina, percent, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
 import { DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanKey, type ScanRow, type ScanSort } from '../state/scan.ts'
 import { PROFESSIONS } from '../state/setup.ts'
@@ -12,7 +12,6 @@ import { ItemCell } from './ItemCell.tsx'
 import { PriceStatus } from './PriceStatus.tsx'
 import { Table, type Column } from './Table.tsx'
 
-const tone = (value: number | null) => (value === null || Math.round(value * 1000) === 0 ? undefined : value > 0 ? 'is-gain' : 'is-loss')
 
 function needs(row: ScanRow, catalog: Catalog, mastery: Mastery) {
   if (row.status === 'unpriced') return 'needs a price'
@@ -61,14 +60,14 @@ export function scanColumns(catalog: Catalog, mastery: Mastery, onOpen: (itemId:
       header: 'Margin',
       numeric: true,
       sortable: true,
-      render: (row) => (row.margin === null ? null : <span className={tone(row.margin)}>{signedKina(row.margin)}</span>),
+      render: (row) => (row.margin === null ? null : <span className={toneOf(row.margin, 'kina')}>{signedKina(row.margin)}</span>),
     },
     {
       key: 'marginPct',
       header: 'Margin %',
       numeric: true,
       sortable: true,
-      render: (row) => (row.marginPct === null ? null : <span className={tone(row.marginPct)}>{percent(row.marginPct, 1, true)}</span>),
+      render: (row) => (row.marginPct === null ? null : <span className={toneOf(row.marginPct, 'fraction')}>{percent(row.marginPct, 1, true)}</span>),
     },
   ]
 }

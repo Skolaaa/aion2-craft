@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseKina, percent, rate, signedKina } from './format.ts'
+import { parseKina, percent, rate, signedKina, toneOf } from './format.ts'
 
 describe('parseKina', () => {
   it('reads plain, grouped and shortened amounts', () => {
@@ -21,6 +21,14 @@ describe('number text', () => {
     expect(signedKina(-812_000.4)).toBe('−812,000')
     expect(signedKina(467_378)).toBe('+467,378')
     expect(percent(0.0252, 1, true)).toBe('+2.5%')
+  })
+
+  it('tones a gain or loss only when it shows as more than zero', () => {
+    expect(toneOf(0.4, 'kina')).toBeUndefined()
+    expect(toneOf(-0.6, 'kina')).toBe('is-loss')
+    expect(toneOf(0.0004, 'fraction')).toBeUndefined()
+    expect(toneOf(0.0006, 'fraction')).toBe('is-gain')
+    expect(toneOf(null, 'fraction')).toBeUndefined()
   })
 
   it('drops a trailing zero from rates', () => {

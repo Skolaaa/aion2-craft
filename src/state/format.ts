@@ -16,6 +16,12 @@ export function percent(fraction: number, digits = 1, signed = false) {
   return `${sign}${text}%`
 }
 
+// Rounds the way the value is displayed (whole Kina, a tenth of a percent), so one shown as zero gets no tone.
+export function toneOf(value: number | null, unit: 'kina' | 'fraction'): 'is-gain' | 'is-loss' | undefined {
+  const shown = value === null ? 0 : Math.round(unit === 'kina' ? value : value * 1000)
+  return shown === 0 ? undefined : shown > 0 ? 'is-gain' : 'is-loss'
+}
+
 export function rate(fraction: number) {
   const text = (fraction * 100).toFixed(1)
   return `${text.endsWith('.0') ? text.slice(0, -2) : text}%`

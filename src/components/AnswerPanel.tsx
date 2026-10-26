@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { ItemId, PlanResult } from '../domain/types.ts'
 import { answerOf, sentenceOf, stepSummary, type Answer } from '../state/answer.ts'
 import { itemName, type Craftable } from '../state/craftables.ts'
-import { kina, percent, plural, signedKina, taxLabel } from '../state/format.ts'
+import { kina, percent, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
 import { FACTION } from '../state/setup.ts'
 import { MAX_QUANTITY, type Target } from '../state/target.ts'
@@ -149,7 +149,7 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
       </>
     )
 
-  const tone = margin === null || Math.round(margin) === 0 ? undefined : margin > 0 ? 'is-gain' : 'is-loss'
+
   const marginNote =
     marginPct !== null
       ? `${percent(marginPct, 1, true)} after ${taxLabel(taxRate)} tax`
@@ -165,7 +165,7 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
       <dl className="figures">
         <Figure label="Craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
         <Figure label="Buy" value={buy === null ? null : kina(buy)} empty="No listing">{buyNote}</Figure>
-        <Figure label="Margin" value={margin === null ? null : signedKina(margin)} empty="No margin" tone={tone}>{marginNote}</Figure>
+        <Figure label="Margin" value={margin === null ? null : signedKina(margin)} empty="No margin" tone={toneOf(margin, 'kina')}>{marginNote}</Figure>
       </dl>
     </>
   )
