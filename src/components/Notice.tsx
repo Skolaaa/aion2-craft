@@ -1,23 +1,13 @@
 import type { ReactNode } from 'react'
-import { Icon } from './Icon.tsx'
 
-interface Props {
-  tone: 'info' | 'warn' | 'error'
-  title: string
-  children?: ReactNode
-  actions?: ReactNode
-  live?: boolean
-}
-
-export function Notice({ tone, title, children, actions, live = false }: Props) {
+export function Notice({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
   return (
-    <div className={`notice notice-${tone}`} role={live ? (tone === 'error' ? 'alert' : 'status') : undefined}>
-      <span className="notice-mark"><Icon name={tone === 'info' ? 'info' : 'alert'} size={18} /></span>
-      <div className="notice-body">
+    <div className="notice" role="status">
+      <div className="notice-text">
         <p className="notice-title">{title}</p>
-        {children && <div className="notice-text">{children}</div>}
+        {children && <p>{children}</p>}
       </div>
-      {actions && <div className="notice-actions">{actions}</div>}
+      {action}
     </div>
   )
 }
