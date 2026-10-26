@@ -44,7 +44,7 @@ function Figure({ label, value, empty, tone, children }: FigureProps) {
 
 
 export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrides, now, onTarget }: Props) {
-  const { catalog, world, index, mastery, options, prices } = planning
+  const { catalog, world, index, mastery, prices } = planning
   const { item } = craftable
   const recipe = plan ? catalog.recipes.get(plan.root.recipeId) : undefined
   const pair = index.pairOf.get(item.id)
@@ -96,7 +96,6 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
           plan={plan}
           planning={planning}
           stepNote={stepSummary(plan.root, recipe, mastery, 1)}
-          taxRate={options.taxRate}
           onPrice={(price) => overrides.save(item.id, price)}
           ownPrice={prices.quote(item.id).kind === 'manual'}
         />
@@ -112,13 +111,13 @@ interface FiguresProps {
   plan: PlanResult
   planning: Planning
   stepNote: string
-  taxRate: number
   ownPrice: boolean
   onPrice(price: number | null): void
 }
 
-function Figures({ answer, plan, planning, stepNote, taxRate, ownPrice, onPrice }: FiguresProps) {
+function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: FiguresProps) {
   const { catalog, world } = planning
+  const { taxRate } = planning.options
   const { verdict, craft, buy, margin, marginPct } = answer
   const { market, target } = plan
   const nameOf = (itemId: ItemId) => itemName(catalog, itemId)
