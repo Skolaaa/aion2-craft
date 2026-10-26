@@ -4,8 +4,7 @@ import { isFiniteNumber, usePersistentState } from './usePersistentState.ts'
 
 export interface PriceOverrides {
   prices: ReadonlyMap<ItemId, number>
-  set(itemId: ItemId, price: number): void
-  reset(itemId: ItemId): void
+  save(itemId: ItemId, price: number | null): void
   resetAll(): void
 }
 
@@ -28,8 +27,11 @@ export function useOverrides(worldId: number): PriceOverrides {
   const prices = useMemo(() => new Map(entries), [entries])
   return {
     prices,
-    set: (itemId, price) => update((previous) => [...previous.filter(([id]) => id !== itemId), [itemId, price]]),
-    reset: (itemId) => update((previous) => previous.filter(([id]) => id !== itemId)),
+    save: (itemId, price) =>
+      update((previous) => {
+        const others = previous.filter(([id]) => id !== itemId)
+        return price === null ? others : [...others, [itemId, price]]
+      }),
     resetAll: () => update(() => NONE),
   }
 }

@@ -97,7 +97,7 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
           planning={planning}
           stepNote={stepSummary(plan.root, recipe, mastery, 1)}
           taxRate={options.taxRate}
-          onPrice={(price) => (price === null ? overrides.reset(item.id) : overrides.set(item.id, price))}
+          onPrice={(price) => overrides.save(item.id, price)}
           ownPrice={prices.quote(item.id).kind === 'manual'}
         />
       )}

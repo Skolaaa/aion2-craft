@@ -73,9 +73,6 @@ export function Details({ plan, planning, overrides, market, tab, now, onTab }: 
   )
 }
 
-function savePrice(overrides: PriceOverrides, itemId: ItemId) {
-  return (price: number | null) => (price === null ? overrides.reset(itemId) : overrides.set(itemId, price))
-}
 
 const nameOf = (catalog: Catalog, itemId: ItemId) => catalog.items.get(itemId)?.name ?? `item ${itemId}`
 
@@ -127,7 +124,7 @@ function WhatToBuy({ plan, planning, overrides, market }: WhatToBuyProps) {
             unit={row.kind === 'buy' ? row.unit : null}
             own={overrides.prices.has(row.itemId)}
             missing={row.kind === 'missing'}
-            onSave={savePrice(overrides, row.itemId)}
+            onSave={(price) => overrides.save(row.itemId, price)}
           />
         ),
     },
@@ -257,7 +254,7 @@ function HowItIsMade({ plan, planning, overrides }: { plan: PlanResult; planning
               unit={method === 'buy' ? row.unit : null}
               own={overrides.prices.has(row.itemId)}
               missing={method === 'none'}
-              onSave={savePrice(overrides, row.itemId)}
+              onSave={(price) => overrides.save(row.itemId, price)}
             />
           )
         }

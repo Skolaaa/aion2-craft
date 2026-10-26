@@ -72,8 +72,8 @@ export function Settings({ open, onClose, worlds, world, setup, patch, onWorld, 
         const name = catalog.items.get(itemId)?.name ?? `item ${itemId}`
         return (
           <span className="price-actions">
-            <PriceCell itemName={name} unit={price} own={false} onSave={(next) => (next === null ? overrides.reset(itemId) : overrides.set(itemId, next))} />
-            <Button className="button-small" aria-label={`Reset the price of ${name}`} onClick={() => overrides.reset(itemId)}>Reset</Button>
+            <PriceCell itemName={name} unit={price} own={false} onSave={(next) => overrides.save(itemId, next)} />
+            <Button className="button-small" aria-label={`Reset the price of ${name}`} onClick={() => overrides.save(itemId, null)}>Reset</Button>
           </span>
         )
       },
