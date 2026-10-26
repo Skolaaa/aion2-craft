@@ -111,7 +111,7 @@ function WhatToBuy({ plan, planning, overrides }: WhatToBuyProps) {
       header: 'Item',
       render: (row) => <ItemCell item={catalog.items.get(row.itemId)} meta={source(row.itemId)} narrowMeta={`${decimal(row.expected)} needed`} />,
     },
-    { key: 'expected', header: 'Expected', numeric: true, wide: true, render: (row) => decimal(row.expected) },
+    { key: 'expected', header: 'Expected', numeric: true, hideNarrow: true, render: (row) => decimal(row.expected) },
     {
       key: 'unit',
       header: 'Unit price',
@@ -226,7 +226,7 @@ function HowItIsMade({ plan, planning, overrides }: { plan: PlanResult; planning
         )
       },
     },
-    { key: 'expected', header: 'Expected', numeric: true, wide: true, render: (row) => decimal(row.expected) },
+    { key: 'expected', header: 'Expected', numeric: true, hideNarrow: true, render: (row) => decimal(row.expected) },
     {
       key: 'unit',
       header: 'Unit price',

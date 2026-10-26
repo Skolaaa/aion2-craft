@@ -37,12 +37,12 @@ function scanColumns(onOpen: (itemId: ItemId) => void): Column<ScanRow, ScanKey>
         )
       },
     },
-    { key: 'cost', header: 'Craft cost', numeric: true, wide: true, sortable: true, render: (row) => (row.cost === null ? null : kina(row.cost)) },
+    { key: 'cost', header: 'Craft cost', numeric: true, hideNarrow: true, sortable: true, render: (row) => (row.cost === null ? null : kina(row.cost)) },
     {
       key: 'lowest',
       header: 'Market lowest',
       numeric: true,
-      wide: true,
+      hideNarrow: true,
       sortable: true,
       render: (row) => (row.lowest === null ? <span className="meta">no listing</span> : kina(row.lowest)),
     },

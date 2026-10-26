@@ -7,7 +7,7 @@ export interface Column<Row, Key extends string = string> {
   header: string
   render(row: Row): ReactNode
   numeric?: boolean
-  wide?: boolean
+  hideNarrow?: boolean
   sortable?: boolean
 }
 
@@ -24,8 +24,8 @@ interface Props<Row, Key extends string> {
   empty?: ReactNode
 }
 
-const cellClass = (column: { numeric?: boolean; wide?: boolean }) =>
-  [column.numeric ? 'num' : '', column.wide ? 'hide-narrow' : ''].filter(Boolean).join(' ') || undefined
+const cellClass = (column: { numeric?: boolean; hideNarrow?: boolean }) =>
+  [column.numeric ? 'num' : '', column.hideNarrow ? 'hide-narrow' : ''].filter(Boolean).join(' ') || undefined
 
 const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const
 

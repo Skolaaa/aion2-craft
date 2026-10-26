@@ -67,7 +67,7 @@ function SettingsBody({ worlds, planning, setup, patch, onWorld, overrides }: Om
       key: 'listing',
       header: 'Lowest listing',
       numeric: true,
-      wide: true,
+      hideNarrow: true,
       render: ([itemId]) => {
         const lowest = market.get(itemId)?.lowest
         return lowest == null ? <span className="meta">none</span> : kina(lowest)
