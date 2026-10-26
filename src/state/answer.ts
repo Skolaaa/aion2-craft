@@ -1,4 +1,4 @@
-import type { Acquisition, Catalog, ItemId, Mastery, PlanResult, Profession, Recipe, RecipeId, StepPlan } from '../domain/types.ts'
+import type { Acquisition, Catalog, ItemId, Mastery, PlanResult, Profession, RateFamily, Recipe, RecipeId, StepPlan } from '../domain/types.ts'
 import { decimal, kina, plural, rate, taxLabel } from './format.ts'
 
 export type Verdict =
@@ -108,6 +108,26 @@ export function stepSummary(step: StepPlan, recipe: Recipe | undefined, mastery:
   const note =
     !combo || combo.itemId === recipe.product.itemId ? '' : step.wantCombo ? ` with a ${rate(combo.chance)} combo` : `, ${rate(combo.chance)} combo instead`
   return `${decimal(step.attempts, digits)} ${plural(step.attempts, 'attempt', 'attempts')} at ${rate(step.successRate)}${note}`
+}
+
+const FAMILY_NOTE: Record<RateFamily, string> = {
+  basic: 'the basic equipment curve',
+  expert: "the Expert's curve",
+  artisan: "the Artisan's curve",
+  dragonlord: 'the Dragon Lord curve',
+  consumable: 'the consumable curve',
+  material: 'the material curve',
+}
+
+export function successNote(step: Pick<StepPlan, 'successRate' | 'rateSource'>): string {
+  if (step.successRate === 0) return 'Your mastery is below the recipe level, so it cannot be attempted.'
+  const source =
+    step.rateSource === 'recipe'
+      ? "from the game client's curve for this recipe"
+      : step.rateSource === 'fixed'
+        ? 'a fixed rate for this recipe'
+        : `from ${FAMILY_NOTE[step.rateSource]}, since the client lists none for this recipe`
+  return `The chance an attempt succeeds, ${source}.`
 }
 
 export type BuyLine =

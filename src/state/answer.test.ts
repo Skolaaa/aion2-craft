@@ -3,7 +3,7 @@ import { buildCatalog, type RatesFile, type RecipesFile } from '../domain/catalo
 import { planCraft } from '../domain/planCraft.ts'
 import { makePriceBook } from '../domain/priceBook.ts'
 import type { Catalog, ItemId, Mastery, PlanResult, Recipe } from '../domain/types.ts'
-import { answerOf, buyList, sentenceOf, stepSummary, type Answer } from './answer.ts'
+import { answerOf, buyList, sentenceOf, stepSummary, successNote, type Answer } from './answer.ts'
 
 const SWORD = 1
 const BLADE = 2
@@ -114,6 +114,17 @@ describe('answerOf', () => {
     const result = answer(recipes, { [IRON]: 10, [SWORD]: 1000 })
     expect(result.answer.verdict).toMatchObject({ kind: 'blocked', itemId: BLADE, level: 25 })
     expect(sentence(result)).toBe('Crafting Blade needs Blacksmithing 25, and your mastery is 10.')
+  })
+})
+
+describe('successNote', () => {
+  it('says where the success rate comes from, or that the step cannot be attempted', () => {
+    expect(successNote({ successRate: 0.9, rateSource: 'recipe' })).toBe("The chance an attempt succeeds, from the game client's curve for this recipe.")
+    expect(successNote({ successRate: 1, rateSource: 'fixed' })).toBe('The chance an attempt succeeds, a fixed rate for this recipe.')
+    expect(successNote({ successRate: 0.5, rateSource: 'dragonlord' })).toBe(
+      'The chance an attempt succeeds, from the Dragon Lord curve, since the client lists none for this recipe.',
+    )
+    expect(successNote({ successRate: 0, rateSource: 'recipe' })).toBe('Your mastery is below the recipe level, so it cannot be attempted.')
   })
 })
 

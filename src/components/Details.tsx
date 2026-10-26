@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { Acquisition, ItemId, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
-import { buyList, childStep, estimateGap, stepSummary, type BuyLine } from '../state/answer.ts'
+import { buyList, childStep, estimateGap, stepSummary, successNote, type BuyLine } from '../state/answer.ts'
 import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
@@ -276,14 +276,6 @@ interface RateRow {
   note: string
 }
 
-const FAMILY_NOTE: Record<string, string> = {
-  basic: 'the basic equipment curve',
-  expert: "the Expert's curve",
-  artisan: "the Artisan's curve",
-  dragonlord: 'the Dragon Lord curve',
-  consumable: 'the consumable curve',
-  material: 'the material curve',
-}
 
 function Rates({ plan, planning }: { plan: PlanResult; planning: Planning }) {
   const now = useNow()
@@ -296,18 +288,12 @@ function Rates({ plan, planning }: { plan: PlanResult; planning: Planning }) {
   const profession = recipe?.profession ?? null
   const rows: RateRow[] = []
 
-  const source =
-    root.rateSource === 'recipe'
-      ? "from the game client's curve for this recipe"
-      : root.rateSource === 'fixed'
-        ? 'a fixed rate for this recipe'
-        : `from ${FAMILY_NOTE[root.rateSource]}, since the client lists none for this recipe`
 
   rows.push({
     key: 'success',
     label: 'Success per attempt',
     value: percent(root.successRate, 2),
-    note: blocked ? 'Your mastery is below the recipe level, so it cannot be attempted.' : `The chance an attempt succeeds, ${source}.`,
+    note: successNote(root),
   })
 
   if (recipe?.combo) {
