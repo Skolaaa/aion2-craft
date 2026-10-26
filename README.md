@@ -1,104 +1,86 @@
-# 🛠️ Aion 2 Crafting Calculator
+# Aion 2 crafting cost calculator
 
-> **The ultimate crafting tool for Aion 2** – optimize resources, discover recipes, and never waste materials again.
+This fork turns the Grachy/aion2-craft starter into a calculator that runs on your own computer. For a craftable item, it computes the expected Kina to craft it at your mastery and compares that with the item's price on the Market of one world. Recipes and success rates ship with the repository. Market prices come live from [aion2.exchange](https://aion2.exchange).
 
-[![Website](https://img.shields.io/badge/Website-aion2t.com-blue?style=flat-square)](https://aion2t.com/crafting)
-[![GitHub](https://img.shields.io/badge/GitHub-Grachy%2Faion2--craft-black?style=flat-square)](https://github.com/Grachy/aion2-craft)
-[![Aion 2](https://img.shields.io/badge/Aion-2-orange?style=flat-square)](https://aion2t.com)
+The calculator UI is in progress. `src/App.tsx` is a smoke page for now. It plans one Artisan's Splendent Orichalcum Greatsword at mastery 100 on one world and prints the result next to aion2.exchange's own cost.
 
----
+## Run it
 
-## 📖 About
+You need Node 24 and npm.
 
-**Aion 2 Crafting Calculator** is a powerful web tool designed for all players of **Aion 2**. It helps you calculate exact material requirements, discover craftable items, and plan your crafting routes efficiently.
+```sh
+npm install
+npm run dev
+```
 
-Whether you're a beginner or a veteran crafter, this tool saves you hours of manual calculations and prevents costly mistakes.
+Open the URL that `npm run dev` prints, usually http://localhost:5173. The page uses aion2.exchange's default world. To pick another world, add its `server_id`, for example http://localhost:5173/?world=11101 for Siel (North America East).
 
-🔗 **Live version:** [https://aion2t.com/crafting](https://aion2t.com/crafting)
+`npm run build` type-checks and builds into `dist/`. `npm run preview` serves that build. Both `dev` and `preview` proxy `/ex` to aion2.exchange and `/a2t` to aion2t.com, because aion2.exchange sends no CORS headers. A static file server without that proxy cannot load prices.
 
----
+## Refresh the recipe and rate data
 
-## ✨ Features
+`src/data/recipes.json` and `src/data/rates.json` are generated and committed. To rebuild them, run the two scripts in this order:
 
-- ✅ **Real-time material calculation** – enter quantity, get exact resources needed
-- ✅ **Recipe database** – all known Aion 2 crafting recipes in one place
-- ✅ **Material cost estimation** – plan your farming or auction house purchases
-- ✅ **Crafting tree visualization** – see dependencies between components
-- ✅ **Mobile-friendly & fast** – works on any device
+```sh
+node scripts/fetch-recipes.mjs
+node scripts/fetch-rates.mjs
+```
 
----
+The scripts keep every download in `.cache/`, which git ignores. They fetch only the files that `.cache/` lacks, wait 200 ms between requests, and write the same output when nothing changed. To pick up a change on a source site, delete the matching file in `.cache/` and run the scripts again.
 
-## 🧮 How it works (formulas)
+- `fetch-recipes.mjs` reads the craft, transfer (succession) and Substance Morph (conversion) recipes of both races from aion2t.com. It also reads aion2.exchange's crafting model for the 400 Kina price of the NPC-sold Bound reagents.
+- `fetch-rates.mjs` reads the success and combo curves that metabot.gg publishes from the game client, one curve per recipe, indexed by level difference.
 
-The calculator uses the following core logic:
+## Check the model
 
-1. **Base formula:**  
-   `Total Material = Recipe Amount × Desired Quantity`
+```sh
+npm test
+node scripts/verify-model.mjs
+```
 
-2. **For multi-component recipes:**
+`npm test` runs the vitest suite for the planner in `src/domain/`.
 
-3. **Material stack rounding:**  
-`Final stacks = Ceil(Required / StackSize)`
+`verify-model.mjs` needs network access. It asks aion2.exchange for its cost breakdown of every Artisan's Splendent item on server 11304, gives our planner the same unit prices at mastery 100 with crafting and morphing of materials turned off, and fails if our cost or any step's attempts differ by more than 0.5%. It also compares the gamewith.ai success tables in `.cache/gw/` with the metabot.gg curves, and the Orichalcum Ingot rate with the one aion2.exchange takes from the game files.
 
-All data is sourced from the official **Aion 2 Database** and verified by the community.
+## How the cost is computed
 
----
+For each craft step, the planner reads the success rate `p` and the combo success rate `pc` at your level difference: your mastery in the recipe's profession minus the recipe's mastery level. The level difference is capped at the end of the curve. A recipe above your mastery cannot be crafted, and the plan says so instead of guessing.
 
-## 🗂️ Related Aion 2 Tools
+A combo fires with the recipe's combo chance `c` (25% for most equipment). It then succeeds at `pc` and gives the Splendent result.
 
-This calculator is part of a larger ecosystem of tools for **Aion 2** players:
+```
+Splendent results per attempt = c * pc
+normal results per attempt    = (1 - c) * p
+attempts                      = wanted results / results per attempt
+expected material             = attempts * count per attempt
+```
 
-| Tool | Description | Link |
-|------|-------------|------|
-| 🗺️ **Interactive Map** | Monster locations, nodes, NPCs | [aion2t.com/map](https://aion2t.com/map?zone=World_L_A) |
-| ⚔️ **Build Simulator** | Plan and share character builds | [aion2t.com/simulator](https://aion2t.com/simulator) |
-| 🔮 **Daevanion Simulator** | Node opening planner (no wasted time) | [aion2t.com/daevanion](https://aion2t.com/daevanion) |
+aion2.exchange's attempts match this: 4.1306 attempts for one Artisan's Splendent item is 1 / (0.96837 * 0.25). Transfers always succeed. A Substance Morph has the fixed rate of its recipe and makes the Bound variant of a material, which recipes accept in place of the unbound one.
 
-> 🚧 **More tools coming soon!** Stay tuned.
+Each material comes from the cheapest of three sources:
 
----
+- Buy it at the lowest listing.
+- Craft it from its own recipe, at your mastery.
+- Morph it from Odyle.
 
-## 🔧 Tech stack
+Turning off crafting or morphing only removes that option for items that have a price. An item with no price is still crafted or morphed when a recipe exists. The normal items that a combo craft leaves behind can be credited at their lowest listing minus the Market tax.
 
-- **Frontend:** HTML5, CSS3, JavaScript (Vanilla)
-- **Data:** JSON-based recipe database
-- **Hosting:** [aion2t.com](https://aion2t.com)
+## Where prices come from, and their limits
 
----
+[aion2.exchange](https://aion2.exchange) (Aion2Market) collects the Market of every Global world once an hour and serves it read-only. The app asks for 100 items per request, asks again at most once a minute, and keeps the last quotes of each world in your browser's `localStorage`.
 
-## 📂 Project structure (placeholder)
+- The price of an item is its cheapest unit listing. Buying 30 units usually costs more than 30 times that price.
+- Prices are hourly snapshots, so a listing can be gone when you look in game.
+- The app reads one world at a time. Prices differ a lot between worlds.
+- Bound items are not on the Market. Only four NPC reagents have a known price (Orichalcum Solvent, Sandpaper, Abrasive, Catalyst, 400 Kina each). Other NPC reagents, such as Glass Bottle or Salt, have no price until you enter one.
+- The 28-day sold average is empty for many items.
+- No source publishes the Market tax. The default is 5%. The game shows the real rate on the Market screen.
 
-*(Actual structure may vary – this is a template for future static version)*
+## Credits
 
----
+- [aion2.exchange](https://aion2.exchange) for Market prices and the crafting model that the verification compares against.
+- [aion2t.com](https://aion2t.com) for recipes and item icons.
+- [metabot.gg](https://metabot.gg/en/aion-2/crafting) for the success and combo curves from the game client.
+- [gamewith.ai](https://gamewith.ai/aion2/en) for the rate tables from NCSOFT's probability disclosure, used to check the curves.
 
-## 🚀 Future plans
-
-- [ ] Export/import crafting lists
-- [ ] Personal crafting cost tracker
-- [ ] Integration with auction house prices
-- [ ] Dark mode
-
----
-
-## 🤝 Contributing
-
-Found a wrong recipe or missing item?  
-Feel free to open an **Issue** or submit a **Pull Request**.
-
----
-
-## 📬 Contact & Links
-
-- 🌐 Main website: [https://aion2t.com](https://aion2t.com)
-- 🧪 Crafting calculator: [https://aion2t.com/crafting](https://aion2t.com/crafting)
-- 🗺️ Monster map: [https://aion2t.com/map?zone=World_L_A](https://aion2t.com/map?zone=World_L_A)
-- ⚙️ Build simulator: [https://aion2t.com/simulator](https://aion2t.com/simulator)
-- 🔮 Daevanion simulator: [https://aion2t.com/daevanion](https://aion2t.com/daevanion)
-
----
-
-## 📄 License
-
-This project is for informational and community purposes.  
-Aion 2 is a trademark of NCSOFT. This tool is not officially affiliated.
+Aion 2 is a trademark of NCSOFT. This project is not affiliated with NCSOFT or with any of the sites above.

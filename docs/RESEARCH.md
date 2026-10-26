@@ -49,7 +49,9 @@ Endpoints we use:
 | `GET /api/quna` | Kina chests priced in Quna, gives a Kina-per-Quna rate |
 
 Constraints measured on 27 Oct 2026:
-- `cache-control: public, max-age=14`. Polling faster than that is pointless.
+- `cache-control: public, max-age=14` at first; a later check of `/api/servers` and `/api/items`
+  answered `max-age=60, s-maxage=290`. The data changes once an hour, so polling faster than once
+  a minute is pointless.
 - No `Access-Control-Allow-Origin` header and `OPTIONS` returns 405, so a browser page cannot
   call it directly. The app goes through a local proxy (Vite's `server.proxy`).
 - robots.txt: `Content-Signal: search=yes, ai-train=no, use=reference`. Reading the API for a
@@ -69,14 +71,21 @@ hourly) and LusitanoScripts/aion-helper (desktop app, polls it every 15 min).
 
 ## 5. Recipe and rate data
 
-- Recipes: aion2t.com (section 2). 142 distinct Light recipes in `craft`, duplicated for Dark.
-  `combo_probability` is in basis points (2500 = 25%, 3000 = 30%, 2000 = 20%, 0 = none).
-  `fee` is 0 everywhere. `success_prob` is null for `craft` and `succession`; `conversion`
-  recipes carry 10000 (100%) or 1000 (10%).
+- Recipes: aion2t.com (section 2). 161 Light recipes in `craft` (142 distinct names), duplicated for Dark.
+  The list route gives `combo_probability` and `success_prob` in basis points (2500 = 25%,
+  10000 = 100%). The detail route `/recipes/{id}` gives the same fields in percent (25, 100,
+  10). `fee` is 0 everywhere. `success_prob` is null for `craft` and `succession`;
+  `conversion` recipes carry 100% or 10%. 38 transfer (`succession`) recipes per race also
+  have a 25% combo that yields the Splendent variant.
 - aion2.exchange `/api/crafts/model` cites "game files, AION2 5.3.2.0, Data/Table CraftRecipe +
   ConversionRecipe + CraftComponentReplacement + ... CraftRecipeRate" and gives per-step success
   at mastery 100: 93.12% (basic), 94.63% (Expert's), 96.84% (Artisan's).
-- Success-rate curves by level difference: gamewith.ai publishes per-item tables from NCSOFT's
+- Success-rate curves by level difference: metabot.gg's crafting page embeds the game client's
+  curves, one success code and one combo code per recipe, at four decimals of a percent, for
+  every craft recipe of both races except 20 tool recipes ("The client lists no success curve
+  for this recipe."). This project uses them. At mastery 100 they give 93.1213%, 94.6339% and
+  96.8372% for the three Artisan's ladder steps, the same as aion2.exchange.
+- gamewith.ai publishes per-item tables from NCSOFT's
   official Korean probability disclosure of 30 Sep 2026, at
   `https://gamewith.ai/aion2/en/items/{product_item_id}`. They are plain HTML tables
   (`Level difference` / `Success` / `Combo success`). Curves seen:
@@ -90,17 +99,22 @@ hourly) and LusitanoScripts/aion-helper (desktop app, polls it every 15 min).
 | Consumables (scrolls, potions) | 72.9% | 90.9% | 47 |
 
   The page notes Global and TW have not published their own tables, so Global may differ.
+  Asmodian item pages redirect to the paired Elyos page. Every gamewith table we cached matches
+  the metabot curve of the same recipe within 0.05 percentage points.
 
 ## 6. Game rules that drive the cost model
 
 - No Kina crafting fee. NPC-sold Bound reagents (Solvent, Sandpaper, Abrasive, Catalyst)
   cost 400 Kina each and appear as ingredients.
-- A failed attempt loses every input. A success has a `combo` chance to roll again for the
-  Splendent (lucky) result, with its own success rate from the table. A failed combo still
-  yields the normal item.
+- A failed attempt loses every input. A combo fires with the recipe's `combo` chance and then
+  succeeds at the "Combo success" rate of the table, giving the Splendent (lucky) result.
+  Otherwise the attempt succeeds at the normal rate and gives the normal item. metabot.gg words
+  it the same way ("{act}% to activate, then {pct}% to succeed"), and aion2.exchange's attempts
+  match it (4.1306 = 1 / (0.96837 × 0.25) for one Artisan's Splendent item).
 - Transfer crafting (`succession`) consumes the lower item and is guaranteed.
 - Substance Morph (`conversion`) turns Odyle into materials 1:1 with no failure for the
-  cases that matter to crafting.
+  cases that matter to crafting. It makes the Bound variant ("Fine Orichalcum Ore (Bound)",
+  630620002), which recipes accept in place of the unbound material (610620014).
 - The Market needs the Special Quai Membership on Global. The listing tax is shown in the
   top-right of the Market screen in game. No source publishes the rate, so it is an input.
 
@@ -109,8 +123,8 @@ Expected-value formulas (the same shape aion2.exchange documents, extended for m
 ```
 p   = success(levelDiff)                 levelDiff = yourMastery - recipe.masteryLevel
 c   = combo chance (0.25 ...)            pc = comboSuccess(levelDiff)
-splendent per attempt  = p * c * pc
-normal per attempt     = p * (1 - c * pc)
+splendent per attempt  = c * pc
+normal per attempt     = (1 - c) * p
 attempts for N outputs = N / (outputs per attempt)
 expected material      = attempts * countPerAttempt
 cost                   = sum(expected material * cheapest unit price)
@@ -139,7 +153,7 @@ cheapest unit price    = min(buy, craft from inputs, morph from Odyle)
 - https://aion2.market/en/
 - https://kinahledger.com/market/
 - https://aion2.wiki.fextralife.com/Crafting
-- https://metabot.gg/en/aion-2/crafting
+- https://metabot.gg/en/aion-2/crafting (rate curves embedded in the page)
 - https://gamewith.ai/aion2/en/items/110150015 (and sibling item pages)
 - https://gamerant.com/aion-2-how-to-trade-auction-house-market/
 - https://space4games.com/en/games-en/aion-2-marketplace-guide/
