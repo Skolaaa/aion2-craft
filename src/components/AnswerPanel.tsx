@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { ItemId, PlanResult } from '../domain/types.ts'
 import { answerOf, sentenceOf, stepSummary, type Answer } from '../state/answer.ts'
-import type { Craftable } from '../state/craftables.ts'
+import { itemName, type Craftable } from '../state/craftables.ts'
 import { kina, percent, plural, signedKina, taxLabel } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
 import { FACTION } from '../state/setup.ts'
@@ -121,8 +121,7 @@ function Figures({ answer, plan, planning, stepNote, taxRate, ownPrice, onPrice 
   const { catalog, world } = planning
   const { verdict, craft, buy, margin, marginPct } = answer
   const { market, target } = plan
-  const itemName = (id: ItemId) => catalog.items.get(id)?.name ?? `item ${id}`
-  const targetName = itemName(target.itemId)
+  const nameOf = (itemId: ItemId) => itemName(catalog, itemId)
   const each = target.quantity > 1
 
   const craftNote =
@@ -136,7 +135,7 @@ function Figures({ answer, plan, planning, stepNote, taxRate, ownPrice, onPrice 
 
   // One keyed editor across the three notes, so focus returns to it after a save.
   const priceEditor = (trigger: string) => (
-    <PriceCell key="price" itemName={targetName} unit={market?.lowest ?? null} own={ownPrice} onSave={onPrice} trigger={trigger} />
+    <PriceCell key="price" itemName={nameOf(target.itemId)} unit={market?.lowest ?? null} own={ownPrice} onSave={onPrice} trigger={trigger} />
   )
 
   const buyNote =
@@ -163,7 +162,7 @@ function Figures({ answer, plan, planning, stepNote, taxRate, ownPrice, onPrice 
 
   return (
     <>
-      <p className="verdict" aria-live="polite">{sentenceOf(verdict, { itemName, worldName: world.name, taxRate })}</p>
+      <p className="verdict" aria-live="polite">{sentenceOf(verdict, { itemName: nameOf, worldName: world.name, taxRate })}</p>
       <dl className="figures">
         <Figure label="Craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
         <Figure label="Buy" value={buy === null ? null : kina(buy)} empty="No listing">{buyNote}</Figure>

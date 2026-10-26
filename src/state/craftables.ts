@@ -19,6 +19,8 @@ export interface CraftIndex {
   pairOf: Map<ItemId, Pair>
 }
 
+export const itemName = (catalog: Catalog, itemId: ItemId) => catalog.items.get(itemId)?.name ?? `item ${itemId}`
+
 const indexes = new WeakMap<Catalog, CraftIndex>()
 
 function build(catalog: Catalog): CraftIndex {

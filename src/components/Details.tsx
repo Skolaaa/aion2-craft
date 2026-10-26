@@ -1,6 +1,7 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
-import type { Acquisition, Catalog, ItemId, MarketQuote, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
+import type { Acquisition, ItemId, MarketQuote, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
 import { buyList, estimateGap, stepSummary, type BuyLine } from '../state/answer.ts'
+import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
@@ -74,7 +75,6 @@ export function Details({ plan, planning, overrides, market, tab, now, onTab }: 
 }
 
 
-const nameOf = (catalog: Catalog, itemId: ItemId) => catalog.items.get(itemId)?.name ?? `item ${itemId}`
 
 type BuyRow = BuyLine | { kind: 'credit'; credit: number }
 
@@ -120,7 +120,7 @@ function WhatToBuy({ plan, planning, overrides, market }: WhatToBuyProps) {
       render: (row) =>
         row.kind === 'credit' ? null : (
           <PriceCell
-            itemName={nameOf(catalog, row.itemId)}
+            itemName={itemName(catalog, row.itemId)}
             unit={row.kind === 'buy' ? row.unit : null}
             own={overrides.prices.has(row.itemId)}
             missing={row.kind === 'missing'}
@@ -215,7 +215,7 @@ function HowItIsMade({ plan, planning, overrides }: { plan: PlanResult; planning
       key: 'item',
       header: 'Item',
       render: (row) => {
-        const name = nameOf(catalog, row.itemId)
+        const name = itemName(catalog, row.itemId)
         const expandable = row.step !== null && row.step.materials.length > 0
         return (
           <ItemCell
@@ -250,7 +250,7 @@ function HowItIsMade({ plan, planning, overrides }: { plan: PlanResult; planning
         if (method === 'buy' || method === 'none') {
           return (
             <PriceCell
-              itemName={nameOf(catalog, row.itemId)}
+              itemName={itemName(catalog, row.itemId)}
               unit={method === 'buy' ? row.unit : null}
               own={overrides.prices.has(row.itemId)}
               missing={method === 'none'}
@@ -314,7 +314,7 @@ function Rates({ plan, planning, now }: { plan: PlanResult; planning: Planning; 
 
   if (recipe?.combo) {
     const { combo } = recipe
-    const comboName = nameOf(catalog, combo.itemId)
+    const comboName = itemName(catalog, combo.itemId)
     rows.push({
       key: 'combo',
       label: 'Combo per attempt',
@@ -331,7 +331,7 @@ function Rates({ plan, planning, now }: { plan: PlanResult; planning: Planning; 
       key: 'attempts',
       label: 'Expected attempts',
       value: decimal(root.attempts),
-      note: `For ${root.outputs} ${nameOf(catalog, root.itemId)}. A failed attempt uses up every material.`,
+      note: `For ${root.outputs} ${itemName(catalog, root.itemId)}. A failed attempt uses up every material.`,
     })
   }
 

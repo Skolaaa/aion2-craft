@@ -1,5 +1,6 @@
 import type { Catalog, ItemId, MarketQuote } from '../domain/types.ts'
 import type { World } from '../market/exchangeClient.ts'
+import { itemName } from '../state/craftables.ts'
 import { kina, taxPercent } from '../state/format.ts'
 import { FACTION, MAX_MASTERY, PROFESSIONS, type Setup } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
@@ -69,7 +70,7 @@ export function Settings({ open, onClose, worlds, world, setup, patch, onWorld, 
       header: 'Your price',
       numeric: true,
       render: ([itemId, price]) => {
-        const name = catalog.items.get(itemId)?.name ?? `item ${itemId}`
+        const name = itemName(catalog, itemId)
         return (
           <span className="price-actions">
             <PriceCell itemName={name} unit={price} own={false} onSave={(next) => overrides.save(itemId, next)} />
