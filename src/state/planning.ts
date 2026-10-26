@@ -1,5 +1,5 @@
 import { planCraft } from '../domain/planCraft.ts'
-import type { Catalog, ItemId, Mastery, PlanOptions, PlanResult, PriceBook } from '../domain/types.ts'
+import type { Catalog, ItemId, MarketQuote, Mastery, PlanOptions, PlanResult, PriceBook } from '../domain/types.ts'
 import type { World } from '../market/exchangeClient.ts'
 import type { CraftIndex } from './craftables.ts'
 
@@ -10,6 +10,7 @@ export interface Planning {
   mastery: Mastery
   options: PlanOptions
   prices: PriceBook
+  market: ReadonlyMap<ItemId, MarketQuote>
 }
 
 export const planOne = (planning: Planning, itemId: ItemId, quantity: number): PlanResult | null =>

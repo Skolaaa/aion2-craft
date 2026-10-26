@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { ItemId, MarketQuote } from '../domain/types.ts'
+import type { ItemId } from '../domain/types.ts'
 import { taxLabel } from '../state/format.ts'
 import { planOne, type Planning } from '../state/planning.ts'
 import { bestMargins, type ScanRow } from '../state/scan.ts'
@@ -12,7 +12,6 @@ import { rowTitle, scanColumns } from './Scanner.tsx'
 import { Search } from './Search.tsx'
 import { Table } from './Table.tsx'
 
-const NO_QUOTES: ReadonlyMap<ItemId, MarketQuote> = new Map()
 
 interface Props {
   planning: Planning
@@ -50,7 +49,7 @@ export function Calculator({ planning, feed, target, scan, overrides, now, onTar
             now={now}
             onTarget={onTarget}
           />
-          {plan && !feed.pending && <Details plan={plan} planning={planning} overrides={overrides} market={feed.snapshot?.quotes ?? NO_QUOTES} tab={tab} now={now} onTab={setTab} />}
+          {plan && !feed.pending && <Details plan={plan} planning={planning} overrides={overrides} tab={tab} now={now} onTab={setTab} />}
         </>
       )}
     </>

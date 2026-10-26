@@ -1,7 +1,8 @@
-import type { Catalog, ItemId, MarketQuote } from '../domain/types.ts'
+import type { ItemId } from '../domain/types.ts'
 import type { World } from '../market/exchangeClient.ts'
 import { itemName } from '../state/craftables.ts'
 import { kina, taxPercent } from '../state/format.ts'
+import type { Planning } from '../state/planning.ts'
 import { FACTION, MAX_MASTERY, PROFESSIONS, type Setup } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { WorldsState } from '../state/useWorlds.ts'
@@ -17,13 +18,11 @@ interface Props {
   open: boolean
   onClose(): void
   worlds: WorldsState
-  world: World
+  planning: Planning
   setup: Setup
   patch(change: Partial<Setup>): void
   onWorld(world: World): void
   overrides: PriceOverrides
-  catalog: Catalog
-  market: ReadonlyMap<ItemId, MarketQuote>
 }
 
 const OPTIONS = [
@@ -50,7 +49,8 @@ function groupByRegion(worlds: readonly World[]) {
   return [...groups]
 }
 
-export function Settings({ open, onClose, worlds, world, setup, patch, onWorld, overrides, catalog, market }: Props) {
+export function Settings({ open, onClose, worlds, planning, setup, patch, onWorld, overrides }: Props) {
+  const { world, catalog, market } = planning
   const list = worlds.status === 'ready' ? worlds.data.worlds : [world]
   const entries = [...overrides.prices]
   const priceColumns: Column<[ItemId, number]>[] = [

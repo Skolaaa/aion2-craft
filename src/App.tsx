@@ -103,8 +103,8 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
     [overrides.prices, market, catalog],
   )
   const planning = useMemo<Planning>(
-    () => ({ world, catalog, index, mastery: setup.mastery, options, prices }),
-    [world, catalog, index, setup.mastery, options, prices],
+    () => ({ world, catalog, index, mastery: setup.mastery, options, prices, market }),
+    [world, catalog, index, setup.mastery, options, prices, market],
   )
 
   const picked = target.itemId !== null && index.byId.has(target.itemId)
@@ -155,13 +155,11 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         worlds={worlds}
-        world={world}
+        planning={planning}
         setup={setup}
         patch={patchSetup}
         onWorld={chooseWorld}
         overrides={overrides}
-        catalog={catalog}
-        market={market}
       />
     </div>
   )

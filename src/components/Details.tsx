@@ -1,5 +1,5 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
-import type { Acquisition, ItemId, MarketQuote, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
+import type { Acquisition, ItemId, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
 import { buyList, childStep, estimateGap, stepSummary, type BuyLine } from '../state/answer.ts'
 import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
@@ -24,13 +24,12 @@ interface Props {
   plan: PlanResult
   planning: Planning
   overrides: PriceOverrides
-  market: ReadonlyMap<ItemId, MarketQuote>
   tab: DetailTab
   now: number
   onTab(tab: DetailTab): void
 }
 
-export function Details({ plan, planning, overrides, market, tab, now, onTab }: Props) {
+export function Details({ plan, planning, overrides, tab, now, onTab }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
 
@@ -67,7 +66,7 @@ export function Details({ plan, planning, overrides, market, tab, now, onTab }: 
         ))}
       </div>
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
-        {tab === 'buy' && <WhatToBuy plan={plan} planning={planning} overrides={overrides} market={market} />}
+        {tab === 'buy' && <WhatToBuy plan={plan} planning={planning} overrides={overrides} />}
         {tab === 'made' && <HowItIsMade key={plan.target.itemId} plan={plan} planning={planning} overrides={overrides} />}
         {tab === 'rates' && <Rates plan={plan} planning={planning} now={now} />}
       </div>
@@ -83,13 +82,12 @@ interface WhatToBuyProps {
   plan: PlanResult
   planning: Planning
   overrides: PriceOverrides
-  market: ReadonlyMap<ItemId, MarketQuote>
 }
 
 const MISSING = <span className="is-warn">no price yet</span>
 
-function WhatToBuy({ plan, planning, overrides, market }: WhatToBuyProps) {
-  const { catalog, prices } = planning
+function WhatToBuy({ plan, planning, overrides }: WhatToBuyProps) {
+  const { catalog, prices, market } = planning
   const { lines, credit } = buyList(plan)
   const rows: BuyRow[] = credit > 0 ? [...lines, { kind: 'credit', credit }] : lines
 
