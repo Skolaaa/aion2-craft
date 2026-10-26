@@ -1,74 +1,14 @@
 import { useMemo, useState } from 'react'
 import type { ItemId, Profession } from '../domain/types.ts'
-import { kina, percent, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
+import { plural, taxLabel } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
-import { DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanKey, type ScanRow, type ScanSort } from '../state/scan.ts'
+import { DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanRow, type ScanSort } from '../state/scan.ts'
 import { PROFESSIONS } from '../state/setup.ts'
 import type { PriceFeed } from '../state/usePrices.ts'
 import { Button } from './Button.tsx'
 import { Field } from './Field.tsx'
-import { ItemCell } from './ItemCell.tsx'
 import { PriceStatus } from './PriceStatus.tsx'
-import { Table, type Column } from './Table.tsx'
-
-
-function needs({ verdict }: ScanRow) {
-  if (verdict.kind === 'missing') return 'needs a price'
-  if (verdict.kind !== 'blocked') return null
-  return verdict.profession ? `needs ${verdict.profession} ${verdict.level}` : 'needs more mastery'
-}
-
-export function rowTitle(row: ScanRow) {
-  if (row.lowest === null) return undefined
-  const sold = row.sold === null ? 'no sales in 28 days' : `28-day average ${kina(row.sold)}`
-  return `${row.listings} ${plural(row.listings, 'listing', 'listings')}, ${sold}`
-}
-
-export function scanColumns(onOpen: (itemId: ItemId) => void): Column<ScanRow, ScanKey>[] {
-  return [
-    {
-      key: 'item',
-      header: 'Item',
-      sortable: true,
-      render: (row) => {
-        const meta = [row.profession ?? 'Any profession', `level ${row.level}`, needs(row)].filter(Boolean).join(', ')
-        return (
-          <ItemCell
-            item={row.item}
-            meta={meta}
-            narrowMeta={[row.cost === null ? null : `cost ${kina(row.cost)}`, row.lowest === null ? 'no listing' : `lowest ${kina(row.lowest)}`]
-              .filter(Boolean)
-              .join(', ')}
-            onOpen={() => onOpen(row.item.id)}
-          />
-        )
-      },
-    },
-    { key: 'cost', header: 'Craft cost', numeric: true, wide: true, sortable: true, render: (row) => (row.cost === null ? null : kina(row.cost)) },
-    {
-      key: 'lowest',
-      header: 'Market lowest',
-      numeric: true,
-      wide: true,
-      sortable: true,
-      render: (row) => (row.lowest === null ? <span className="meta">no listing</span> : kina(row.lowest)),
-    },
-    {
-      key: 'margin',
-      header: 'Margin',
-      numeric: true,
-      sortable: true,
-      render: (row) => (row.margin === null ? null : <span className={toneOf(row.margin, 'kina')}>{signedKina(row.margin)}</span>),
-    },
-    {
-      key: 'marginPct',
-      header: 'Margin %',
-      numeric: true,
-      sortable: true,
-      render: (row) => (row.marginPct === null ? null : <span className={toneOf(row.marginPct, 'fraction')}>{percent(row.marginPct, 1, true)}</span>),
-    },
-  ]
-}
+import { ScanTable } from './ScanTable.tsx'
 
 interface Props {
   rows: readonly ScanRow[]
@@ -85,7 +25,7 @@ export function Scanner({ rows, planning, feed, now, onOpen }: Props) {
   const [showHidden, setShowHidden] = useState(false)
   const [sort, setSort] = useState<ScanSort>(DEFAULT_SCAN_SORT)
   const view = useMemo(() => viewScan(rows, { profession, name, showHidden, sort }), [rows, profession, name, showHidden, sort])
-  const columns = scanColumns(onOpen)
+
 
   const chips: readonly { id: Profession | null; label: string }[] = [{ id: null, label: 'All' }, ...PROFESSIONS]
 
@@ -125,13 +65,10 @@ export function Scanner({ rows, planning, feed, now, onOpen }: Props) {
         </Field>
       </div>
 
-      <Table
+      <ScanTable
         label={`Every recipe on ${world.name}`}
-        columns={columns}
         rows={view.rows}
-        rowKey={(row) => String(row.item.id)}
-        rowTitle={rowTitle}
-        onRowClick={(row) => onOpen(row.item.id)}
+        onOpen={onOpen}
         sort={sort}
         onSort={(key) => setSort((previous) => nextSort(previous, key))}
         empty={feed.pending ? 'Prices are loading.' : 'No recipe matches these filters.'}

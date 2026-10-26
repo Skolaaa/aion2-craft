@@ -8,9 +8,8 @@ import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { PriceFeed } from '../state/usePrices.ts'
 import { AnswerPanel } from './AnswerPanel.tsx'
 import { Details, type DetailTab } from './Details.tsx'
-import { rowTitle, scanColumns } from './Scanner.tsx'
+import { ScanTable } from './ScanTable.tsx'
 import { Search } from './Search.tsx'
-import { Table } from './Table.tsx'
 
 
 interface Props {
@@ -71,13 +70,10 @@ function BestMargins({ planning, scan, loading, onOpen }: BestProps) {
         <h2 className="section-title" id="best-title">Best margins on {world.name}</h2>
         <p className="meta">After {taxLabel(options.taxRate)} tax at your mastery. Open one, or search for any craftable item.</p>
       </div>
-      <Table
+      <ScanTable
         label={`Best margins on ${world.name}`}
-        columns={scanColumns(onOpen)}
         rows={loading ? [] : bestMargins(scan, 5)}
-        rowKey={(row) => String(row.item.id)}
-        rowTitle={rowTitle}
-        onRowClick={(row) => onOpen(row.item.id)}
+        onOpen={onOpen}
         empty={loading ? 'Loading prices from aion2.exchange.' : 'No recipe has a margin with these prices yet.'}
       />
     </section>
