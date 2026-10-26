@@ -5,7 +5,6 @@ import { ItemIcon } from './ItemIcon.tsx'
 interface Props {
   item: Item | undefined
   meta?: ReactNode
-  // Shown only under 720px, where the table drops a column into this line.
   narrowMeta?: ReactNode
   depth?: number
   toggle?: ReactNode

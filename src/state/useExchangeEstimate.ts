@@ -9,10 +9,10 @@ const requests = new Map<string, Promise<ExchangeCraft | null>>()
 // aion2.exchange models the Artisan's Splendent items only; asking for anything else is a 404.
 const modelled = (item: Item | undefined): item is Item => item?.name.startsWith("Artisan's Splendent ") === true
 
-export function useExchangeEstimate(item: Item | undefined, worldId: number, enabled: boolean): Estimate {
+export function useExchangeEstimate(item: Item | undefined, worldId: number): Estimate {
   const key = `${worldId}:${item?.id}`
   const [result, setResult] = useState<{ key: string; craft: ExchangeCraft | null } | null>(null)
-  const wanted = enabled && modelled(item)
+  const wanted = modelled(item)
   const itemId = item?.id
 
   useEffect(() => {

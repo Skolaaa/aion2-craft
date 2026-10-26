@@ -16,7 +16,6 @@ export function percent(fraction: number, digits = 1, signed = false) {
   return `${sign}${text}%`
 }
 
-// 0.968 reads 96.8%, a whole 1 reads 100%.
 export function rate(fraction: number) {
   const text = (fraction * 100).toFixed(1)
   return `${text.endsWith('.0') ? text.slice(0, -2) : text}%`
@@ -40,7 +39,6 @@ export function age(iso: string, now: number) {
 
 export const isStale = (iso: string, now: number) => now - timeOf(iso) > STALE_AFTER_MS
 
-// Accepts 1200, 1,200, 1.2k and 1.2m.
 export function parseKina(text: string): number | null {
   const match = /^(\d+(?:\.\d+)?)([km]?)$/.exec(text.trim().toLowerCase().replace(/[,\s_]/g, ''))
   if (!match) return null

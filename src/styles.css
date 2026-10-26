@@ -50,7 +50,6 @@
   }
 }
 
-/* Base */
 *,
 *::before,
 *::after {
@@ -152,7 +151,6 @@ a {
   color: var(--warn);
 }
 
-/* Shell */
 .app {
   min-height: 100dvh;
   display: flex;
@@ -253,7 +251,6 @@ a {
   gap: var(--space-1);
 }
 
-/* Buttons */
 .button {
   display: inline-flex;
   align-items: center;
@@ -304,7 +301,6 @@ a {
   transform: rotate(180deg);
 }
 
-/* Fields */
 .field {
   display: grid;
   gap: var(--space-1);
@@ -455,7 +451,6 @@ input[type='range'] {
   pointer-events: none;
 }
 
-/* Table: the one table style */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -609,7 +604,6 @@ input[type='range'] {
   transform: rotate(-90deg);
 }
 
-/* Prices you can change in place */
 .price-value {
   /* A taller hit area than the text, without moving the row. */
   padding: 10px 0;
@@ -648,7 +642,6 @@ input[type='range'] {
   text-align: right;
 }
 
-/* Notice */
 .notice {
   display: flex;
   flex-wrap: wrap;
@@ -672,7 +665,6 @@ input[type='range'] {
   color: var(--warn);
 }
 
-/* Dialog */
 .dialog {
   width: min(640px, calc(100vw - 32px));
   max-height: calc(100dvh - 64px);
@@ -705,7 +697,6 @@ input[type='range'] {
   justify-content: flex-end;
 }
 
-/* Search */
 .search {
   display: grid;
   gap: var(--space-1);
@@ -728,10 +719,6 @@ input[type='range'] {
   min-height: 48px;
   padding-left: 44px;
   font-size: var(--text-body);
-}
-
-.search-input::-webkit-search-cancel-button {
-  cursor: pointer;
 }
 
 .search-pop {
@@ -778,7 +765,6 @@ input[type='range'] {
   color: var(--muted);
 }
 
-/* Answer panel: the one raised surface */
 .answer {
   display: grid;
   gap: var(--space-5);
@@ -867,7 +853,6 @@ input[type='range'] {
   font-weight: 600;
 }
 
-/* Detail tabs */
 .details {
   display: grid;
   gap: var(--space-2);
@@ -903,15 +888,10 @@ input[type='range'] {
   border-bottom-color: var(--accent);
 }
 
-.tab-panel:focus-visible {
-  outline-offset: 4px;
-}
-
 .rate-text .meta {
   max-width: 72ch;
 }
 
-/* Scanner */
 .stack-tight {
   display: grid;
   gap: var(--space-2);
@@ -936,7 +916,6 @@ input[type='range'] {
   gap: var(--space-2) var(--space-3);
 }
 
-/* Settings */
 .settings-group {
   display: grid;
   gap: var(--space-3);

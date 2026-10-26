@@ -64,7 +64,6 @@ const VALUE: Record<Exclude<ScanKey, 'item'>, (row: ScanRow) => number | null> =
   marginPct: (row) => row.marginPct,
 }
 
-// Clicking the sorted column flips it; a new column starts high to low, names A to Z.
 export function nextSort(sort: ScanSort, key: ScanKey): ScanSort {
   if (sort.key === key) return { key, direction: sort.direction === 'asc' ? 'desc' : 'asc' }
   return { key, direction: key === 'item' ? 'asc' : 'desc' }

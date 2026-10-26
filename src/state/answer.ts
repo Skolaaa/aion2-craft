@@ -90,8 +90,6 @@ export function sentenceOf(verdict: Verdict, { itemName, worldName }: Names): st
   }
 }
 
-// "4.13 attempts at 96.8% with a 25% combo" when the combo result is the one wanted, ", 25% combo
-// instead" when combos make the other result, or what the step lacks to be attempted at all.
 export function stepSummary(step: StepPlan, recipe: Recipe | undefined, mastery: Mastery, digits = 2): string {
   if (step.successRate === 0) {
     if (!recipe?.profession) return 'needs more mastery'
@@ -107,8 +105,7 @@ export type BuyLine =
   | { kind: 'buy'; itemId: ItemId; expected: number; unit: number; subtotal: number }
   | { kind: 'missing'; itemId: ItemId; expected: number }
 
-// The shopping list as planCraft aggregates it, with the unpriced items first and the
-// byproduct credit that turns its sum into plan.cost.
+// The credit is what turns the sum of the lines into plan.cost.
 export function buyList(plan: PlanResult): { lines: BuyLine[]; credit: number } {
   const missing = new Map<ItemId, number>()
   let credit = 0

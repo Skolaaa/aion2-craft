@@ -6,7 +6,6 @@ interface Props {
   unit: number | null
   own: boolean
   onSave(price: number | null): void
-  // A missing price shows the input straight away instead of a value to click.
   missing?: boolean
   trigger?: ReactNode
 }

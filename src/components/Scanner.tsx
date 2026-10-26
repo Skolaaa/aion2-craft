@@ -27,7 +27,6 @@ export function rowTitle(row: ScanRow) {
   return `${row.listings} ${plural(row.listings, 'listing', 'listings')}, ${sold}`
 }
 
-// The scanner and the best margins on the calculator share these columns.
 export function scanColumns(catalog: Catalog, mastery: Mastery, onOpen: (itemId: ItemId) => void): Column<ScanRow, ScanKey>[] {
   return [
     {

@@ -3,14 +3,11 @@ import type { Craftable } from './craftables.ts'
 const normal = (text: string) => text.toLowerCase().replace(/['’]/g, '')
 const termsOf = (query: string) => normal(query).trim().split(/\s+/).filter(Boolean)
 
-// True when every word of the query appears in the text, in any order.
 export function matches(text: string, query: string) {
   const haystack = normal(text)
   return termsOf(query).every((term) => haystack.includes(term))
 }
 
-// Every term has to appear in the name, profession or grade. Names that start with the
-// query come first, then names with a word that starts with the first term.
 export function searchCraftables(craftables: readonly Craftable[], query: string): Craftable[] {
   const whole = normal(query).trim()
   const terms = termsOf(query)

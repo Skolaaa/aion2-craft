@@ -296,7 +296,7 @@ function Rates({ plan, planning, now }: { plan: PlanResult; planning: Planning; 
   const { root } = plan
   const recipe = catalog.recipes.get(root.recipeId)
   const item = catalog.items.get(plan.target.itemId)
-  const estimate = useExchangeEstimate(item, world.id, true)
+  const estimate = useExchangeEstimate(item, world.id)
   const blocked = root.successRate === 0
   const profession = recipe?.profession ?? null
   const rows: RateRow[] = []

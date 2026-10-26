@@ -1,4 +1,3 @@
-// The only three glyphs the UI draws. Everything else is a word or a game icon.
 const PATHS = {
   search: 'M7 12.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11Zm4-1.5 3.5 3.5',
   chevron: 'm4 6 4 4 4-4',

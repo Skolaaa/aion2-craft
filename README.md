@@ -2,7 +2,11 @@
 
 This fork turns the Grachy/aion2-craft starter into a calculator that runs on your own computer. For a craftable item, it computes the expected Kina to craft it at your mastery and compares that with the item's price on the Market of one world. Recipes and success rates ship with the repository. Market prices come live from [aion2.exchange](https://aion2.exchange).
 
-The calculator UI is in progress. `src/App.tsx` is a smoke page for now. It plans one Artisan's Splendent Orichalcum Greatsword at mastery 100 on one world and prints the result next to aion2.exchange's own cost.
+Pick an item and the page answers in one sentence whether to craft it or buy it, with three figures under it: the expected crafting cost, the lowest listing, and the margin after the Market tax. Three tabs hold the detail: what to buy, how each step is made, and the success rates, next to aion2.exchange's own estimate for the Artisan's Splendent items. Click any unit price to enter your own, per world. The scanner ranks every recipe on your world by margin. Settings holds the world, your mastery per profession (100 until you change it, and shown in the top bar), the tax, and the prices you entered.
+
+![The calculator in the dark theme](docs/screenshots/calculator-desktop-dark.png)
+
+More screenshots in `docs/screenshots/`: the light theme, the scanner, a phone at 390 px, the settings dialog, and a recipe with missing prices.
 
 ## Run it
 
@@ -13,7 +17,7 @@ npm install
 npm run dev
 ```
 
-Open the URL that `npm run dev` prints, usually http://localhost:5173. The page uses aion2.exchange's default world. To pick another world, add its `server_id`, for example http://localhost:5173/?world=11101 for Siel (North America East).
+Open the URL that `npm run dev` prints, usually http://localhost:5173. The page starts on aion2.exchange's default world. To pick yours, open **Settings** and choose it under **World**.
 
 `npm run build` type-checks and builds into `dist/`. `npm run preview` serves that build. Both `dev` and `preview` proxy `/ex` to aion2.exchange and `/a2t` to aion2t.com, because aion2.exchange sends no CORS headers. A static file server without that proxy cannot load prices.
 
@@ -38,7 +42,7 @@ npm test
 node scripts/verify-model.mjs
 ```
 
-`npm test` runs the vitest suite for the planner in `src/domain/`.
+`npm test` runs the vitest suites for the planner in `src/domain/` and for the verdict, search and scanner helpers in `src/state/`.
 
 `node scripts/validate-recipes.mjs` cross-checks every cached recipe against metabot.gg, aion2.exchange's game-file model and gamewith.ai, and fails on the first disagreement. The result table is in `docs/RESEARCH.md`.
 

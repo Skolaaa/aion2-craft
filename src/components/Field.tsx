@@ -26,14 +26,13 @@ interface NumberInputProps {
   step?: number
   className?: string
   describedBy?: string
-  labelledBy?: string
   onChange(value: number): void
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
 // Keeps the typed text while it is not a number yet, so the field can be cleared and retyped.
-export function NumberInput({ id, value, min, max, step = 1, className, describedBy, labelledBy, onChange }: NumberInputProps) {
+export function NumberInput({ id, value, min, max, step = 1, className, describedBy, onChange }: NumberInputProps) {
   const [text, setText] = useState(String(value))
   useEffect(() => setText(String(value)), [value])
   return (
@@ -47,7 +46,6 @@ export function NumberInput({ id, value, min, max, step = 1, className, describe
       step={step}
       value={text}
       aria-describedby={describedBy}
-      aria-labelledby={labelledBy}
       onChange={(event) => {
         setText(event.target.value)
         const next = event.target.valueAsNumber
