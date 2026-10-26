@@ -120,7 +120,7 @@ function SettingsBody({ worlds, planning, setup, patch, onWorld, overrides }: Om
 
       <fieldset className="settings-group">
         <legend className="section-title">Mastery</legend>
-        <p className="hint">Your level in each profession. A recipe above it cannot be crafted.</p>
+        <p className="meta">Your level in each profession. A recipe above it cannot be crafted.</p>
         {PROFESSIONS.map(({ id, label, inGame }) => (
           <div className="mastery-row" key={id}>
             <label className="mastery-label" htmlFor={`mastery-${id}`} id={`mastery-${id}-label`}>

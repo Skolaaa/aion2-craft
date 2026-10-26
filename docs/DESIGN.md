@@ -16,10 +16,9 @@ Color, dark theme (default), light under `prefers-color-scheme: light`:
 | `--line` | `#2E343D` | `#DDD9D2` | every border and table rule |
 | `--text` | `#EDEAE3` | `#1C1F24` | text |
 | `--muted` | `#9AA1AB` | `#646B75` | labels, secondary |
-| `--accent` | `#D9A441` | `#9A6B12` | focus rings, links, selected tab, primary button. Brass, because the game's currency is Kina and the tool is about money |
+| `--accent` | `#D9A441` | `#9A6B12` | focus rings, links, selected tab, primary button, and the stale and missing-price warnings. Brass, because the game's currency is Kina and the tool is about money |
 | `--gain` | `#7FC98A` | `#2E7D3E` | positive margin only |
 | `--loss` | `#E8847A` | `#B3382C` | negative margin only |
-| `--warn` | `#D9A441` | `#9A6B12` | stale and missing-price notices (same hue as accent, never a fourth color) |
 
 Rules: no gradients, no shadows, no grade colors anywhere (grade is a word). Icons: the game's
 item icons only, inside a 1px `--line` frame; the UI itself uses no icon font and at most three

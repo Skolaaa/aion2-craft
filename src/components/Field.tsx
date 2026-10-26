@@ -14,7 +14,7 @@ export function Field({ id, label, hint, className, children }: FieldProps) {
     <div className={`field ${className ?? ''}`}>
       <label className="label" htmlFor={id}>{label}</label>
       {children}
-      {hint && <p className="hint" id={`${id}-hint`}>{hint}</p>}
+      {hint && <p className="meta" id={`${id}-hint`}>{hint}</p>}
     </div>
   )
 }
