@@ -1,6 +1,6 @@
 import type { Catalog, ItemId, MarketQuote } from '../domain/types.ts'
 import type { World } from '../market/exchangeClient.ts'
-import { kina } from '../state/format.ts'
+import { kina, taxPercent } from '../state/format.ts'
 import { FACTION, MAX_MASTERY, PROFESSIONS, type Setup } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { WorldsState } from '../state/useWorlds.ts'
@@ -144,7 +144,7 @@ export function Settings({ open, onClose, worlds, world, setup, patch, onWorld, 
         <NumberInput
           id="tax"
           describedBy="tax-hint"
-          value={Math.round(setup.taxRate * 1000) / 10}
+          value={taxPercent(setup.taxRate)}
           min={0}
           max={50}
           step={0.1}

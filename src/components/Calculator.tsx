@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ItemId, MarketQuote } from '../domain/types.ts'
+import { taxLabel } from '../state/format.ts'
 import { planOne, type Planning } from '../state/planning.ts'
 import { bestMargins, type ScanRow } from '../state/scan.ts'
 import type { Target } from '../state/target.ts'
@@ -70,7 +71,7 @@ function BestMargins({ planning, scan, loading, onOpen }: BestProps) {
     <section className="stack" aria-labelledby="best-title">
       <div className="stack-tight">
         <h2 className="section-title" id="best-title">Best margins on {world.name}</h2>
-        <p className="meta">After {Math.round(options.taxRate * 1000) / 10}% tax at your mastery. Open one, or search for any craftable item.</p>
+        <p className="meta">After {taxLabel(options.taxRate)} tax at your mastery. Open one, or search for any craftable item.</p>
       </div>
       <Table
         label={`Best margins on ${world.name}`}

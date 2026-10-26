@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { Catalog, ItemId, Mastery, Profession } from '../domain/types.ts'
 import { answerOf } from '../state/answer.ts'
-import { kina, percent, plural, signedKina } from '../state/format.ts'
+import { kina, percent, plural, signedKina, taxLabel } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
 import { DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanKey, type ScanRow, type ScanSort } from '../state/scan.ts'
 import { PROFESSIONS } from '../state/setup.ts'
@@ -96,7 +96,7 @@ export function Scanner({ rows, planning, feed, now, onOpen }: Props) {
     <section className="stack scanner" aria-labelledby="scanner-title">
       <div className="stack-tight">
         <h1 className="section-title" id="scanner-title">Every recipe on {world.name}</h1>
-        <p className="meta">Margins after {Math.round(options.taxRate * 1000) / 10}% tax at your mastery. Click a row to open it in the calculator.</p>
+        <p className="meta">Margins after {taxLabel(options.taxRate)} tax at your mastery. Click a row to open it in the calculator.</p>
         <PriceStatus feed={feed} now={now} worldName={world.name} />
       </div>
 

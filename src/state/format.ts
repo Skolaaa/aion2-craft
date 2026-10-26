@@ -47,4 +47,6 @@ export function parseKina(text: string): number | null {
   return value > 0 && Number.isSafeInteger(value) ? value : null
 }
 
-export const taxLabel = (taxRate: number) => `${Math.round(taxRate * 1000) / 10}%`
+export const taxPercent = (taxRate: number) => Math.round(taxRate * 1000) / 10
+
+export const taxLabel = (taxRate: number) => `${taxPercent(taxRate)}%`
