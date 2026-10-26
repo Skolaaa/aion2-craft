@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import type { ItemId, Profession } from '../domain/types.ts'
 import { plural, taxLabel } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
@@ -24,7 +24,8 @@ export function Scanner({ rows, planning, feed, now, onOpen }: Props) {
   const [name, setName] = useState('')
   const [showHidden, setShowHidden] = useState(false)
   const [sort, setSort] = useState<ScanSort>(DEFAULT_SCAN_SORT)
-  const view = useMemo(() => viewScan(rows, { profession, name, showHidden, sort }), [rows, profession, name, showHidden, sort])
+  const filter = useDeferredValue(name)
+  const view = useMemo(() => viewScan(rows, { profession, name: filter, showHidden, sort }), [rows, profession, filter, showHidden, sort])
 
 
   const chips: readonly { id: Profession | null; label: string }[] = [{ id: null, label: 'All' }, ...PROFESSIONS]

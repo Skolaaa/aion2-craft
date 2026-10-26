@@ -1,7 +1,7 @@
 import type { Item, PlanResult, Profession } from '../domain/types.ts'
 import { answerOf, type Verdict } from './answer.ts'
 import { planOne, type Planning } from './planning.ts'
-import { matches } from './search.ts'
+import { matches, termsOf } from './search.ts'
 
 export type ScanStatus = 'ready' | 'unpriced' | 'locked'
 
@@ -94,7 +94,8 @@ function compare(sort: ScanSort) {
 // Rows that need a price or more mastery have no margin to rank, so they stay out of the
 // table unless asked for; `hidden` counts them either way.
 export function viewScan(rows: readonly ScanRow[], { profession, name, showHidden, sort }: ScanQuery) {
-  const matching = rows.filter((row) => (profession === null || row.profession === profession) && matches(row.item.name, name))
+  const terms = termsOf(name)
+  const matching = rows.filter((row) => (profession === null || row.profession === profession) && matches(row.item.name, terms))
   const hidden = matching.filter((row) => row.status !== 'ready').length
   const shown = showHidden ? matching : matching.filter((row) => row.status === 'ready')
   return { rows: [...shown].sort(compare(sort)), hidden }

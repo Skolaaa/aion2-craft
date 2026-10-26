@@ -1,11 +1,11 @@
 import type { Craftable } from './craftables.ts'
 
 const normal = (text: string) => text.toLowerCase().replace(/['’]/g, '')
-const termsOf = (query: string) => normal(query).trim().split(/\s+/).filter(Boolean)
+export const termsOf = (query: string) => normal(query).trim().split(/\s+/).filter(Boolean)
 
-export function matches(text: string, query: string) {
+export function matches(text: string, terms: readonly string[]) {
   const haystack = normal(text)
-  return termsOf(query).every((term) => haystack.includes(term))
+  return terms.every((term) => haystack.includes(term))
 }
 
 export function searchCraftables(craftables: readonly Craftable[], query: string): Craftable[] {
