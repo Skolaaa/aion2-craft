@@ -24,7 +24,7 @@ chose from are dark, and one theme halves the CSS to keep right.
 | `--bronze` | `#C69C7C` | ornamental rules and diamond finials only |
 | `--gold` | `#E6B85C` | money: figures, sorted column header, primary button, links |
 | `--gold-hi` | `#FFDC8F` | margin figure, focus ring, diamond cores |
-| `--heat-0` to `--heat-1` | `#B35317` to `#FFDC8F` | margin heat column only (alpha 0.14 to 1), text colour picked per cell for contrast |
+| `--heat-0` to `--heat-1` | `#B35317` to `#FFDC8F` | margin heat column only (alpha 0.14 to 1), text `#000000` or `#FFFFFF` picked per cell for contrast (`--page` and `--text` as inks fall to 4.0:1 mid-ramp; black and white keep 4.5:1) |
 | `--gain` / `--loss` | `#5FD38D` / `#F0716B` | signed margin, change chips |
 | `--elyos` / `--elyos-l` | `#2E6FD1` / `#7EB3FF` | Elyos: side badge, the world chip, the answer panel's 2 px top border |
 | `--asmo` / `--asmo-l` | `#7B4FD6` / `#B89CFF` | Asmodian: the same places, and matched-world names |

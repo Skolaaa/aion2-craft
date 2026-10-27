@@ -2,13 +2,14 @@ import type { ReactNode } from 'react'
 import type { ItemId, PlanResult } from '../domain/types.ts'
 import { answerOf, sentenceOf, stepSummary, type Answer } from '../state/answer.ts'
 import { itemName, type Craftable } from '../state/craftables.ts'
-import { kina, percent, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
+import { kina, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
 import { SIDE } from '../market/worlds.ts'
 import type { Planning } from '../state/planning.ts'
 import { MAX_QUANTITY, type Target } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { PriceFeed } from '../state/usePrices.ts'
 import { Field, NumberInput } from './Field.tsx'
+import { HeatChip } from './HeatChip.tsx'
 import { ItemIcon } from './ItemIcon.tsx'
 import { PriceCell } from './PriceCell.tsx'
 import { PriceStatus } from './PriceStatus.tsx'
@@ -148,7 +149,7 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
 
   const marginNote =
     marginPct !== null
-      ? `${percent(marginPct, 1, true)} after ${taxLabel(taxRate)} tax`
+      ? <><HeatChip marginPct={marginPct} /> after {taxLabel(taxRate)} tax</>
       : craft === null
         ? 'needs a craft cost'
         : buy === null

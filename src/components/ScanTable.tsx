@@ -1,7 +1,8 @@
 import { useMemo, type ReactNode } from 'react'
 import type { ItemId } from '../domain/types.ts'
-import { kina, percent, plural, signedKina, toneOf } from '../state/format.ts'
+import { kina, plural, signedKina, toneOf } from '../state/format.ts'
 import type { ScanKey, ScanRow, ScanSort } from '../state/scan.ts'
+import { HeatChip } from './HeatChip.tsx'
 import { ItemCell } from './ItemCell.tsx'
 import { Table, type Column } from './Table.tsx'
 
@@ -58,7 +59,7 @@ function scanColumns(onOpen: (itemId: ItemId) => void): Column<ScanRow, ScanKey>
       header: 'Margin %',
       numeric: true,
       sortable: true,
-      render: (row) => (row.marginPct === null ? null : <span className={toneOf(row.marginPct, 'fraction')}>{percent(row.marginPct, 1, true)}</span>),
+      render: (row) => <HeatChip marginPct={row.marginPct} />,
     },
   ]
 }
