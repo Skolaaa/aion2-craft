@@ -1314,6 +1314,107 @@ input[type='range'] {
   color: var(--muted);
 }
 
+.trend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.spark {
+  flex: none;
+  overflow: visible;
+}
+
+.spark-line {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.spark-dot {
+  fill: var(--gold);
+}
+
+.spark-open {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.spark-open:hover .spark-line {
+  stroke: var(--gold-hi);
+}
+
+.spark-open:hover .spark-dot {
+  fill: var(--gold-hi);
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  font: 400 10px / 1 var(--mono);
+  fill: var(--muted);
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.chart-wait {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 560 / 220;
+}
+
+.chart-rules line {
+  stroke: var(--rule);
+}
+
+/* A label sits over the band or a line now and then, so the surface colour halos it. */
+.chart-rules text {
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.chart-band {
+  fill: var(--gold);
+  fill-opacity: 0.12;
+}
+
+.chart-avg {
+  fill: none;
+  stroke: var(--muted);
+}
+
+.chart-low {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-dot {
+  fill: var(--gold);
+}
+
+.chart-hair {
+  stroke: var(--text);
+  stroke-opacity: 0.4;
+}
+
+.chart-dates line {
+  stroke: var(--rule-2);
+}
+
 .hidden-note {
   display: flex;
   flex-wrap: wrap;
@@ -1742,5 +1843,10 @@ input[type='range'] {
     max-height: 85dvh;
     border-width: 1px 0 0;
     border-radius: 8px 8px 0 0;
+  }
+
+  /* The chart's box scales to 358 px here, so its labels are set to come out near 10 px. */
+  .chart {
+    font-size: 15px;
   }
 }

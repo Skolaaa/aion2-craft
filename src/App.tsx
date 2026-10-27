@@ -197,6 +197,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
             overrides={overrides}
             owned={owned}
             sources={sources}
+            surface={surface}
             link={link}
             onTarget={patchTarget}
             list={list}

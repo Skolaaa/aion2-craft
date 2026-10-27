@@ -125,6 +125,22 @@ listings it spans ("Market, across 3 listings of 15"), with "only 4 listed" when
 runs out. The buy figure does the same for the target at a quantity above one. The price
 status line adds one sentence when the ladder poll is stale against the prices.
 
+Price history: under the buy figure's note, a 120 by 24 px gold line of the lowest listing over
+seven days with a dot on the last point and "7 d: low, high" beside it, shown only when a listing
+exists. The line is a button. It opens the full chart in a popover titled with the item's name,
+560 px wide under the line on desktop and a bottom sheet on a phone. A segmented control picks
+the range, `7 days` in hourly buckets or `30 days` in six-hour ones; 90 days would show the same
+24 days the exchange holds today. The chart is one SVG, 560 by 220, scaled to the width: a band
+between each bucket's low and high in gold at 12%, the low line in gold over the avg line in muted
+ink, rules at round Kina values labelled inside the plot in mono, a date tick at each local
+midnight (every fifth at 30 days) and a dot on the last low. The pointer, a touch or the arrow
+keys on the focused chart select the nearest bucket by time. A hairline marks it and a readout
+line under the chart prints "Tue 27 Oct 12:00, low 499,999, avg 545,998, high 689,994, 17
+listings", or the one price when the bucket holds a single sample. The last bucket is selected on
+open. A summary line follows: "7 days: low 99,999 on 20 Oct, high 689,994 on 27 Oct, now 689,994",
+now being the last bucket's close. Dates and times are the player's local ones. Without history
+the surface says "No price history on aion2.exchange for this item yet."
+
 Source choice: under steps, a row whose item the plan could get more than one way carries a
 small segmented control under its note, `buy | craft`, plus `morph` when a Substance Morph
 exists, with the plan's pick selected. Choosing another way forces it for that item everywhere
