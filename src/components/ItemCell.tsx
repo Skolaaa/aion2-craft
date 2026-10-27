@@ -15,7 +15,7 @@ export function ItemCell({ item, meta, narrowMeta, depth, toggle, onOpen }: Prop
   const name = item?.name ?? 'Unknown item'
   const style = depth === undefined ? undefined : ({ '--depth': depth } as CSSProperties)
   return (
-    <div className={`item-cell ${depth === undefined ? '' : 'is-tree'}`} style={style}>
+    <div className={`item-cell ${depth === undefined ? '' : 'is-tree'}`} style={style} data-grade={item?.grade}>
       {depth !== undefined && (toggle ?? <span className="toggle-gap" />)}
       <ItemIcon item={item} />
       <div className="item-text">

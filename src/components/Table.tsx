@@ -17,6 +17,7 @@ interface Props<Row, Key extends string> {
   rows: readonly Row[]
   rowKey(row: Row): string
   rowTitle?(row: Row): string | undefined
+  rowClass?(row: Row): string | undefined
   onRowClick?(row: Row): void
   sort?: Sort<Key>
   onSort?(key: Key): void
@@ -30,7 +31,7 @@ const cellClass = (column: { numeric?: boolean; hideNarrow?: boolean }) =>
 const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const
 
 export function Table<Row, Key extends string>({
-  label, columns, rows, rowKey, rowTitle, onRowClick, sort, onSort, footer, empty,
+  label, columns, rows, rowKey, rowTitle, rowClass, onRowClick, sort, onSort, footer, empty,
 }: Props<Row, Key>) {
   return (
     <table className="table" aria-label={label}>
@@ -43,7 +44,7 @@ export function Table<Row, Key extends string>({
                 {column.sortable && onSort ? (
                   <button type="button" className={`sort ${active ? 'is-active' : ''}`} onClick={() => onSort(column.key)}>
                     {column.header}
-                    {active && sort && <Glyph name="chevron" className={sort.direction === 'asc' ? 'is-up' : undefined} />}
+                    {active && sort && <Glyph name="arrow" className={sort.direction === 'asc' ? 'is-up' : undefined} />}
                   </button>
                 ) : (
                   column.header
@@ -63,7 +64,7 @@ export function Table<Row, Key extends string>({
             <tr
               key={rowKey(row)}
               title={rowTitle?.(row)}
-              className={onRowClick ? 'is-clickable' : undefined}
+              className={[onRowClick ? 'is-clickable' : '', rowClass?.(row) ?? ''].filter(Boolean).join(' ') || undefined}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
             >
               {columns.map((column) => (

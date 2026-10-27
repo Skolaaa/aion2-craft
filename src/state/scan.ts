@@ -91,12 +91,19 @@ function compare(sort: ScanSort) {
   }
 }
 
+// counts holds the rows each profession would show under the same name filter; null counts them all.
 export function viewScan(rows: readonly ScanRow[], { profession, name, showHidden, sort }: ScanQuery) {
   const terms = termsOf(name)
-  const matching = rows.filter((row) => (profession === null || row.profession === profession) && matches(row.item.name, terms))
+  const named = rows.filter((row) => matches(row.item.name, terms))
+  const visible = (row: ScanRow) => showHidden || row.status === 'ready'
+  const counts = new Map<Profession | null, number>([[null, 0]])
+  for (const row of named.filter(visible)) {
+    counts.set(null, (counts.get(null) ?? 0) + 1)
+    if (row.profession) counts.set(row.profession, (counts.get(row.profession) ?? 0) + 1)
+  }
+  const matching = named.filter((row) => profession === null || row.profession === profession)
   const hidden = matching.filter((row) => row.status !== 'ready').length
-  const shown = showHidden ? matching : matching.filter((row) => row.status === 'ready')
-  return { rows: [...shown].sort(compare(sort)), hidden }
+  return { rows: matching.filter(visible).sort(compare(sort)), hidden, counts }
 }
 
 export function bestMargins(rows: readonly ScanRow[], count: number): ScanRow[] {

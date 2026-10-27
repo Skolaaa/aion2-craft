@@ -2,14 +2,14 @@ import { useMemo, type ReactNode } from 'react'
 import type { ItemId } from '../domain/types.ts'
 import { kina, plural, signedKina, toneOf } from '../state/format.ts'
 import type { ScanKey, ScanRow, ScanSort } from '../state/scan.ts'
+import { Glyph } from './Glyph.tsx'
 import { HeatChip } from './HeatChip.tsx'
 import { ItemCell } from './ItemCell.tsx'
 import { Table, type Column } from './Table.tsx'
 
 function needs({ verdict }: ScanRow) {
   if (verdict.kind === 'missing') return 'needs a price'
-  if (verdict.kind !== 'blocked') return null
-  return verdict.profession ? `needs ${verdict.profession} ${verdict.level}` : 'needs more mastery'
+  return verdict.kind === 'blocked' ? `needs mastery ${verdict.level}` : null
 }
 
 function rowTitle(row: ScanRow) {
@@ -24,19 +24,13 @@ function scanColumns(onOpen: (itemId: ItemId) => void): Column<ScanRow, ScanKey>
       key: 'item',
       header: 'Item',
       sortable: true,
-      render: (row) => {
-        const meta = [row.profession ?? 'Any profession', `level ${row.level}`, needs(row)].filter(Boolean).join(', ')
-        return (
-          <ItemCell
-            item={row.item}
-            meta={meta}
-            narrowMeta={[row.cost === null ? null : `cost ${kina(row.cost)}`, row.lowest === null ? 'no listing' : `lowest ${kina(row.lowest)}`]
-              .filter(Boolean)
-              .join(', ')}
-            onOpen={() => onOpen(row.item.id)}
-          />
-        )
-      },
+      render: (row) => (
+        <ItemCell
+          item={row.item}
+          meta={<span className="mono">{row.profession ?? 'Any profession'} {row.level}</span>}
+          onOpen={() => onOpen(row.item.id)}
+        />
+      ),
     },
     { key: 'cost', header: 'Craft cost', numeric: true, hideNarrow: true, sortable: true, render: (row) => (row.cost === null ? null : kina(row.cost)) },
     {
@@ -52,15 +46,13 @@ function scanColumns(onOpen: (itemId: ItemId) => void): Column<ScanRow, ScanKey>
       header: 'Margin',
       numeric: true,
       sortable: true,
-      render: (row) => (row.margin === null ? null : <span className={toneOf(row.margin, 'kina')}>{signedKina(row.margin)}</span>),
+      render: (row) => {
+        const reason = needs(row)
+        if (reason) return <span className="tag pill">{reason}</span>
+        return row.margin === null ? null : <span className={toneOf(row.margin, 'kina')}>{signedKina(row.margin)}</span>
+      },
     },
-    {
-      key: 'marginPct',
-      header: 'Margin %',
-      numeric: true,
-      sortable: true,
-      render: (row) => <HeatChip marginPct={row.marginPct} />,
-    },
+    { key: 'marginPct', header: 'Margin %', numeric: true, sortable: true, render: (row) => <HeatChip marginPct={row.marginPct} /> },
   ]
 }
 
@@ -76,16 +68,32 @@ interface Props {
 export function ScanTable({ label, rows, empty, onOpen, sort, onSort }: Props) {
   const columns = useMemo(() => scanColumns(onOpen), [onOpen])
   return (
-    <Table
-      label={label}
-      columns={columns}
-      rows={rows}
-      rowKey={(row) => String(row.item.id)}
-      rowTitle={rowTitle}
-      onRowClick={(row) => onOpen(row.item.id)}
-      sort={sort}
-      onSort={onSort}
-      empty={empty}
-    />
+    <>
+      {sort && onSort && (
+        <div className="sort-chips" role="group" aria-label="Sort by">
+          <span className="chip-key" aria-hidden="true">sort by</span>
+          {columns
+            .filter((column) => column.sortable && !column.hideNarrow)
+            .map(({ key, header }) => (
+              <button key={key} type="button" className="chip" aria-pressed={sort.key === key} onClick={() => onSort(key)}>
+                {header}
+                {sort.key === key && <Glyph name="arrow" className={sort.direction === 'asc' ? 'is-up' : undefined} />}
+              </button>
+            ))}
+        </div>
+      )}
+      <Table
+        label={label}
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => String(row.item.id)}
+        rowTitle={rowTitle}
+        rowClass={(row) => (row.status === 'ready' ? undefined : 'is-dim')}
+        onRowClick={(row) => onOpen(row.item.id)}
+        sort={sort}
+        onSort={onSort}
+        empty={empty}
+      />
+    </>
   )
 }
