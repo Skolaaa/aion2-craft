@@ -18,18 +18,7 @@ either closes a gap those tools have already filled, or widens that edge.
 - Depth-aware prices: a bulk buy follows the exchange's listing ladder for the units the player does not hold, and the row says how many listings it spans.
 - Per-component source choice: buy, craft or morph per part under steps, held per world, with what the choice costs over the cheapest way on the row.
 - Where to get it: each item in the buy table and under steps links to its AION2 Hub page, which lists where it is gathered, dropped, crafted or sold.
-
-## Now: make a plan shareable
-
-These are table stakes. Every competitor has them, and they are what turns one player's
-calculator into something a Legion passes around.
-
-### 4. Multi-craft list (M)
-
-Add several items to one list and get a single merged buy table, with owned stock shared
-across them. The planner already takes a quantity; the work is a basket in state, a merged
-`buyList`, and the Copy list text for several targets. A shareable basket extends the share
-link query in `src/state/shareLink.ts`.
+- Multi-craft list: several items on one per-world list, planned in one pass with stock spent once and bulk prices for the total, as one buy table, one Copy list text and a link that carries the list.
 
 ## Next: widen the edge
 

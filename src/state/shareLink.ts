@@ -1,9 +1,10 @@
-import type { ItemId } from '../domain/types.ts'
+import type { ItemId, Race } from '../domain/types.ts'
 import { resolveWorld, SIDE, type WorldDirectory, type WorldId } from '../market/worlds.ts'
 import { itemFor } from './craftables.ts'
-import { taxPercent } from './format.ts'
+import { plural, taxPercent } from './format.ts'
+import { hasRoom, type List } from './list.ts'
 import { parseSetup, PLAN_FLAGS, PROFESSIONS, settingsOf, type PlanFlag, type PlanSettings, type Setup } from './setup.ts'
-import { parseTarget, parseView, type Target, type View } from './target.ts'
+import { parseQuantity, parseTarget, parseView, type Target, type View } from './target.ts'
 
 /** The plan the address bar spells. Prices, owned counts and recent worlds stay out of it. */
 export interface PlanLink {
@@ -11,18 +12,23 @@ export interface PlanLink {
   view: View
   target: Target
   settings: PlanSettings
+  /** Written only when `view` is 'list', so an item link never carries the sender's list. */
+  list: List
 }
 
-/** Starting values for the three persistent slots, complete in every field. */
+/** Starting values for the three persistent slots, complete in every field, and the list for the world the link opens on. */
 export interface Seed {
   setup: Setup
   target: Target
   view: View
+  /** Null when the link names no list, so the recipient keeps their own. */
+  list: List | null
 }
 
 export type LinkNote =
   | { kind: 'world-unknown'; worldId: WorldId; shown: string }
   | { kind: 'item-unknown'; itemId: ItemId; side: string }
+  | { kind: 'list-unknown'; dropped: number; side: string }
 
 /** `seed: null` means the address carried no plan, so storage alone decides. */
 export interface Opened {
@@ -30,8 +36,9 @@ export interface Opened {
   notes: readonly LinkNote[]
 }
 
-interface Parsed extends Omit<PlanLink, 'worldId'> {
+interface Parsed extends Omit<PlanLink, 'worldId' | 'list'> {
   worldId: WorldId | null
+  list: List | null
 }
 
 // What an absent key means. Links outlive defaults in chat history, so this stays put when
@@ -44,15 +51,18 @@ const BASELINE: PlanSettings = {
   byproductCredit: false,
 }
 
-const KEY = { world: 'world', item: 'item', qty: 'qty', tax: 'tax', view: 'view' } as const
+const KEY = { world: 'world', item: 'item', qty: 'qty', tax: 'tax', view: 'view', list: 'list' } as const
 const FLAG_KEY: Record<PlanFlag, string> = { allowCraft: 'craft', allowMorph: 'morph', byproductCredit: 'credit' }
 const professionKey = (abbr: string) => abbr.toLowerCase()
 const KEYS = [...Object.values(KEY), ...Object.values(FLAG_KEY), ...PROFESSIONS.map(({ abbr }) => professionKey(abbr))]
 
 const ABSENT: Opened = { seed: null, notes: [] }
 
-/** The query for a plan, such as `?world=11304&item=110140013&qty=40&tl=60`. A key appears only off its baseline. */
-export function encodeLink({ worldId, view, target, settings }: PlanLink): string {
+/**
+ * The query for a plan, such as `?world=11304&item=110140013&qty=40&tl=60`. A key appears only off its baseline.
+ * A list link repeats `list=<itemId>x<qty>` per line, `x1` left off, so no value needs escaping.
+ */
+export function encodeLink({ worldId, view, target, settings, list }: PlanLink): string {
   const query = new URLSearchParams({ [KEY.world]: String(worldId) })
   if (target.itemId !== null) query.set(KEY.item, String(target.itemId))
   if (target.quantity !== 1) query.set(KEY.qty, String(target.quantity))
@@ -64,7 +74,35 @@ export function encodeLink({ worldId, view, target, settings }: PlanLink): strin
     if (settings[flag] !== BASELINE[flag]) query.set(FLAG_KEY[flag], settings[flag] ? '1' : '0')
   }
   if (view !== 'calculator') query.set(KEY.view, view)
+  if (view === 'list') for (const [itemId, quantity] of list) query.append(KEY.list, quantity === 1 ? String(itemId) : `${itemId}x${quantity}`)
   return `?${query}`
+}
+
+const LINE = /^(\d+)(?:x(\d+))?$/
+
+/** The `list` values as a map, or null when none is usable. A bad value is skipped and a repeated item keeps its first position. */
+function decodeList(values: readonly string[]): List | null {
+  const list = new Map<ItemId, number>()
+  for (const value of values) {
+    const match = LINE.exec(value)
+    if (!match) continue
+    const itemId = Number(match[1])
+    const quantity = parseQuantity(match[2] === undefined ? 1 : Number(match[2]))
+    if (quantity !== null && hasRoom(list, itemId)) list.set(itemId, quantity)
+  }
+  return list.size === 0 ? null : list
+}
+
+/** The list as `race` crafts it: each id remapped by name like `item`, with the count of lines that have no counterpart. */
+function fitList(race: Race, list: List): { list: List; dropped: number } {
+  const fitted = new Map<ItemId, number>()
+  let dropped = 0
+  for (const [itemId, quantity] of list) {
+    const mine = itemFor(race, itemId)
+    if (mine === null) dropped += 1
+    else fitted.set(mine, quantity)
+  }
+  return { list: fitted, dropped }
 }
 
 // The URL is spelled as the JSON storage holds, so parseSetup and parseTarget own the clamps.
@@ -88,7 +126,13 @@ function decode(search: string): Parsed | null {
   })
   const target = parseTarget({ itemId: whole(KEY.item), quantity: whole(KEY.qty) ?? 1 })
   if (setup === null || target === null) return null
-  return { worldId: whole(KEY.world), view: parseView(query.get(KEY.view)) ?? 'calculator', target, settings: settingsOf(setup) }
+  return {
+    worldId: whole(KEY.world),
+    view: parseView(query.get(KEY.view)) ?? 'calculator',
+    target,
+    settings: settingsOf(setup),
+    list: decodeList(query.getAll(KEY.list)),
+  }
 }
 
 /**
@@ -117,11 +161,19 @@ export function openLink(search: string, stored: Setup, directory: WorldDirector
     if (fitted === null) notes.push({ kind: 'item-unknown', itemId, side: SIDE[shown.race].name })
     itemId = fitted
   }
+  let { list } = link
+  if (shown && list !== null) {
+    const fitted = fitList(shown.race, list)
+    if (fitted.dropped > 0) notes.push({ kind: 'list-unknown', dropped: fitted.dropped, side: SIDE[shown.race].name })
+    list = fitted.list.size > 0 ? fitted.list : null
+  }
   return {
     seed: {
       setup: { ...stored, ...link.settings, world },
       target: { itemId, quantity: link.target.quantity },
-      view: link.view,
+      // A list view with nothing to show would present the recipient's own list as the sender's.
+      view: link.view === 'list' && list === null ? 'calculator' : link.view,
+      list,
     },
     notes,
   }
@@ -138,6 +190,11 @@ export function noteText(note: LinkNote): { title: string; body: string } {
       return {
         title: 'The link names an item this side cannot craft',
         body: `No ${note.side} recipe makes item ${note.itemId}, so no item is open. Search for it by name.`,
+      }
+    case 'list-unknown':
+      return {
+        title: 'The link names items this side cannot craft',
+        body: `${note.dropped} ${plural(note.dropped, 'item', 'items')} in its list ${plural(note.dropped, 'has', 'have')} no ${note.side} recipe and ${plural(note.dropped, 'is', 'are')} left out.`,
       }
   }
 }

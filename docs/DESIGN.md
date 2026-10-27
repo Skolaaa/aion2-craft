@@ -53,7 +53,7 @@ cells are split by the same rules and finials. Nothing else is ornamented.
 
 ```
 +----------------------------------------------------------------------------------------------+
-| CRAFT OR BUY  calculator  scanner | region EU | world Kaisinel [EL] | tax 5.0% | BS 100 TL 100 JC 100 AL 100 CK 100 | plan 3/3 |   * prices 21 min ago |
+| CRAFT OR BUY  calculator  list 3  scanner | region EU | world Kaisinel [EL] | tax 5.0% | BS 100 TL 100 JC 100 AL 100 CK 100 | plan 3/3 |   * prices 21 min ago |
 +----------------------------------------------------------------------------------------------+
 | item  [ Artisan's Splendent Orichalcum Helm ..................................... ]   /     |
 |                                                                                              |
@@ -90,8 +90,8 @@ setting in place (Arena's idea on Ledger's line):
   capture time, or the stale or missing warning, as text.
 - Copy link sits right of the freshness pill as a link glyph, and shows a check for two seconds
   after it copies. The address bar always holds the same link: world, item, quantity, mastery
-  off 100, tax off 5%, plan options off their defaults, and the scanner view. Prices and Have
-  counts stay in the browser. Opening a link never changes what the recipient has saved; a
+  off 100, tax off 5%, plan options off their defaults, the scanner view, and on the list view
+  the list itself. Prices and Have counts stay in the browser. Opening a link never changes what the recipient has saved; a
   setting is saved once they change it.
 - The settings button goes away. Everything it held is reachable from a chip.
 
@@ -130,6 +130,21 @@ costs over the cheapest way: "Craft, 4.1 attempts at 96.8%, yours, 1,230 Kina mo
 buying". A way the plan cannot use is disabled, with the reason on hover. The buy table stays
 a shopping list.
 
+List: a small `Add to list` button closes the answer controls after the quantity. It puts the
+open item on the list for this world at the shown quantity, then reads `In list` (which opens the
+list) or `Update list to 5` when the open quantity differs from the line's, and `List is full`
+disabled at 24 lines. The `list` view appears in the nav between calculator and scanner only once
+the list has a line or the view is open, with the count in the tab badge, so a player who never
+adds sees today's bar. The view is the calculator's anatomy for several items: a section title
+`Your list on Kaisinel`, one line saying the lines are planned together top to bottom, that what
+you hold is spent once, that bulk prices follow the total bought, and that a list item never
+feeds another (the list is what the player means to end up holding); then the member table (name
+in the grade colour opening the item in the calculator at its quantity, a quantity field, the
+cost, Remove, and Clear list once there are two), the list sentence over the same craft, buy and
+margin strip, and the `buy | steps` tabs over the merged plan, with Copy list heading its text
+`To craft on Kaisinel` and a line per member. No rates tab, since rates are per item. The open
+item stays separate from the list, so the calculator reads the same whether or not a list exists.
+
 Where to get it: in the buy table and under steps, a muted external-link glyph follows each
 item name and opens the item's AION2 Hub page in a new tab. The page lists where the item is
 gathered, dropped, crafted or sold. The glyph turns gold on hover and focus, and its hover text
@@ -163,7 +178,10 @@ opens no item. Each shows a notice with Dismiss, once, above the page.
 Mobile (under 640 px): the status line wraps to two rows (chips, then the mastery strip) with the
 freshness pill and Copy link on a short third row at the right, the
 figures stack, the buy table collapses to item plus subtotal with the math as a sub-line, the
-picker and popovers become bottom sheets, the drawer takes the full width.
+picker and popovers become bottom sheets, the drawer takes the full width. The nav's list count
+is hidden: at 390 px the wordmark (130 px) and the three views (212 px) fill the row, and a count
+would wrap the nav under it. The list's member table keeps the name, the quantity field and
+Remove, with the cost on the name's sub-line.
 
 ## Principles
 - Every number in the header says what it is and opens its own setting.

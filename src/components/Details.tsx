@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
-import type { Acquisition, ItemId, Method, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
+import type { Acquisition, ItemId, Method, PlanResult, Recipe, StepPlan, TargetPlan } from '../domain/types.ts'
 import {
   buyList, childStep, depthNote, estimateGap, extraCost, stepCount, stepSummary, successNote, type BuyLine, type BuyList,
 } from '../state/answer.ts'
@@ -40,27 +40,30 @@ interface Props {
   link: string
   tab: DetailTab
   onTab(tab: DetailTab): void
+  /** The target whose rates to show. The tab is offered only when given, since rates are per item. */
+  rates?: TargetPlan
 }
 
-export function Details({ plan, planning, overrides, owned, sources, link, tab, onTab }: Props) {
+export function Details({ plan, planning, overrides, owned, sources, link, tab, onTab, rates }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const list = buyList(plan)
-  const counts: Record<DetailTab, number | null> = { buy: list.lines.length, steps: stepCount(plan.root), rates: null }
+  const tabs = rates ? TABS : TABS.filter(({ id }) => id !== 'rates')
+  const counts: Record<DetailTab, number | null> = { buy: list.lines.length, steps: stepCount(plan), rates: null }
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0
-    const target = event.key === 'Home' ? 0 : event.key === 'End' ? TABS.length - 1 : step ? (index + step + TABS.length) % TABS.length : null
+    const target = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : step ? (index + step + tabs.length) % tabs.length : null
     if (target === null) return
     event.preventDefault()
-    onTab(TABS[target].id)
+    onTab(tabs[target].id)
     tabRefs.current[target]?.focus()
   }
 
   return (
     <section className="details" aria-label="Details">
       <div className="tabs" role="tablist" aria-label="Details">
-        {TABS.map(({ id, label, title }, index) => (
+        {tabs.map(({ id, label, title }, index) => (
           <button
             key={id}
             ref={(element) => {
@@ -85,9 +88,9 @@ export function Details({ plan, planning, overrides, owned, sources, link, tab, 
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
         {tab === 'buy' && <WhatToBuy plan={plan} list={list} planning={planning} overrides={overrides} owned={owned} link={link} />}
         {tab === 'steps' && (
-          <HowItIsMade key={plan.target.itemId} plan={plan} credit={list.credit} planning={planning} overrides={overrides} sources={sources} />
+          <HowItIsMade key={targetsKey(plan)} plan={plan} credit={list.credit} planning={planning} overrides={overrides} sources={sources} />
         )}
-        {tab === 'rates' && <Rates plan={plan} planning={planning} />}
+        {tab === 'rates' && rates && <Rates target={rates} planning={planning} />}
       </div>
     </section>
   )
@@ -252,6 +255,11 @@ interface LadderRow {
   acquisition: Acquisition
 }
 
+// Adding or removing a target resets which rows are open; a quantity edit keeps them.
+const targetsKey = (plan: PlanResult) => plan.targets.map((target) => target.itemId).join()
+const rootKey = (target: TargetPlan) => `target:${target.itemId}`
+
+/** One depth-0 row per target, each expandable into its tree. */
 function flatten(plan: PlanResult, open: ReadonlySet<string>): LadderRow[] {
   const rows: LadderRow[] = []
   const walk = (step: StepPlan, key: string, depth: number) => {
@@ -262,10 +270,13 @@ function flatten(plan: PlanResult, open: ReadonlySet<string>): LadderRow[] {
       if (child && open.has(lineKey)) walk(child, lineKey, depth + 1)
     }
   }
-  const { root } = plan
-  const made: Acquisition = { method: 'craft', unit: plan.unitCost, step: root }
-  rows.push({ key: 'root', depth: 0, itemId: root.itemId, expected: root.outputs, owned: 0, subtotal: plan.cost, acquisition: made })
-  if (open.has('root')) walk(root, 'root', 1)
+  for (const target of plan.targets) {
+    const { root } = target
+    const key = rootKey(target)
+    const made: Acquisition = { method: 'craft', unit: target.unitCost, step: root }
+    rows.push({ key, depth: 0, itemId: root.itemId, expected: root.outputs, owned: 0, subtotal: target.cost, acquisition: made })
+    if (open.has(key)) walk(root, key, 1)
+  }
   return rows
 }
 
@@ -293,7 +304,8 @@ interface HowProps {
 
 function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
   const { catalog } = planning
-  const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(['root']))
+  // One target opens on its own; a list starts folded so its rows read as the list.
+  const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(plan.targets.length === 1 ? [rootKey(plan.targets[0])] : []))
   const rows = flatten(plan, open)
   const recipeOf = (step: StepPlan) => catalog.recipes.get(step.recipeId)
 
@@ -406,12 +418,12 @@ interface RateRow {
   note: string
 }
 
-function Rates({ plan, planning }: { plan: PlanResult; planning: Planning }) {
+function Rates({ target, planning }: { target: TargetPlan; planning: Planning }) {
   const now = useNow()
   const { catalog, mastery, world } = planning
-  const { root } = plan
+  const { root } = target
   const recipe = catalog.recipes.get(root.recipeId)
-  const estimate = useExchangeEstimate(plan.target.itemId, world.id)
+  const estimate = useExchangeEstimate(target.itemId, world.id)
   const blocked = root.successRate === 0
   const profession = recipe?.profession ?? null
   const rows: RateRow[] = []
@@ -456,7 +468,7 @@ function Rates({ plan, planning }: { plan: PlanResult; planning: Planning }) {
   }
 
   if (estimate !== null) {
-    const gap = estimateGap(plan, estimate.cost)
+    const gap = estimateGap(target, estimate.cost)
     const compare =
       gap === null || Math.round(gap) === 0
         ? ''

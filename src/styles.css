@@ -1342,6 +1342,12 @@ input[type='range'] {
   color: var(--muted);
 }
 
+.list-lines .input-number {
+  width: 72px;
+  min-height: 28px;
+  padding: 0 6px;
+}
+
 .share {
   display: inline-block;
   width: 64px;
@@ -1514,6 +1520,21 @@ input[type='range'] {
   }
 }
 
+/* With the list view in the nav, the one-row status line only fits at the page's 1280 px cap with the mastery chip collapsed. */
+@media (min-width: 1280px) {
+  .top-bar-inner:has(.nav-item[data-view='list']) .mastery-chip > .chip-key {
+    display: inline;
+  }
+
+  .top-bar-inner:has(.nav-item[data-view='list']) .mastery-pairs {
+    display: none;
+  }
+
+  .top-bar-inner:has(.nav-item[data-view='list']) .mastery-collapsed {
+    display: inline;
+  }
+}
+
 @media (min-width: 640px) and (max-width: 1279.98px) {
   .top-bar-inner {
     flex-wrap: wrap;
@@ -1603,6 +1624,11 @@ input[type='range'] {
 
   .nav-item {
     padding: 0 var(--space-2);
+  }
+
+  /* Three views and the wordmark fill 386 px at 390 px; a count would wrap the nav to its own row. */
+  .nav .tab-count {
+    display: none;
   }
 
   .context {

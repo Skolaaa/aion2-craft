@@ -1,9 +1,7 @@
 import type { Item, PlanResult, Profession } from '../domain/types.ts'
-import { answerOf, type Verdict } from './answer.ts'
-import { planOne, type Planning } from './planning.ts'
+import { answerOf, targetStatus, type TargetStatus, type Verdict } from './answer.ts'
+import { planWanted, type Planning } from './planning.ts'
 import { matches, termsOf } from './search.ts'
-
-export type ScanStatus = 'ready' | 'unpriced' | 'locked'
 
 export interface ScanRow {
   item: Item
@@ -11,7 +9,7 @@ export interface ScanRow {
   level: number
   plan: PlanResult
   verdict: Verdict
-  status: ScanStatus
+  status: TargetStatus
   cost: number | null
   lowest: number | null
   sold: number | null
@@ -20,15 +18,13 @@ export interface ScanRow {
   marginPct: number | null
 }
 
-const statusOf = (verdict: Verdict): ScanStatus =>
-  verdict.kind === 'blocked' ? 'locked' : verdict.kind === 'missing' ? 'unpriced' : 'ready'
-
 export function scanCraftables(planning: Planning): ScanRow[] {
   const rows: ScanRow[] = []
   for (const craftable of planning.index.craftables) {
-    const plan = planOne(planning, craftable.item.id, 1)
+    const plan = planWanted(planning, new Map([[craftable.item.id, 1]]))
     if (!plan) continue
-    const recipe = planning.catalog.recipes.get(plan.root.recipeId)
+    const [target] = plan.targets
+    const recipe = planning.catalog.recipes.get(target.root.recipeId)
     const { verdict } = answerOf(plan, planning)
     rows.push({
       item: craftable.item,
@@ -36,13 +32,13 @@ export function scanCraftables(planning: Planning): ScanRow[] {
       level: recipe?.masteryLevel ?? craftable.level,
       plan,
       verdict,
-      status: statusOf(verdict),
+      status: targetStatus(target),
       cost: Number.isFinite(plan.cost) ? plan.cost : null,
-      lowest: plan.market?.lowest ?? null,
-      sold: plan.market?.soldAvg ?? null,
-      listings: plan.market?.listings ?? 0,
-      margin: plan.margin,
-      marginPct: plan.marginPct,
+      lowest: target.market?.lowest ?? null,
+      sold: target.market?.soldAvg ?? null,
+      listings: target.market?.listings ?? 0,
+      margin: target.margin,
+      marginPct: target.marginPct,
     })
   }
   return rows

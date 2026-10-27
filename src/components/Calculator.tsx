@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { ItemId } from '../domain/types.ts'
-import { bulkBuys } from '../state/answer.ts'
 import { taxLabel } from '../state/format.ts'
-import { planOne, type Planning } from '../state/planning.ts'
+import type { ListState } from '../state/list.ts'
+import { planWanted, type Planning } from '../state/planning.ts'
 import { bestMargins } from '../state/scan.ts'
-import type { Target } from '../state/target.ts'
+import type { Target, View } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { OwnedStock } from '../state/useOwned.ts'
 import type { Sources } from '../state/useSources.ts'
 import type { Freshness } from '../state/useFreshness.ts'
+import { useBulkLadders } from '../state/useLadders.ts'
 import { useScan } from '../state/useScan.ts'
+import { AddToList } from './AddToList.tsx'
 import { AnswerPanel } from './AnswerPanel.tsx'
 import { Details, type DetailTab } from './Details.tsx'
 import { ScanTable } from './ScanTable.tsx'
@@ -25,21 +27,20 @@ interface Props {
   sources: Sources
   link: string
   onTarget(change: Partial<Target>): void
+  list: ListState
+  onView(view: View): void
 }
 
-export function Calculator({ planning, freshness, requestLadders, target, overrides, owned, sources, link, onTarget }: Props) {
+export function Calculator({ planning, freshness, requestLadders, target, overrides, owned, sources, link, onTarget, list, onView }: Props) {
   const { index } = planning
   const [tab, setTab] = useState<DetailTab>('buy')
   const craftable = target.itemId === null ? null : (index.byId.get(target.itemId) ?? null)
   const plan = useMemo(
-    () => (craftable ? planOne(planning, craftable.item.id, target.quantity, owned.counts, sources.choices) : null),
+    () => (craftable ? planWanted(planning, new Map([[craftable.item.id, target.quantity]]), owned.counts, sources.choices) : null),
     [planning, craftable, target.quantity, owned.counts, sources.choices],
   )
 
-  // Items the plan buys in bulk get their depth ladder; the plan then re-runs with it and may ask for more.
-  useEffect(() => {
-    if (plan && !freshness.refreshing) requestLadders(bulkBuys(plan, planning.prices))
-  }, [plan, planning.prices, freshness.refreshing, requestLadders])
+  useBulkLadders(plan, planning.prices, freshness, requestLadders)
 
   return (
     <>
@@ -56,9 +57,20 @@ export function Calculator({ planning, freshness, requestLadders, target, overri
             quantity={target.quantity}
             overrides={overrides}
             onTarget={onTarget}
+            after={plan && <AddToList itemId={craftable.item.id} quantity={target.quantity} list={list} onView={onView} />}
           />
           {plan && !freshness.pending && (
-            <Details plan={plan} planning={planning} overrides={overrides} owned={owned} sources={sources} link={link} tab={tab} onTab={setTab} />
+            <Details
+              plan={plan}
+              planning={planning}
+              overrides={overrides}
+              owned={owned}
+              sources={sources}
+              link={link}
+              tab={tab}
+              onTab={setTab}
+              rates={plan.targets[0]}
+            />
           )}
         </>
       )}

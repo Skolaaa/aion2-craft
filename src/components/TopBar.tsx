@@ -1,17 +1,12 @@
 import type { ReactNode } from 'react'
 import type { StatusChips } from '../state/chips.ts'
 import { SETTINGS, settingKey, type Setting } from '../state/openSetting.ts'
-import type { View } from '../state/target.ts'
+import { VIEWS, type View } from '../state/target.ts'
 import { useClipboard } from '../state/useClipboard.ts'
 import type { Freshness } from '../state/useFreshness.ts'
 import { Button } from './Button.tsx'
 import { Glyph } from './Glyph.tsx'
 import { FreshnessPill } from './PriceStatus.tsx'
-
-const VIEWS: readonly { id: View; label: string }[] = [
-  { id: 'calculator', label: 'calculator' },
-  { id: 'scanner', label: 'scanner' },
-]
 
 interface Context {
   chips: StatusChips
@@ -21,23 +16,35 @@ interface Context {
   link: string
 }
 
+interface Props {
+  view: View
+  onView?(view: View): void
+  context?: Context
+  /** Lines on the list. The list view is offered once it has one, or while it is open. */
+  listCount?: number
+}
+
 /** Without `onView` the views show but cannot be switched, as while a link waits for the world list. */
-export function TopBar({ view, onView, context }: { view: View; onView?(view: View): void; context?: Context }) {
+export function TopBar({ view, onView, context, listCount = 0 }: Props) {
+  const views = VIEWS.filter((id) => id !== 'list' || listCount > 0 || view === 'list')
   return (
     <header className="top-bar">
       <div className="top-bar-inner">
         <p className="brand">Craft or buy</p>
         <nav className="nav" aria-label="Views">
-          {VIEWS.map(({ id, label }) => (
+          {views.map((id) => (
             <button
               key={id}
               type="button"
               className="nav-item"
+              data-view={id}
               aria-current={view === id ? 'page' : undefined}
+              aria-label={id === 'list' && listCount > 0 ? `list, ${listCount} ${listCount === 1 ? 'item' : 'items'}` : undefined}
               disabled={onView === undefined}
               onClick={() => onView?.(id)}
             >
-              {label}
+              {id}
+              {id === 'list' && listCount > 0 && <span className="tab-count" aria-hidden="true">{listCount}</span>}
             </button>
           ))}
         </nav>

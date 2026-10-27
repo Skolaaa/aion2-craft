@@ -1,7 +1,8 @@
 import { stepRates, type StepRates } from './rates.ts'
-import type {
-  Acquisition, Alternative, Catalog, Forced, ItemId, Mastery, Method, Owned, PlanInput, PlanOptions, PlanResult, Price, PriceBook, Recipe, RecipeId,
-  StepPlan,
+import {
+  isNonEmpty,
+  type Acquisition, type Alternative, type Catalog, type Forced, type ItemId, type Mastery, type Method, type Owned, type PlanInput, type PlanOptions,
+  type PlanResult, type Price, type PriceBook, type Recipe, type RecipeId, type StepPlan, type TargetPlan, type Wanted,
 } from './types.ts'
 
 interface Route {
@@ -53,7 +54,8 @@ const NO_CHOICES: Forced = new Map()
 type Demand = ReadonlyMap<ItemId, number>
 
 interface Pass {
-  root: StepPlan | null
+  /** One tree per wanted item, in order, or null when some wanted item has no recipe. */
+  roots: StepPlan[] | null
   alternatives: PlanResult['alternatives']
 }
 
@@ -165,11 +167,16 @@ function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices:
     return { ...step, attempts, materials, byproducts, cost }
   }
 
-  return function planRoot(itemId: ItemId, quantity: number): Pass {
-    const routes = (world.byProduct.get(itemId) ?? []).map((recipe) => ({ recipe, wanted: itemId }))
-    if (routes.length === 0) return { root: null, alternatives }
-    const best = cheapest(routes.map((route) => ({ route, unit: routeUnit(route) })))
-    return { root: buildStep(best.route, quantity), alternatives }
+  // Every root shares the stock and the choices, so a material two targets need draws one budget.
+  return function planRoots(targets: Wanted): Pass {
+    const roots: StepPlan[] = []
+    for (const [itemId, quantity] of targets) {
+      const routes = (world.byProduct.get(itemId) ?? []).map((recipe) => ({ recipe, wanted: itemId }))
+      if (routes.length === 0) return { roots: null, alternatives }
+      const best = cheapest(routes.map((route) => ({ route, unit: routeUnit(route) })))
+      roots.push(buildStep(best.route, quantity))
+    }
+    return { roots, alternatives }
   }
 }
 
@@ -198,14 +205,14 @@ function collectLeaves(step: StepPlan, leaves: Leaves) {
   }
 }
 
-function leavesOf(root: StepPlan): Leaves {
+function leavesOf(roots: readonly StepPlan[]): Leaves {
   const leaves: Leaves = { shopping: new Map(), missing: new Set(), blocked: new Set() }
-  collectLeaves(root, leaves)
+  for (const root of roots) collectLeaves(root, leaves)
   return leaves
 }
 
-const demandOf = (root: StepPlan): Demand =>
-  new Map([...leavesOf(root).shopping.values()].map(({ itemId, expected, owned }) => [itemId, expected - owned]))
+const demandOf = (roots: readonly StepPlan[]): Demand =>
+  new Map([...leavesOf(roots).shopping.values()].map(({ itemId, expected, owned }) => [itemId, expected - owned]))
 
 const sameDemand = (a: Demand, b: Demand) => a.size === b.size && [...a].every(([itemId, units]) => Math.abs((b.get(itemId) ?? 0) - units) < 1e-9)
 
@@ -221,8 +228,8 @@ function settle(prices: PriceBook, plan: (demand: Demand) => Pass): Pass {
     })
   let demand: Demand = new Map()
   let pass = plan(demand)
-  for (let count = 1; pass.root && count < MAX_PASSES; count++) {
-    const next = demandOf(pass.root)
+  for (let count = 1; pass.roots && count < MAX_PASSES; count++) {
+    const next = demandOf(pass.roots)
     // Another pass changes nothing unless a ladder priced the old demand or would price the new one.
     if (sameDemand(next, demand) || !(laddered(next) || laddered(demand))) break
     demand = next
@@ -231,31 +238,42 @@ function settle(prices: PriceBook, plan: (demand: Demand) => Pass): Pass {
   return pass
 }
 
-export function planCraft({ target, mastery, options, world, prices, owned = NO_STOCK, forced = NO_CHOICES }: PlanInput): PlanResult | null {
-  const { root, alternatives } = settle(prices, (demand) =>
-    planner(world, mastery, options, prices, owned, forced, demand)(target.itemId, target.quantity),
-  )
-  if (!root) return null
-
-  const quote = prices.quote(target.itemId, target.quantity)
+function targetPlanOf(itemId: ItemId, quantity: number, root: StepPlan, prices: PriceBook, options: PlanOptions): TargetPlan {
+  const quote = prices.quote(itemId, quantity)
   const market =
-    quote.kind === 'market' ? { lowest: quote.lowest, soldAvg: quote.soldAvg, listings: quote.listings, cost: quote.unit * target.quantity, depth: quote.depth }
-    : quote.kind === 'manual' ? { lowest: quote.unit, soldAvg: null, listings: 0, cost: quote.unit * target.quantity, depth: null }
+    quote.kind === 'market' ? { lowest: quote.lowest, soldAvg: quote.soldAvg, listings: quote.listings, cost: quote.unit * quantity, depth: quote.depth }
+    : quote.kind === 'manual' ? { lowest: quote.unit, soldAvg: null, listings: 0, cost: quote.unit * quantity, depth: null }
     : null
-  const margin = market && Number.isFinite(root.cost)
-    ? market.lowest * (1 - options.taxRate) * target.quantity - root.cost
-    : null
-
-  const leaves = leavesOf(root)
-
+  const margin = market && Number.isFinite(root.cost) ? market.lowest * (1 - options.taxRate) * quantity - root.cost : null
   return {
-    target,
+    itemId,
+    quantity,
     root,
     cost: root.cost,
-    unitCost: root.cost / target.quantity,
+    unitCost: root.cost / quantity,
     market,
     margin,
     marginPct: margin !== null && root.cost > 0 ? margin / root.cost : null,
+  }
+}
+
+/**
+ * Plans everything in `wanted` as one purchase. Null when `wanted` is empty or some item has no recipe.
+ *
+ * Order only decides which target is shown drawing on the player's stock first. The total does not change
+ * with it, because stock units are interchangeable and every price is quoted for the total demand.
+ */
+export function planCraft({ wanted, mastery, options, world, prices, owned = NO_STOCK, forced = NO_CHOICES }: PlanInput): PlanResult | null {
+  const { roots, alternatives } = settle(prices, (demand) => planner(world, mastery, options, prices, owned, forced, demand)(wanted))
+  if (!roots) return null
+  const targets = [...wanted].map(([itemId, quantity], at) => targetPlanOf(itemId, quantity, roots[at], prices, options))
+  if (!isNonEmpty(targets)) return null
+
+  const leaves = leavesOf(roots)
+
+  return {
+    targets,
+    cost: sum(targets, (target) => target.cost),
     shopping: [...leaves.shopping.values()].sort((a, b) => b.subtotal - a.subtotal),
     missing: [...leaves.missing],
     blocked: [...leaves.blocked],

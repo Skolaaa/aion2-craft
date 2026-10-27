@@ -25,18 +25,22 @@ export const parseEntries = <T>(parse: Parse<T>): Parse<Entries<T>> => (raw) => 
   return entries
 }
 
-export function useItemMap<T>(key: string, parse: Parse<T>): ItemMap<T> {
+/** `entries` with `itemId` set to `value` where it already sits, appended when new, or removed when `value` is null. */
+export function withEntry<T>(entries: Entries<T>, itemId: ItemId, value: T | null): Entries<T> {
+  const at = entries.findIndex(([id]) => id === itemId)
+  if (value === null) return at === -1 ? entries : entries.filter(([id]) => id !== itemId)
+  if (at === -1) return [...entries, [itemId, value]]
+  return entries.map((entry, index) => (index === at ? [itemId, value] : entry))
+}
+
+/** A `seed` shows in place of the stored map until the player edits an entry, which stores the whole map, as the slot is one value. */
+export function useItemMap<T>(key: string, parse: Parse<T>, seed?: ReadonlyMap<ItemId, T>): ItemMap<T> {
   const parseAll = useMemo(() => parseEntries(parse), [parse])
-  const [entries, update] = usePersistentState<Entries<T>>(key, NONE, parseAll)
+  const [entries, update] = usePersistentState<Entries<T>>(key, NONE, parseAll, seed && [...seed])
   const values = useMemo(() => new Map(entries), [entries])
   return {
     values,
-    save: (itemId, value) =>
-      update((previous) => {
-        const others = previous.filter(([id]) => id !== itemId)
-        const kept = value === null ? null : parse(value)
-        return kept === null ? others : [...others, [itemId, kept]]
-      }),
+    save: (itemId, value) => update((previous) => withEntry(previous, itemId, value === null ? null : parse(value))),
     resetAll: () => update(() => NONE),
   }
 }

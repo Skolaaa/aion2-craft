@@ -34,8 +34,8 @@ for (const { target_key: target } of targets) {
     { lowest: m.unit_price, listings: 1, soldAvg: null, capturedAt: oracle.latest.captured_at },
   ])))
   const prices = makePriceBook({ manual: new Map(), market, npc: new Map() })
-  const plan = planCraft({ target: { itemId: target, quantity: 1 }, mastery: MASTERY, options: BUY_ONLY, world, prices })
-  const ours = stepsOf(plan.root)
+  const plan = planCraft({ wanted: new Map([[target, 1]]), mastery: MASTERY, options: BUY_ONLY, world, prices })
+  const ours = stepsOf(plan.targets[0].root)
   const attempts = oracle.steps.map((s) => [ours.get(s.recipe_id)?.attempts ?? NaN, s.attempts])
   const costOff = off(plan.cost, oracle.latest.cost)
   const bad = !(costOff <= TOLERANCE) || attempts.some(([a, b]) => !(off(a, b) <= TOLERANCE))
