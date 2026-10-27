@@ -115,7 +115,7 @@ function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices:
       const expected = attempts * ing.count
       const owned = takeStock(ing.itemId, expected)
       const rest = expected - owned
-      if (rest <= 0) return { itemId: ing.itemId, perAttempt: ing.count, expected, owned, acquisition: { method: 'owned' } as const, subtotal: 0 }
+      if (rest <= 1e-9) return { itemId: ing.itemId, perAttempt: ing.count, expected, owned, acquisition: { method: 'owned' } as const, subtotal: 0 }
       const acquisition = acquire(ing.itemId, rest)
       const subtotal = acquisition.method === 'none' ? Infinity : rest * acquisition.unit
       return { itemId: ing.itemId, perAttempt: ing.count, expected, owned, acquisition, subtotal }

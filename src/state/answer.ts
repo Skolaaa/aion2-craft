@@ -203,5 +203,8 @@ export function buyList(plan: PlanResult): BuyList {
 
 export const stepCount = (root: StepPlan): number => [...stepsOf(root)].length
 
+/** Whether any line of the plan draws on what the player holds. */
+export const usesStock = (root: StepPlan): boolean => [...stepsOf(root)].some((step) => step.materials.some((line) => line.owned > 0))
+
 export const estimateGap = (plan: PlanResult, theirs: number): number | null =>
   Number.isFinite(plan.unitCost) ? plan.unitCost - theirs : null
