@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ItemId } from '../domain/types.ts'
 import { bulkBuys } from '../state/answer.ts'
 import { taxLabel } from '../state/format.ts'
-import { planOne, type Planning } from '../state/planning.ts'
+import { planWanted, type Planning } from '../state/planning.ts'
 import { bestMargins } from '../state/scan.ts'
 import type { Target } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
@@ -32,7 +32,7 @@ export function Calculator({ planning, freshness, requestLadders, target, overri
   const [tab, setTab] = useState<DetailTab>('buy')
   const craftable = target.itemId === null ? null : (index.byId.get(target.itemId) ?? null)
   const plan = useMemo(
-    () => (craftable ? planOne(planning, craftable.item.id, target.quantity, owned.counts, sources.choices) : null),
+    () => (craftable ? planWanted(planning, new Map([[craftable.item.id, target.quantity]]), owned.counts, sources.choices) : null),
     [planning, craftable, target.quantity, owned.counts, sources.choices],
   )
 

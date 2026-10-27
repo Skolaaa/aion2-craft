@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { parseEntries } from './useItemMap.ts'
+import { parseEntries, withEntry } from './useItemMap.ts'
 import { parsePrice } from './useOverrides.ts'
 import { MAX_OWNED, parseCount } from './useOwned.ts'
 import { parseMethod } from './useSources.ts'
+
+describe('withEntry', () => {
+  it('keeps an edited entry in place, appends a new one, and removes on null', () => {
+    const entries: [number, number][] = [[1, 3], [2, 5]]
+    expect(withEntry(entries, 1, 7)).toEqual([[1, 7], [2, 5]])
+    expect(withEntry(entries, 3, 1)).toEqual([[1, 3], [2, 5], [3, 1]])
+    expect(withEntry(entries, 1, null)).toEqual([[2, 5]])
+    expect(withEntry(entries, 9, null)).toBe(entries)
+  })
+})
 
 describe('parseEntries', () => {
   it('keeps the pairs whose value the parser accepts and rejects anything but a list', () => {

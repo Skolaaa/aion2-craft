@@ -4,6 +4,7 @@ import type { ItemId, Mastery } from '../domain/types.ts'
 import { serverDirectory } from '../market/worlds.fixture.ts'
 import { resolveWorld, type World, type WorldDirectory, type WorldId } from '../market/worlds.ts'
 import { craftIndexFor } from './craftables.ts'
+import { MAX_LINES } from './list.ts'
 import { DEFAULT_SETUP, settingsOf, setWorld, type PlanSettings, type Setup } from './setup.ts'
 import { encodeLink, openLink, type LinkNote, type Opened, type PlanLink, type Seed } from './shareLink.ts'
 
@@ -29,7 +30,7 @@ const mine: Setup = {
   byproductCredit: true,
 }
 
-const plain: PlanLink = { worldId: 11304, view: 'calculator', target: { itemId: GREATSWORD, quantity: 1 }, settings: settingsOf(DEFAULT_SETUP) }
+const plain: PlanLink = { worldId: 11304, view: 'calculator', target: { itemId: GREATSWORD, quantity: 1 }, settings: settingsOf(DEFAULT_SETUP), list: new Map() }
 
 const withSettings = (patch: Partial<PlanSettings>): PlanLink => ({ ...plain, settings: { ...plain.settings, ...patch } })
 const withMastery = (patch: Partial<Mastery>) => withSettings({ mastery: { ...plain.settings.mastery, ...patch } })
@@ -45,7 +46,11 @@ const offBaseline: PlanLink = {
     allowMorph: false,
     byproductCredit: true,
   },
+  list: new Map(),
 }
+
+const session = new Map([[GREATSWORD, 3], [INGOT, 10], [DRAGON_LORD, 1]])
+const onList: PlanLink = { ...plain, view: 'list', list: session }
 
 const seedOf = (opened: Opened | 'waiting'): Seed => {
   if (opened === 'waiting' || opened.seed === null) throw new Error(`expected a seed, got ${JSON.stringify(opened)}`)
@@ -79,6 +84,12 @@ describe('encodeLink', () => {
     expect(keys).toHaveLength(13)
     expect(new Set(keys).size).toBe(keys.length)
   })
+
+  it('repeats a list key per line on the list view only, with x1 left off', () => {
+    expect(encodeLink(onList)).toBe(`?world=11304&item=110140013&view=list&list=${GREATSWORD}x3&list=${INGOT}x10&list=${DRAGON_LORD}`)
+    expect(encodeLink({ ...onList, view: 'calculator' })).toBe('?world=11304&item=110140013')
+    expect(encodeLink({ ...onList, view: 'scanner' })).toBe('?world=11304&item=110140013&view=scanner')
+  })
 })
 
 describe('openLink', () => {
@@ -97,6 +108,47 @@ describe('openLink', () => {
     expect(settingsOf(seed.setup)).toEqual(settingsOf(DEFAULT_SETUP))
     expect(seed.target).toEqual({ itemId: null, quantity: 1 })
     expect(seed.view).toBe('calculator')
+    expect(seed.list).toBeNull()
+  })
+
+  describe('with a list', () => {
+    const listOf = (search: string, stored = mine, directory: WorldDirectory | null = serverDirectory) => {
+      const opened = openLink(search, stored, directory)
+      const seed = seedOf(opened)
+      return { list: seed.list === null ? null : [...seed.list], view: seed.view, notes: opened !== 'waiting' ? opened.notes : [] }
+    }
+
+    it('opens the list the link was made from, in order', () => {
+      expect(listOf(encodeLink(onList))).toEqual({ list: [[GREATSWORD, 3], [INGOT, 10], [DRAGON_LORD, 1]], view: 'list', notes: [] })
+    })
+
+    it('fits each line to the side it opens on, and says how many have no counterpart', () => {
+      expect(listOf(`?world=12304&view=list&list=${GREATSWORD}x3&list=${INGOT}x10&list=${DRAGON_LORD}`)).toEqual({
+        list: [[GREATSWORD_DARK, 3], [INGOT, 10]],
+        view: 'list',
+        notes: [{ kind: 'list-unknown', dropped: 1, side: 'Asmodian' }],
+      })
+    })
+
+    it('opens the calculator when the list view has no usable line', () => {
+      expect(listOf('?world=11304&view=list')).toEqual({ list: null, view: 'calculator', notes: [] })
+      expect(listOf('?world=11304&view=list&list=abc&list=3.5&list=1x')).toEqual({ list: null, view: 'calculator', notes: [] })
+      expect(listOf(`?world=12304&view=list&list=${DRAGON_LORD}`)).toEqual({
+        list: null,
+        view: 'calculator',
+        notes: [{ kind: 'list-unknown', dropped: 1, side: 'Asmodian' }],
+      })
+    })
+
+    it('keeps a repeated item in its first place, clamps a quantity, and stops at the cap', () => {
+      expect(listOf(`?world=11304&view=list&list=${INGOT}x2&list=${GREATSWORD}&list=${INGOT}x5000000`).list).toEqual([[INGOT, 999_999], [GREATSWORD, 1]])
+      const ids = craftIndexFor(catalogFor('Light')).craftables.slice(0, MAX_LINES + 1).map((craftable) => `list=${craftable.item.id}`)
+      expect(listOf(`?world=11304&view=list&${ids.join('&')}`).list).toHaveLength(MAX_LINES)
+    })
+
+    it('carries a list on the calculator view without opening it there', () => {
+      expect(listOf(`?world=11304&item=${GREATSWORD}&list=${INGOT}x2`)).toEqual({ list: [[INGOT, 2]], view: 'calculator', notes: [] })
+    })
   })
 
   it('keeps the recipient recent worlds and never stores a world the recipient did not pick', () => {

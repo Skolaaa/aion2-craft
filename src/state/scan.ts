@@ -1,6 +1,6 @@
 import type { Item, PlanResult, Profession } from '../domain/types.ts'
 import { answerOf, targetStatus, type TargetStatus, type Verdict } from './answer.ts'
-import { planOne, type Planning } from './planning.ts'
+import { planWanted, type Planning } from './planning.ts'
 import { matches, termsOf } from './search.ts'
 
 export interface ScanRow {
@@ -21,7 +21,7 @@ export interface ScanRow {
 export function scanCraftables(planning: Planning): ScanRow[] {
   const rows: ScanRow[] = []
   for (const craftable of planning.index.craftables) {
-    const plan = planOne(planning, craftable.item.id, 1)
+    const plan = planWanted(planning, new Map([[craftable.item.id, 1]]))
     if (!plan) continue
     const [target] = plan.targets
     const recipe = planning.catalog.recipes.get(target.root.recipeId)

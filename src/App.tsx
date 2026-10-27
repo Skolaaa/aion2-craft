@@ -12,6 +12,7 @@ import { resolveWorld, type Listed, type World } from './market/worlds.ts'
 import { statusChips } from './state/chips.ts'
 import { craftIndexFor, itemFor } from './state/craftables.ts'
 import { age } from './state/format.ts'
+import { useList, type List } from './state/list.ts'
 import { useOpenSetting } from './state/openSetting.ts'
 import type { Planning } from './state/planning.ts'
 import { DEFAULT_SETUP, parseSetup, settingsOf, SETUP_KEY, setWorld, type Setup, type SetupPatch } from './state/setup.ts'
@@ -71,6 +72,7 @@ function Session({ opened, worlds, retry }: { opened: Opened; worlds: WorldsStat
       onView={onView}
       target={target}
       updateTarget={updateTarget}
+      seedList={seed?.list ?? null}
     />
   )
 }
@@ -122,14 +124,16 @@ interface WorkspaceProps {
   onView(view: View): void
   target: Target
   updateTarget(change: (previous: Target) => Target): void
+  seedList: List | null
 }
 
-function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, view, onView, target, updateTarget }: WorkspaceProps) {
+function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, view, onView, target, updateTarget, seedList }: WorkspaceProps) {
   const { world } = current
   const [linkNotes, setLinkNotes] = useState(notes)
-  const link = useAddressBar(encodeLink({ worldId: world.id, view, target, settings: settingsOf(setup) }))
   const catalog = catalogFor(world.race)
   const index = craftIndexFor(catalog)
+  const list = useList(world.id, index, seedList)
+  const link = useAddressBar(encodeLink({ worldId: world.id, view, target, settings: settingsOf(setup), list: list.wanted }))
   const feed = usePrices(world, catalog)
   const freshness = useFreshness(feed)
   const ladders = useLadders(world.id)

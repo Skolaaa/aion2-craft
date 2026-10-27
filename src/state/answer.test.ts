@@ -4,7 +4,8 @@ import { planCraft } from '../domain/planCraft.ts'
 import { makePriceBook } from '../domain/priceBook.ts'
 import type { Alternative, Catalog, ItemId, Mastery, Owned, PlanResult, PriceBook, Recipe, Wanted } from '../domain/types.ts'
 import {
-  answerOf, blockedNote, bulkBuys, buyList, depthCapturedAt, depthNote, extraCost, sentenceOf, stepSummary, successNote, targetStatus, type Answer,
+  answerOf, blockedNote, bulkBuys, buyList, depthCapturedAt, depthNote, extraCost, listSentenceOf, sentenceOf, stepSummary, successNote, targetStatus,
+  type Answer,
 } from './answer.ts'
 
 const SWORD = 1
@@ -66,9 +67,11 @@ function answer(
   return { plan, answer: answerOf(plan, { catalog, mastery }), catalog, prices }
 }
 
-const segments = (result: ReturnType<typeof answer>) =>
-  sentenceOf(result.answer.verdict, { itemName: (id) => NAMES[id] ?? String(id), worldName: 'Siel', taxRate: 0.05 })
+const names = { itemName: (id: number) => NAMES[id] ?? String(id), worldName: 'Siel', taxRate: 0.05 }
+const segments = (result: ReturnType<typeof answer>) => sentenceOf(result.answer.verdict, names)
 const sentence = (result: ReturnType<typeof answer>) => segments(result).map((segment) => segment.text).join('')
+const listSentence = (result: ReturnType<typeof answer>) =>
+  listSentenceOf(result.plan, result.answer.verdict, names).map((segment) => segment.text).join('')
 
 describe('answerOf', () => {
   it('says craft when the expected cost is under the lowest listing, with the spec sentence', () => {
@@ -148,6 +151,23 @@ describe('answerOf', () => {
       const locked = [recipe(100, SWORD, [[IRON, 2]]), recipe(101, SHIELD, [[BLADE, 1]]), recipe(102, BLADE, [[IRON, 3]], { masteryLevel: 25 })]
       const result = answer(locked, { [IRON]: 10, [SWORD]: 1000, [SHIELD]: 1000 }, both)
       expect(result.answer.verdict).toMatchObject({ kind: 'blocked', itemId: BLADE, level: 25 })
+      expect(listSentence(result)).toBe('Crafting Blade needs Blacksmithing 25, and your mastery is 10.')
+    })
+
+    it('says whether crafting the whole list beats buying it, and which members are cheaper to buy', () => {
+      const craft = answer(recipes, { [IRON]: 100, [WOOD]: 50, [SWORD]: 1000, [SHIELD]: 120 }, both)
+      expect(listSentence(craft)).toBe('Crafting the list costs 1,570 Kina under buying it all. Shield is cheaper to buy than to craft.')
+      const buy = answer(recipes, { [IRON]: 100, [WOOD]: 50, [SWORD]: 150, [SHIELD]: 120 }, both)
+      expect(listSentence(buy)).toBe('Buying it all costs 130 Kina under crafting the list. Sword and Shield are cheaper to buy than to craft.')
+      const even = answer(recipes, { [IRON]: 100, [WOOD]: 50, [SWORD]: 200, [SHIELD]: 150 }, both)
+      expect(listSentence(even)).toBe('Crafting the list costs the same as buying it all.')
+    })
+
+    it('names the member with no listing instead of comparing', () => {
+      const one = answer(recipes, { [IRON]: 100, [WOOD]: 50, [SWORD]: 1000 }, both)
+      expect(listSentence(one)).toBe('Shield has no listing on Siel to compare with. Crafting the list costs 550 Kina.')
+      const none = answer(recipes, { [IRON]: 100, [WOOD]: 50 }, both)
+      expect(listSentence(none)).toBe('2 items on the list have no listing on Siel to compare with. Crafting the list costs 550 Kina.')
     })
   })
 })

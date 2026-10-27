@@ -154,6 +154,44 @@ export function sentenceOf(verdict: Verdict, { itemName, worldName, taxRate }: N
   }
 }
 
+/** The targets whose lowest listing is under their expected cost, in list order. */
+const cheaperToBuy = (targets: readonly TargetPlan[]): ItemId[] =>
+  targets
+    .filter((target) => target.market !== null && Number.isFinite(target.cost) && Math.round(target.market.cost - target.cost) < 0)
+    .map((target) => target.itemId)
+
+const named = (items: readonly ItemId[], itemName: (itemId: ItemId) => string): string => {
+  const names = items.map(itemName)
+  return names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
+
+/**
+ * The verdict for a list, on the same kinds: whether crafting the whole list beats buying it all, and which
+ * members are cheaper to buy. No sell clause, since the list is what the player means to make. Blocked and
+ * missing read the same for a list as for one item, so sentenceOf words them.
+ */
+export function listSentenceOf(plan: PlanResult, verdict: Verdict, names: Names): Segment[] {
+  const { itemName, worldName } = names
+  const cheaper = cheaperToBuy(plan.targets)
+  const clause = cheaper.length === 0 ? '' : ` ${named(cheaper, itemName)} ${plural(cheaper.length, 'is', 'are')} cheaper to buy than to craft.`
+  switch (verdict.kind) {
+    case 'craft':
+      return said`Crafting the list costs ${kinaOf(verdict.gap)} Kina under buying it all.${clause}`
+    case 'buy':
+      return said`Buying it all costs ${kinaOf(verdict.gap)} Kina under crafting the list.${clause}`
+    case 'even':
+      return said`Crafting the list costs the same as buying it all.${clause}`
+    case 'no-listing': {
+      const unlisted = plan.targets.filter((target) => target.market === null)
+      const who = unlisted.length === 1 ? itemName(unlisted[0].itemId) : `${unlisted.length} items on the list`
+      return said`${who} ${plural(unlisted.length, 'has', 'have')} no listing on ${worldName} to compare with. Crafting the list costs ${kinaOf(verdict.cost)} Kina.`
+    }
+    case 'missing':
+    case 'blocked':
+      return sentenceOf(verdict, names)
+  }
+}
+
 const masteryNote = (recipe: Recipe | undefined, mastery: Mastery) =>
   recipe?.profession ? `needs ${recipe.profession} ${recipe.masteryLevel}, yours is ${mastery[recipe.profession]}` : 'needs more mastery'
 
