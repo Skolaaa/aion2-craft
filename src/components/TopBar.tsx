@@ -39,17 +39,19 @@ export function TopBar({ view, onView, context }: { view: View; onView(view: Vie
 interface ChipProps extends Pick<Context, 'opened' | 'open'> {
   setting: Setting
   label: string
+  spoken: string
   title: string
   className?: string
   children: ReactNode
 }
 
-function Chip({ setting, label, title, className = '', opened, open, children }: ChipProps) {
+function Chip({ setting, label, spoken, title, className = '', opened, open, children }: ChipProps) {
   return (
     <button
       type="button"
       className={`chip ${className}`}
       title={title}
+      aria-label={`${label} ${spoken}`}
       aria-haspopup="dialog"
       aria-expanded={opened !== null && settingKey(opened) === settingKey(setting)}
       onClick={(event) => open(setting, event.currentTarget)}
@@ -64,19 +66,18 @@ function ContextChips({ chips, opened, open }: Context) {
   const state = { opened, open }
   return (
     <div className="context" role="group" aria-label="Plan context">
-      <Chip {...state} setting={SETTINGS.region} label="region" title={chips.region.title}>
+      <Chip {...state} setting={SETTINGS.region} label="region" spoken={chips.region.value} title={chips.region.title}>
         <span className="chip-value">{chips.region.value}</span>
       </Chip>
-      <Chip {...state} setting={SETTINGS.world} label="world" title={chips.world.title}>
+      <Chip {...state} setting={SETTINGS.world} label="world" spoken={`${chips.world.value}, ${chips.world.side}`} title={chips.world.title}>
         <span className="chip-value">{chips.world.value}</span>
-        <span className="side-badge" aria-hidden="true">{chips.world.badge}</span>
-        <span className="sr-only">{chips.world.side}</span>
+        <span className="side-badge">{chips.world.badge}</span>
       </Chip>
-      <Chip {...state} setting={SETTINGS.tax} label="tax" title={chips.tax.title}>
+      <Chip {...state} setting={SETTINGS.tax} label="tax" spoken={chips.tax.value} title={chips.tax.title}>
         <span className="chip-value">{chips.tax.value}</span>
       </Chip>
-      <Chip {...state} setting={SETTINGS.mastery} label="mastery" title={chips.mastery.title} className="mastery-chip">
-        <span className="mastery-pairs" aria-hidden="true">
+      <Chip {...state} setting={SETTINGS.mastery} label="mastery" spoken={chips.mastery.spoken} title={chips.mastery.title} className="mastery-chip">
+        <span className="mastery-pairs">
           {chips.mastery.pairs.map(({ abbr, value, title }) => (
             <span className="mastery-pair" key={abbr} title={title}>
               <span className="chip-key">{abbr}</span>
@@ -84,10 +85,9 @@ function ContextChips({ chips, opened, open }: Context) {
             </span>
           ))}
         </span>
-        <span className="chip-value mastery-collapsed" aria-hidden="true">{chips.mastery.collapsed}</span>
-        <span className="sr-only">{chips.mastery.spoken}</span>
+        <span className="chip-value mastery-collapsed">{chips.mastery.collapsed}</span>
       </Chip>
-      <Chip {...state} setting={SETTINGS.plan} label="plan" title={chips.plan.title}>
+      <Chip {...state} setting={SETTINGS.plan} label="plan" spoken={chips.plan.value} title={chips.plan.title}>
         <span className="chip-value">{chips.plan.value}</span>
       </Chip>
     </div>
