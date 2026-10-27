@@ -142,7 +142,7 @@ export function PlanSettings({ setup, patch, planning, overrides, owned, sources
           columns={stockColumns}
           rows={stock}
           rowKey={([itemId]) => String(itemId)}
-          empty="None yet. Click a count under Have in the buy table."
+          empty="None yet. Click a count under You have in the buy table."
         />
       </section>
 

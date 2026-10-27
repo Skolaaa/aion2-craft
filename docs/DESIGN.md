@@ -187,8 +187,8 @@ headers, names end in an ellipsis instead of wrapping, rows are 52 px, and the h
 line moves under the list. No sparkline: it would cost one history request per row.
 
 Settings drawer: plan options with their one-line notes, then "Your prices on Kaisinel" with
-reset, as today, then "What you have on Kaisinel": the counts entered under Have in the buy
-table, each with Clear. The buy table's Have column edits in place like a unit price; a
+reset, as today, then "What you have on Kaisinel": the counts entered under You have in the buy
+table, each with Clear. The buy table's You have column edits in place like a unit price; a
 "To buy" column appears only once a count is set, and a line that stock covers in full
 drops to the bottom with "your stock" as its source. Then "Your sources on Kaisinel": the
 ways chosen under steps, each with Clear, and Clear all once there are two.
@@ -203,8 +203,11 @@ opens no item. Each shows a notice with Dismiss, once, above the page.
 
 Mobile (under 640 px): the status line wraps to two rows (chips, then the mastery strip) with the
 freshness pill and Copy link on a short third row at the right, the
-figures stack, the buy table collapses to item plus subtotal with the math as a sub-line, the
-picker and popovers become bottom sheets, the drawer takes the full width. The nav's list count
+figures stack, the buy table becomes one card per line (name on one line, "Market, across 9
+listings of 224. 20.65 needed." under it, then You have, Unit price and Subtotal on a shared
+64 / 100 / rest grid under one label row) with Copy list at the right of the tab strip and the
+You have note under the total, the picker and popovers become bottom sheets, the drawer takes
+the full width. The nav's list count
 is hidden: at 390 px the wordmark (130 px) and the three views (212 px) fill the row, and a count
 would wrap the nav under it. The list's member table keeps the name, the quantity field and
 Remove, with the cost on the name's sub-line.
