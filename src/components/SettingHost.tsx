@@ -1,8 +1,9 @@
-import type { Listed, World, WorldDirectory } from '../market/worlds.ts'
+import type { Listed, World } from '../market/worlds.ts'
 import { settingKey, type OpenSetting } from '../state/openSetting.ts'
 import type { Planning } from '../state/planning.ts'
 import type { Setup, SetupPatch } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
+import type { WorldsState } from '../state/useWorlds.ts'
 import { Button } from './Button.tsx'
 import { Glyph } from './Glyph.tsx'
 import { MasteryForm } from './MasteryForm.tsx'
@@ -14,7 +15,7 @@ import { WorldPicker } from './WorldPicker.tsx'
 
 interface Props {
   surface: OpenSetting
-  directory: WorldDirectory | null
+  worlds: WorldsState
   retryWorlds(): void
   current: Listed
   setup: Setup
@@ -24,7 +25,7 @@ interface Props {
   overrides: PriceOverrides
 }
 
-export function SettingHost({ surface, directory, retryWorlds, current, setup, patch, chooseWorld, planning, overrides }: Props) {
+export function SettingHost({ surface, worlds, retryWorlds, current, setup, patch, chooseWorld, planning, overrides }: Props) {
   const { opened, close } = surface
   if (opened === null) return null
   const { setting, anchor } = opened
@@ -33,10 +34,10 @@ export function SettingHost({ surface, directory, retryWorlds, current, setup, p
   switch (setting.kind) {
     case 'world':
       return (
-        <Surface key={key} anchor={anchor} placement="popover" width={440} title="World" flush={directory !== null} onClose={close}>
-          {directory ? (
+        <Surface key={key} anchor={anchor} placement="popover" width={440} title="World" flush={worlds.status === 'ready'} onClose={close}>
+          {worlds.status === 'ready' ? (
             <WorldPicker
-              directory={directory}
+              directory={worlds.directory}
               current={current}
               recent={setup.recent}
               from={setting.from}
@@ -45,10 +46,16 @@ export function SettingHost({ surface, directory, retryWorlds, current, setup, p
                 close()
               }}
             />
-          ) : (
-            <Notice title="The world list did not load" action={<Button onClick={retryWorlds}><Glyph name="refresh" />Try again</Button>}>
+          ) : worlds.status === 'failed' ? (
+            <Notice
+              title="The world list did not load"
+              detail={worlds.message}
+              action={<Button onClick={retryWorlds}><Glyph name="refresh" />Try again</Button>}
+            >
               You can keep working on {current.world.name}, the world you used last.
             </Notice>
+          ) : (
+            <p className="meta" role="status">Loading the world list from aion2.exchange.</p>
           )}
         </Surface>
       )

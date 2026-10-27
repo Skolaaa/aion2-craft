@@ -571,6 +571,11 @@ input[type='range'] {
   font-family: var(--mono);
 }
 
+.table .num .meta {
+  font-family: var(--sans);
+  font-weight: 400;
+}
+
 .table tfoot th,
 .table tfoot td {
   font-weight: 400;

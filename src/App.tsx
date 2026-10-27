@@ -10,7 +10,7 @@ import { TopBar } from './components/TopBar.tsx'
 import { catalogFor } from './data/catalog.ts'
 import { makePriceBook } from './domain/priceBook.ts'
 import type { ItemId, MarketQuote, PlanOptions } from './domain/types.ts'
-import { resolveWorld, type Listed, type World, type WorldDirectory } from './market/worlds.ts'
+import { resolveWorld, type Listed, type World } from './market/worlds.ts'
 import { statusChips } from './state/chips.ts'
 import { craftIndexFor, remapItem } from './state/craftables.ts'
 import { age } from './state/format.ts'
@@ -60,7 +60,6 @@ export function App() {
   return (
     <Workspace
       current={current}
-      directory={directory}
       worlds={worlds}
       retryWorlds={retry}
       setup={setup}
@@ -92,7 +91,6 @@ function FeedNotice({ feed, worldName }: { feed: PriceFeed; worldName: string })
 
 interface WorkspaceProps {
   current: Listed
-  directory: WorldDirectory | null
   worlds: WorldsState
   retryWorlds(): void
   setup: Setup
@@ -103,7 +101,7 @@ interface WorkspaceProps {
   updateTarget(change: (previous: Target) => Target): void
 }
 
-function Workspace({ current, directory, worlds, retryWorlds, setup, updateSetup, view, onView, target, updateTarget }: WorkspaceProps) {
+function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onView, target, updateTarget }: WorkspaceProps) {
   const { world } = current
   const catalog = catalogFor(world.race)
   const index = craftIndexFor(catalog)
@@ -155,7 +153,7 @@ function Workspace({ current, directory, worlds, retryWorlds, setup, updateSetup
       />
       <SettingHost
         surface={surface}
-        directory={directory}
+        worlds={worlds}
         retryWorlds={retryWorlds}
         current={current}
         setup={setup}
