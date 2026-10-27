@@ -80,12 +80,20 @@ export type Acquisition =
   | { method: 'buy'; unit: number; quote: Price }
   | { method: 'craft'; unit: number; step: StepPlan }
   | { method: 'morph'; unit: number; step: StepPlan }
+  | { method: 'owned' }
   | { method: 'none' }
+
+/** Units the player already holds, per item. The planner uses them before it buys or crafts. */
+export type Owned = ReadonlyMap<ItemId, number>
 
 export interface MaterialLine {
   itemId: ItemId
   perAttempt: number
+  /** Units the step consumes, counting failed attempts. */
   expected: number
+  /** The part of `expected` that comes from what the player holds. */
+  owned: number
+  /** How the rest is obtained. `owned` when stock covers the whole line. */
   acquisition: Acquisition
   subtotal: number
 }
@@ -111,6 +119,7 @@ export interface PlanInput {
   options: PlanOptions
   world: Catalog
   prices: PriceBook
+  owned?: Owned
 }
 
 export interface PlanResult {
@@ -121,7 +130,8 @@ export interface PlanResult {
   market: { lowest: number; soldAvg: number | null; listings: number } | null
   margin: number | null
   marginPct: number | null
-  shopping: { itemId: ItemId; expected: number; unit: number; subtotal: number }[]
+  /** Every bought leaf, summed over the steps that use it. `expected` includes the `owned` part; `subtotal` is for the rest. */
+  shopping: { itemId: ItemId; expected: number; owned: number; unit: number; subtotal: number }[]
   missing: ItemId[]
   blocked: RecipeId[]
 }

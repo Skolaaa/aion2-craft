@@ -168,6 +168,32 @@ describe('planCraft', () => {
     expect(result.cost).toBeCloseTo(10)
   })
 
+  it('uses what the player holds before buying, and shares that stock between steps', () => {
+    const world = { recipes: [craft(1, 100, [[10, 2], [200, 1]]), craft(2, 200, [[10, 1], [11, 1]])] }
+    const market = { 10: 10, 11: 5, 200: 100 }
+    const partial = plan(world, market, { target: 100, owned: new Map([[10, 2.5]]) })
+    const [ore, part] = partial.root.materials
+    expect([ore.expected, ore.owned, ore.acquisition.method, ore.subtotal]).toEqual([2, 2, 'owned', 0])
+    expect(part.acquisition.method).toBe('craft')
+    const inner = part.acquisition.method === 'craft' ? part.acquisition.step.materials[0] : null
+    expect(inner && [inner.expected, inner.owned, inner.acquisition.method, inner.subtotal]).toEqual([1, 0.5, 'buy', 5])
+    expect(partial.cost).toBeCloseTo(10)
+    expect(partial.shopping).toEqual([
+      { itemId: 10, expected: 1, owned: 0.5, unit: 10, subtotal: 5 },
+      { itemId: 11, expected: 1, owned: 0, unit: 5, subtotal: 5 },
+    ])
+    expect(plan(world, market, { target: 100 }).cost).toBeCloseTo(35)
+  })
+
+  it('does not call an item missing when the player holds enough of it', () => {
+    const world = { recipes: [craft(1, 100, [[10, 1], [11, 1]])] }
+    const result = plan(world, { 10: 5 }, { target: 100, owned: new Map([[11, 1]]) })
+    expect(result.missing).toEqual([])
+    expect(result.cost).toBeCloseTo(5)
+    const short = plan(world, { 10: 5 }, { target: 100, owned: new Map([[11, 0.5]]) })
+    expect(short.missing).toEqual([11])
+  })
+
   it('lists an ingredient with no price and no recipe as missing', () => {
     const world = { recipes: [craft(1, 100, [[10, 1], [11, 1]])] }
     const result = plan(world, { 10: 5 }, { target: 100 })
