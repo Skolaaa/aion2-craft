@@ -21,7 +21,7 @@ npm run dev
 
 Open the URL that `npm run dev` prints, usually http://localhost:5173. The page starts on aion2.exchange's default world. To pick yours, click the world in the status line and choose it from the list.
 
-`npm run build` type-checks and builds into `dist/`. `npm run preview` serves that build. Both `dev` and `preview` proxy `/ex` to aion2.exchange and `/a2t` to aion2t.com, because aion2.exchange sends no CORS headers. A static file server without that proxy cannot load prices.
+`npm run build` type-checks and builds into `dist/`. `npm run preview` serves that build. Both `dev` and `preview` proxy `/ex` to aion2.exchange and `/a2t` to aion2t.com, because aion2.exchange sends no CORS headers. A static file server without that proxy cannot load prices. The public copy at https://aion2-craft.vercel.app gets the same two routes from the rewrites in `vercel.json`; `vercel --prod` from this directory redeploys it.
 
 ## Refresh the recipe and rate data
 
