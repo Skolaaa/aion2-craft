@@ -1,11 +1,10 @@
 import type { ItemId } from '../domain/types.ts'
-import type { World } from '../market/exchangeClient.ts'
+import { SIDE, type World, type WorldDirectory } from '../market/worlds.ts'
 import { itemName } from '../state/craftables.ts'
 import { kina, taxPercent } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
-import { FACTION, MAX_MASTERY, PROFESSIONS, type Setup } from '../state/setup.ts'
+import { MAX_MASTERY, PROFESSIONS, type Setup, type SetupPatch } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
-import type { WorldsState } from '../state/useWorlds.ts'
 import { Button } from './Button.tsx'
 import { Dialog } from './Dialog.tsx'
 import { Field, NumberInput } from './Field.tsx'
@@ -17,10 +16,10 @@ import { Table, type Column } from './Table.tsx'
 interface Props {
   open: boolean
   onClose(): void
-  worlds: WorldsState
+  directory: WorldDirectory | null
   planning: Planning
   setup: Setup
-  patch(change: Partial<Setup>): void
+  patch(change: SetupPatch): void
   onWorld(world: World): void
   overrides: PriceOverrides
 }
@@ -43,12 +42,6 @@ const OPTIONS = [
   },
 ] as const
 
-function groupByRegion(worlds: readonly World[]) {
-  const groups = new Map<string, World[]>()
-  for (const world of worlds) groups.set(world.regionName, [...(groups.get(world.regionName) ?? []), world])
-  return [...groups]
-}
-
 export function Settings({ open, onClose, ...body }: Props) {
   return (
     <Dialog open={open} title="Settings" onClose={onClose} footer={<Button variant="primary" onClick={onClose}>Done</Button>}>
@@ -57,9 +50,9 @@ export function Settings({ open, onClose, ...body }: Props) {
   )
 }
 
-function SettingsBody({ worlds, planning, setup, patch, onWorld, overrides }: Omit<Props, 'open' | 'onClose'>) {
+function SettingsBody({ directory, planning, setup, patch, onWorld, overrides }: Omit<Props, 'open' | 'onClose'>) {
   const { world, catalog, market } = planning
-  const list = worlds.status === 'ready' ? worlds.data.worlds : [world]
+  const regions = directory?.regions ?? [{ code: world.region, name: world.regionName, worlds: [{ world, match: null }] }]
   const entries = [...overrides.prices]
   const priceColumns: Column<[ItemId, number]>[] = [
     { key: 'item', header: 'Item', render: ([itemId]) => <ItemCell item={catalog.items.get(itemId)} /> },
@@ -98,17 +91,17 @@ function SettingsBody({ worlds, planning, setup, patch, onWorld, overrides }: Om
             className="select"
             aria-describedby="world-hint"
             value={world.id}
-            disabled={list.length < 2}
+            disabled={directory === null}
             onChange={(event) => {
-              const next = list.find((w) => w.id === Number(event.target.value))
-              if (next) onWorld(next)
+              const next = directory?.byId.get(Number(event.target.value))
+              if (next) onWorld(next.world)
             }}
           >
-            {groupByRegion(list).map(([region, members]) => (
-              <optgroup key={region} label={region}>
-                {members.map((w) => (
+            {regions.map((region) => (
+              <optgroup key={region.code} label={region.name}>
+                {region.worlds.map(({ world: w }) => (
                   <option key={w.id} value={w.id}>
-                    {w.name}, {FACTION[w.race]}{w.hasData ? '' : ', no prices yet'}
+                    {w.name}, {SIDE[w.race].name}{w.hasData ? '' : ', no prices yet'}
                   </option>
                 ))}
               </optgroup>

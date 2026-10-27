@@ -1,24 +1,11 @@
 import type { ItemId, MarketQuote, Race } from '../domain/types.ts'
+import { directoryOf, type KeyedWorld, type WorldDirectory } from './worlds.ts'
 
 const API = '/ex/api'
 const BATCH = 100
 const MIN_REFRESH_MS = 60_000
 const STORAGE_KEY = (serverId: number) => `aion2-craft:quotes:${serverId}`
 const FACTION_RACE: Record<string, Race> = { Elyos: 'Light', Asmodian: 'Dark' }
-
-export interface World {
-  id: number
-  name: string
-  region: string
-  regionName: string
-  race: Race
-  hasData: boolean
-}
-
-export interface WorldList {
-  defaultId: number
-  worlds: World[]
-}
 
 export interface QuoteSnapshot {
   serverId: number
@@ -79,13 +66,13 @@ async function getJson(path: string): Promise<Json> {
   return body
 }
 
-export async function fetchWorlds(): Promise<WorldList> {
+export async function fetchWorlds(): Promise<WorldDirectory> {
   const body = await getJson('/servers')
-  const worlds = list(body.servers, 'servers').map((raw) => {
+  const rows = list(body.servers, 'servers').map((raw): KeyedWorld => {
     const s = record(raw, 'server')
     const race = FACTION_RACE[str(s.faction, 'faction')]
     if (!race) throw new Error(`aion2.exchange: unknown faction ${String(s.faction)}`)
-    return {
+    const world = {
       id: num(s.server_id, 'server_id'),
       name: str(s.name, 'name'),
       region: str(s.region, 'region'),
@@ -93,8 +80,9 @@ export async function fetchWorlds(): Promise<WorldList> {
       race,
       hasData: s.has_data === true,
     }
+    return { world, key: num(s.game_server_key, 'game_server_key') }
   })
-  return { defaultId: num(body.default, 'default'), worlds }
+  return directoryOf(num(body.default, 'default'), rows)
 }
 
 function parseQuote(raw: unknown): [ItemId, MarketQuote] {

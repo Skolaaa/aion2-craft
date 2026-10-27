@@ -3,8 +3,8 @@ import type { ItemId, PlanResult } from '../domain/types.ts'
 import { answerOf, sentenceOf, stepSummary, type Answer } from '../state/answer.ts'
 import { itemName, type Craftable } from '../state/craftables.ts'
 import { kina, percent, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
+import { SIDE } from '../market/worlds.ts'
 import type { Planning } from '../state/planning.ts'
-import { FACTION } from '../state/setup.ts'
 import { MAX_QUANTITY, type Target } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { PriceFeed } from '../state/usePrices.ts'
@@ -85,7 +85,7 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
 
       {plan === null ? (
         <p className="verdict">
-          No {FACTION[world.race]} recipe makes {item.name}. Pick another item or a world of the other faction.
+          No {SIDE[world.race].name} recipe makes {item.name}. Pick another item or a world of the other faction.
         </p>
       ) : feed.pending ? null : (
         <Figures

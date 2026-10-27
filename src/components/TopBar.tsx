@@ -1,6 +1,6 @@
 import type { Mastery } from '../domain/types.ts'
-import type { World } from '../market/exchangeClient.ts'
-import { FACTION, PROFESSIONS } from '../state/setup.ts'
+import { SIDE, type World } from '../market/worlds.ts'
+import { PROFESSIONS } from '../state/setup.ts'
 import type { View } from '../state/target.ts'
 import { Button } from './Button.tsx'
 
@@ -39,7 +39,7 @@ export function TopBar({ view, onView, world, mastery, onSettings }: Props) {
         </nav>
         {world && (
           <div className="status">
-            <span className="status-world">{world.name}, {FACTION[world.race]}</span>
+            <span className="status-world">{world.name}, {SIDE[world.race].name}</span>
             <span className="meta" title={`Mastery: ${spoken}`}>
               <span aria-hidden="true">Mastery {summary}</span>
               <span className="sr-only">Mastery: {spoken}</span>

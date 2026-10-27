@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { tradeableItems } from '../domain/catalog.ts'
 import type { Catalog } from '../domain/types.ts'
-import { loadSnapshot, refreshSnapshot, type QuoteSnapshot, type World } from '../market/exchangeClient.ts'
+import { loadSnapshot, refreshSnapshot, type QuoteSnapshot } from '../market/exchangeClient.ts'
+import type { World } from '../market/worlds.ts'
 import { messageOf } from './feedError.ts'
 
 export type RefreshOutcome = 'updated' | 'recent' | 'failed'

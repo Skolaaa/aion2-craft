@@ -10,35 +10,30 @@ import { TopBar } from './components/TopBar.tsx'
 import { catalogFor } from './data/catalog.ts'
 import { makePriceBook } from './domain/priceBook.ts'
 import type { ItemId, MarketQuote, PlanOptions } from './domain/types.ts'
-import type { World } from './market/exchangeClient.ts'
+import { resolveWorld, type World, type WorldDirectory } from './market/worlds.ts'
 import { craftIndexFor, remapItem } from './state/craftables.ts'
 import { age } from './state/format.ts'
 import type { Planning } from './state/planning.ts'
-import { DEFAULT_SETUP, parseSetup, type Setup } from './state/setup.ts'
+import { DEFAULT_SETUP, parseSetup, setWorld, type Setup, type SetupPatch } from './state/setup.ts'
 import { DEFAULT_TARGET, DEFAULT_VIEW, parseTarget, parseView, type Target, type View } from './state/target.ts'
 import { useNow } from './state/useNow.ts'
 import { useOverrides } from './state/useOverrides.ts'
 import { usePersistentState } from './state/usePersistentState.ts'
 import { usePrices, type PriceFeed } from './state/usePrices.ts'
-import { useWorlds, type WorldsState } from './state/useWorlds.ts'
+import { readyDirectory, useWorlds, type WorldsState } from './state/useWorlds.ts'
 
 const NO_QUOTES: ReadonlyMap<ItemId, MarketQuote> = new Map()
-
-function pickWorld(worlds: WorldsState, saved: World | null): World | null {
-  if (worlds.status !== 'ready') return saved
-  const { defaultId, worlds: list } = worlds.data
-  return list.find((w) => w.id === saved?.id) ?? list.find((w) => w.id === defaultId) ?? list[0] ?? null
-}
 
 export function App() {
   const { state: worlds, retry } = useWorlds()
   const [setup, updateSetup] = usePersistentState('setup', DEFAULT_SETUP, parseSetup)
   const [view, updateView] = usePersistentState<View>('view', DEFAULT_VIEW, parseView)
   const [target, updateTarget] = usePersistentState('target', DEFAULT_TARGET, parseTarget)
-  const world = pickWorld(worlds, setup.world)
+  const directory = readyDirectory(worlds)
+  const current = resolveWorld(directory, setup.world)
   const onView = useCallback((next: View) => updateView(() => next), [updateView])
 
-  if (world === null) {
+  if (current === null) {
     return (
       <div className="app">
         <TopBar view={view} onView={onView} world={null} mastery={setup.mastery} />
@@ -62,7 +57,8 @@ export function App() {
 
   return (
     <Workspace
-      world={world}
+      world={current.world}
+      directory={directory}
       worlds={worlds}
       retryWorlds={retry}
       setup={setup}
@@ -94,6 +90,7 @@ function FeedNotice({ feed, worldName }: { feed: PriceFeed; worldName: string })
 
 interface WorkspaceProps {
   world: World
+  directory: WorldDirectory | null
   worlds: WorldsState
   retryWorlds(): void
   setup: Setup
@@ -104,7 +101,7 @@ interface WorkspaceProps {
   updateTarget(change: (previous: Target) => Target): void
 }
 
-function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onView, target, updateTarget }: WorkspaceProps) {
+function Workspace({ world, directory, worlds, retryWorlds, setup, updateSetup, view, onView, target, updateTarget }: WorkspaceProps) {
   const catalog = catalogFor(world.race)
   const index = craftIndexFor(catalog)
   const feed = usePrices(world, catalog)
@@ -125,7 +122,7 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
     [world, catalog, index, setup.mastery, options, prices, market],
   )
 
-  const patchSetup = (change: Partial<Setup>) => updateSetup((previous) => ({ ...previous, ...change }))
+  const patchSetup = (change: SetupPatch) => updateSetup((previous) => ({ ...previous, ...change }))
   const patchTarget = (change: Partial<Target>) => updateTarget((previous) => ({ ...previous, ...change }))
 
   const chooseWorld = (next: World) => {
@@ -133,7 +130,7 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
       const nextCatalog = catalogFor(next.race)
       updateTarget((previous) => ({ ...previous, itemId: previous.itemId === null ? null : remapItem(catalog, nextCatalog, previous.itemId) }))
     }
-    patchSetup({ world: next })
+    updateSetup((previous) => setWorld(previous, next))
   }
 
   const openItem = useCallback(
@@ -169,7 +166,7 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
       <Settings
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        worlds={worlds}
+        directory={directory}
         planning={planning}
         setup={setup}
         patch={patchSetup}
