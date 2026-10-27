@@ -1,4 +1,4 @@
-import { SIDE, type Listed, type World, type WorldDirectory } from '../market/worlds.ts'
+import type { Listed, World, WorldDirectory } from '../market/worlds.ts'
 import { settingKey, type OpenSetting } from '../state/openSetting.ts'
 import type { Planning } from '../state/planning.ts'
 import type { Setup, SetupPatch } from '../state/setup.ts'
@@ -10,6 +10,7 @@ import { Notice } from './Notice.tsx'
 import { PlanSettings } from './PlanSettings.tsx'
 import { Surface } from './Surface.tsx'
 import { TaxForm } from './TaxForm.tsx'
+import { WorldPicker } from './WorldPicker.tsx'
 
 interface Props {
   surface: OpenSetting
@@ -32,11 +33,13 @@ export function SettingHost({ surface, directory, retryWorlds, current, setup, p
   switch (setting.kind) {
     case 'world':
       return (
-        <Surface key={key} anchor={anchor} placement="popover" width={440} title="World" onClose={close}>
+        <Surface key={key} anchor={anchor} placement="popover" width={440} title="World" flush={directory !== null} onClose={close}>
           {directory ? (
-            <WorldSelect
+            <WorldPicker
               directory={directory}
               current={current}
+              recent={setup.recent}
+              from={setting.from}
               onChoose={(world) => {
                 chooseWorld(world)
                 close()
@@ -79,32 +82,4 @@ export function SettingHost({ surface, directory, retryWorlds, current, setup, p
       return unknown
     }
   }
-}
-
-function WorldSelect({ directory, current, onChoose }: { directory: WorldDirectory; current: Listed; onChoose(world: World): void }) {
-  return (
-    <div className="select-box">
-      <select
-        className="select"
-        aria-label="World"
-        value={current.world.id}
-        data-autofocus
-        onChange={(event) => {
-          const next = directory.byId.get(Number(event.target.value))
-          if (next) onChoose(next.world)
-        }}
-      >
-        {directory.regions.map((region) => (
-          <optgroup key={region.code} label={region.name}>
-            {region.worlds.map(({ world }) => (
-              <option key={world.id} value={world.id}>
-                {world.name}, {SIDE[world.race].name}{world.hasData ? '' : ', no prices yet'}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
-      <Glyph name="chevron" />
-    </div>
-  )
 }

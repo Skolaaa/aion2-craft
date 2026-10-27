@@ -12,6 +12,7 @@ interface Props {
   placement: Placement
   title: string
   width?: number
+  flush?: boolean
   // focusAnchor is false when the user moved on by clicking or tabbing elsewhere.
   onClose(focusAnchor: boolean): void
   children: ReactNode
@@ -22,7 +23,7 @@ const inside = (node: EventTarget | null, ...parents: HTMLElement[]) => node ins
 
 // A popover on a wide screen is non-modal, so one click moves from one setting to the next and the
 // page stays readable. The sheet and the drawer are modal. Mounted only while open.
-export function Surface({ anchor, placement, title, width = 320, onClose, children, footer }: Props) {
+export function Surface({ anchor, placement, title, width = 320, flush = false, onClose, children, footer }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const close = useRef(onClose)
@@ -95,7 +96,7 @@ export function Surface({ anchor, placement, title, width = 320, onClose, childr
         <h2 className="surface-title" id={titleId}>{title}</h2>
         <Button className="button-small" onClick={() => onClose(true)}>Close</Button>
       </header>
-      <div className="surface-content">{children}</div>
+      <div className={`surface-content ${flush ? 'is-flush' : ''}`}>{children}</div>
       {footer && <footer className="surface-foot">{footer}</footer>}
     </dialog>
   )

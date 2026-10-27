@@ -1,16 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import notice from '../../docs/explorations/worlds.json'
-import { directoryOf, PAIRING, resolveWorld, type KeyedWorld, type World } from './worlds.ts'
-
-// The exchange's game_server_key is server_id - 10000 for all 106 worlds (checked against /api/servers).
-const keyed = (world: World): KeyedWorld => ({ world, key: world.id - 10000 })
-
-const rows: KeyedWorld[] = notice.flatMap((region) =>
-  region.pairs.flatMap(({ elyos, asmodian }) => [
-    keyed({ ...elyos, region: region.code, regionName: region.name, race: 'Light' }),
-    keyed({ ...asmodian, region: region.code, regionName: region.name, race: 'Dark' }),
-  ]),
-)
+import { notice, noticeDirectory, noticeRows as rows } from './worlds.fixture.ts'
+import { directoryOf, PAIRING, resolveWorld, type World } from './worlds.ts'
 
 // Reversed so the pairing cannot lean on list order.
 const directory = directoryOf(11304, [...rows].reverse())
@@ -30,7 +20,7 @@ describe('directoryOf', () => {
   })
 
   it('groups regions in first-seen order with each pair side by side', () => {
-    const forward = directoryOf(11304, rows)
+    const forward = noticeDirectory
     expect(forward.count).toBe(106)
     expect(forward.regions.map((region) => region.code)).toEqual(['NAE', 'NAW', 'EU', 'LA', 'AS'])
     const eu = forward.regions.find((region) => region.code === 'EU')
