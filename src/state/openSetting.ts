@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 export type Setting =
   | { kind: 'world'; from: 'region' | 'world' }
@@ -6,7 +6,15 @@ export type Setting =
   | { kind: 'tax' }
   | { kind: 'plan' }
 
-export interface Opened {
+export const SETTINGS = {
+  region: { kind: 'world', from: 'region' },
+  world: { kind: 'world', from: 'world' },
+  tax: { kind: 'tax' },
+  mastery: { kind: 'mastery' },
+  plan: { kind: 'plan' },
+} as const satisfies Record<string, Setting>
+
+interface Opened {
   setting: Setting
   anchor: HTMLElement
 }
@@ -19,8 +27,8 @@ export interface OpenSetting {
 
 export const settingKey = (setting: Setting) => (setting.kind === 'world' ? `world-${setting.from}` : setting.kind)
 
-// One value says which setting is open, so two can never be open together. Focus goes back to the
-// chip after its surface has left the DOM, since a modal surface keeps the chip inert until then.
+// Focus goes back to the chip after its surface has left the DOM, since a modal surface keeps the
+// chip inert until then.
 export function useOpenSetting(): OpenSetting {
   const [opened, setOpened] = useState<Opened | null>(null)
   const returnTo = useRef<HTMLElement | null>(null)
@@ -31,21 +39,15 @@ export function useOpenSetting(): OpenSetting {
     returnTo.current = null
   }, [opened])
 
-  const close = useCallback(
-    (focusAnchor = true) => {
-      if (opened && focusAnchor) returnTo.current = opened.anchor
-      setOpened(null)
-    },
-    [opened],
-  )
+  const close = (focusAnchor = true) => {
+    if (opened && focusAnchor) returnTo.current = opened.anchor
+    setOpened(null)
+  }
 
-  const open = useCallback(
-    (setting: Setting, anchor: HTMLElement) => {
-      if (opened?.anchor === anchor) close()
-      else setOpened({ setting, anchor })
-    },
-    [opened, close],
-  )
+  const open = (setting: Setting, anchor: HTMLElement) => {
+    if (opened?.anchor === anchor) close()
+    else setOpened({ setting, anchor })
+  }
 
   return { opened, open, close }
 }

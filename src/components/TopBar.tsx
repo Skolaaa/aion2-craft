@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { StatusChips } from '../state/chips.ts'
-import { settingKey, type Setting } from '../state/openSetting.ts'
+import { SETTINGS, settingKey, type Setting } from '../state/openSetting.ts'
 import type { View } from '../state/target.ts'
 import type { PriceFeed } from '../state/usePrices.ts'
 import { FreshnessPill } from './PriceStatus.tsx'
@@ -9,12 +9,6 @@ const VIEWS: readonly { id: View; label: string }[] = [
   { id: 'calculator', label: 'calculator' },
   { id: 'scanner', label: 'scanner' },
 ]
-
-const REGION: Setting = { kind: 'world', from: 'region' }
-const WORLD: Setting = { kind: 'world', from: 'world' }
-const TAX: Setting = { kind: 'tax' }
-const MASTERY: Setting = { kind: 'mastery' }
-const PLAN: Setting = { kind: 'plan' }
 
 interface Context {
   chips: StatusChips
@@ -70,18 +64,18 @@ function ContextChips({ chips, opened, open }: Context) {
   const state = { opened, open }
   return (
     <div className="context" role="group" aria-label="Plan context">
-      <Chip {...state} setting={REGION} label="region" title={chips.region.title}>
+      <Chip {...state} setting={SETTINGS.region} label="region" title={chips.region.title}>
         <span className="chip-value">{chips.region.value}</span>
       </Chip>
-      <Chip {...state} setting={WORLD} label="world" title={chips.world.title}>
+      <Chip {...state} setting={SETTINGS.world} label="world" title={chips.world.title}>
         <span className="chip-value">{chips.world.value}</span>
         <span className="side-badge" aria-hidden="true">{chips.world.badge}</span>
         <span className="sr-only">{chips.world.side}</span>
       </Chip>
-      <Chip {...state} setting={TAX} label="tax" title={chips.tax.title}>
+      <Chip {...state} setting={SETTINGS.tax} label="tax" title={chips.tax.title}>
         <span className="chip-value">{chips.tax.value}</span>
       </Chip>
-      <Chip {...state} setting={MASTERY} label="mastery" title={chips.mastery.title} className="mastery-chip">
+      <Chip {...state} setting={SETTINGS.mastery} label="mastery" title={chips.mastery.title} className="mastery-chip">
         <span className="mastery-pairs" aria-hidden="true">
           {chips.mastery.pairs.map(({ abbr, value, title }) => (
             <span className="mastery-pair" key={abbr} title={title}>
@@ -93,7 +87,7 @@ function ContextChips({ chips, opened, open }: Context) {
         <span className="chip-value mastery-collapsed" aria-hidden="true">{chips.mastery.collapsed}</span>
         <span className="sr-only">{chips.mastery.spoken}</span>
       </Chip>
-      <Chip {...state} setting={PLAN} label="plan" title={chips.plan.title}>
+      <Chip {...state} setting={SETTINGS.plan} label="plan" title={chips.plan.title}>
         <span className="chip-value">{chips.plan.value}</span>
       </Chip>
     </div>

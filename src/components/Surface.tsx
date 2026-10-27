@@ -3,7 +3,8 @@ import { Button } from './Button.tsx'
 
 export type Placement = 'popover' | 'drawer'
 
-const SHEET = '(max-width: 639.98px)'
+export const SHEET_BELOW = 640
+const SHEET = `(max-width: ${SHEET_BELOW - 0.02}px)`
 const GAP = 4
 const EDGE = 8
 
@@ -13,7 +14,6 @@ interface Props {
   title: string
   width?: number
   flush?: boolean
-  // focusAnchor is false when the user moved on by clicking or tabbing elsewhere.
   onClose(focusAnchor: boolean): void
   children: ReactNode
   footer?: ReactNode
@@ -22,7 +22,7 @@ interface Props {
 const inside = (node: EventTarget | null, ...parents: HTMLElement[]) => node instanceof Node && parents.some((parent) => parent.contains(node))
 
 // A popover on a wide screen is non-modal, so one click moves from one setting to the next and the
-// page stays readable. The sheet and the drawer are modal. Mounted only while open.
+// page stays readable.
 export function Surface({ anchor, placement, title, width = 320, flush = false, onClose, children, footer }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
@@ -62,9 +62,9 @@ export function Surface({ anchor, placement, title, width = 320, flush = false, 
     }
     const onCross = () => close.current(true)
 
-    document.addEventListener('keydown', onKey)
     if (placement === 'popover') sheet.addEventListener('change', onCross)
     if (!modal) {
+      document.addEventListener('keydown', onKey)
       document.addEventListener('pointerdown', onPointer, true)
       dialog.addEventListener('focusout', onFocusOut)
       window.addEventListener('resize', place)
