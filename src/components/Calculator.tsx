@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import type { ItemId } from '../domain/types.ts'
 import { taxLabel } from '../state/format.ts'
 import type { ListState } from '../state/list.ts'
+import type { OpenSetting } from '../state/openSetting.ts'
 import { planWanted, type Planning } from '../state/planning.ts'
 import { bestMargins } from '../state/scan.ts'
 import type { Target, View } from '../state/target.ts'
@@ -25,13 +26,14 @@ interface Props {
   overrides: PriceOverrides
   owned: OwnedStock
   sources: Sources
+  surface: Pick<OpenSetting, 'opened' | 'open'>
   link: string
   onTarget(change: Partial<Target>): void
   list: ListState
   onView(view: View): void
 }
 
-export function Calculator({ planning, freshness, requestLadders, target, overrides, owned, sources, link, onTarget, list, onView }: Props) {
+export function Calculator({ planning, freshness, requestLadders, target, overrides, owned, sources, surface, link, onTarget, list, onView }: Props) {
   const { index } = planning
   const [tab, setTab] = useState<DetailTab>('buy')
   const craftable = target.itemId === null ? null : (index.byId.get(target.itemId) ?? null)
@@ -56,6 +58,7 @@ export function Calculator({ planning, freshness, requestLadders, target, overri
             freshness={freshness}
             quantity={target.quantity}
             overrides={overrides}
+            surface={surface}
             onTarget={onTarget}
             after={plan && <AddToList itemId={craftable.item.id} quantity={target.quantity} list={list} onView={onView} />}
           />

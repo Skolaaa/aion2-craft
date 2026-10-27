@@ -1,10 +1,12 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import type { ItemId } from '../domain/types.ts'
 
 export type Setting =
   | { kind: 'world'; from: 'region' | 'world' }
   | { kind: 'mastery' }
   | { kind: 'tax' }
   | { kind: 'plan' }
+  | { kind: 'history'; itemId: ItemId }
 
 export const SETTINGS = {
   region: { kind: 'world', from: 'region' },
@@ -25,7 +27,8 @@ export interface OpenSetting {
   close(focusAnchor?: boolean): void
 }
 
-export const settingKey = (setting: Setting) => (setting.kind === 'world' ? `world-${setting.from}` : setting.kind)
+export const settingKey = (setting: Setting) =>
+  setting.kind === 'world' ? `world-${setting.from}` : setting.kind === 'history' ? `history-${setting.itemId}` : setting.kind
 
 // Focus goes back to the chip after its surface has left the DOM, since a modal surface keeps the
 // chip inert until then.

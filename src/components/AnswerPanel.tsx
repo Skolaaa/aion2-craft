@@ -5,6 +5,7 @@ import { itemName, type Craftable } from '../state/craftables.ts'
 import { kina, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
 import { gradeName } from '../state/grade.ts'
 import { SIDE } from '../market/worlds.ts'
+import type { OpenSetting } from '../state/openSetting.ts'
 import type { Planning } from '../state/planning.ts'
 import { MAX_QUANTITY, type Target } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
@@ -25,12 +26,14 @@ interface Props {
   freshness: Freshness
   quantity: number
   overrides: PriceOverrides
+  /** Opens the price history from the sparkline. */
+  surface: Pick<OpenSetting, 'opened' | 'open'>
   onTarget(change: Partial<Target>): void
   /** Rendered last among the controls, after the quantity. */
   after?: ReactNode
 }
 
-export function AnswerPanel({ craftable, plan, planning, freshness, quantity, overrides, onTarget, after }: Props) {
+export function AnswerPanel({ craftable, plan, planning, freshness, quantity, overrides, surface, onTarget, after }: Props) {
   const { catalog, world, index, mastery, prices } = planning
   const { item } = craftable
   const recipe = plan ? catalog.recipes.get(plan.targets[0].root.recipeId) : undefined
@@ -74,6 +77,7 @@ export function AnswerPanel({ craftable, plan, planning, freshness, quantity, ov
           plan={plan}
           planning={planning}
           stepNote={stepSummary(plan.targets[0].root, recipe, mastery, 1)}
+          surface={surface}
           onPrice={(price) => overrides.save(item.id, price)}
           ownPrice={prices.quote(item.id).kind === 'manual'}
         />
@@ -90,10 +94,11 @@ interface FiguresProps {
   planning: Planning
   stepNote: string
   ownPrice: boolean
+  surface: Pick<OpenSetting, 'opened' | 'open'>
   onPrice(price: number | null): void
 }
 
-function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: FiguresProps) {
+function Figures({ answer, plan, planning, stepNote, ownPrice, surface, onPrice }: FiguresProps) {
   const { catalog, world } = planning
   const { taxRate } = planning.options
   const { verdict, craft, buy, margin, marginPct } = answer
@@ -143,7 +148,7 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
         <Figure label="craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
         <Figure label="buy" value={buy === null ? null : kina(buy)} empty="No listing">
           {buyNote}
-          {market !== null && <Sparkline itemId={itemId} worldId={world.id} />}
+          {market !== null && <Sparkline itemId={itemId} worldId={world.id} surface={surface} />}
         </Figure>
         <Figure label="margin" value={margin === null ? null : signedKina(margin)} empty="No margin" tone={toneOf(margin, 'kina')}>{marginNote}</Figure>
       </dl>

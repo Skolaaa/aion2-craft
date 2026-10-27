@@ -1,4 +1,6 @@
+import type { Catalog } from '../domain/types.ts'
 import type { Listed, World } from '../market/worlds.ts'
+import { itemName } from '../state/craftables.ts'
 import { settingKey, type OpenSetting, type Setting } from '../state/openSetting.ts'
 import type { Planning } from '../state/planning.ts'
 import type { Setup, SetupPatch } from '../state/setup.ts'
@@ -10,6 +12,7 @@ import { Button } from './Button.tsx'
 import { MasteryForm } from './MasteryForm.tsx'
 import { WorldsFailed } from './Notice.tsx'
 import { PlanSettings } from './PlanSettings.tsx'
+import { PriceChart } from './PriceChart.tsx'
 import { Surface, type Placement } from './Surface.tsx'
 import { TaxForm } from './TaxForm.tsx'
 import { WorldPicker } from './WorldPicker.tsx'
@@ -28,12 +31,17 @@ interface Props {
   sources: Sources
 }
 
-const FRAME: Record<Setting['kind'], { title: string; placement: Placement; width?: number }> = {
-  world: { title: 'World', placement: 'popover', width: 440 },
-  mastery: { title: 'Mastery', placement: 'popover', width: 360 },
-  tax: { title: 'Market tax', placement: 'popover', width: 320 },
-  plan: { title: 'Settings', placement: 'drawer' },
+const FRAME: Record<Setting['kind'], { placement: Placement; width?: number }> = {
+  world: { placement: 'popover', width: 440 },
+  mastery: { placement: 'popover', width: 360 },
+  tax: { placement: 'popover', width: 320 },
+  plan: { placement: 'drawer' },
+  history: { placement: 'popover', width: 560 },
 }
+
+const TITLE: Record<Exclude<Setting['kind'], 'history'>, string> = { world: 'World', mastery: 'Mastery', tax: 'Market tax', plan: 'Settings' }
+
+const titleOf = (setting: Setting, catalog: Catalog) => (setting.kind === 'history' ? itemName(catalog, setting.itemId) : TITLE[setting.kind])
 
 export function SettingHost({ surface, worlds, retryWorlds, current, setup, patch, chooseWorld, planning, overrides, owned, sources }: Props) {
   const { opened, close } = surface
@@ -70,6 +78,8 @@ export function SettingHost({ surface, worlds, retryWorlds, current, setup, patc
         return <TaxForm taxRate={setup.taxRate} patch={patch} />
       case 'plan':
         return <PlanSettings setup={setup} patch={patch} planning={planning} overrides={overrides} owned={owned} sources={sources} />
+      case 'history':
+        return <PriceChart itemId={setting.itemId} worldId={planning.world.id} />
       default: {
         const unknown: never = setting
         return unknown
@@ -81,6 +91,7 @@ export function SettingHost({ surface, worlds, retryWorlds, current, setup, patc
     <Surface
       key={settingKey(setting)}
       anchor={anchor}
+      title={titleOf(setting, planning.catalog)}
       {...FRAME[setting.kind]}
       flush={setting.kind === 'world' && worlds.status === 'ready'}
       footer={setting.kind === 'plan' ? <Button variant="primary" onClick={() => close()}>Done</Button> : undefined}
