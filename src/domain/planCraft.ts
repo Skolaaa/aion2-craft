@@ -30,7 +30,10 @@ function outcomes(recipe: Recipe, rates: StepRates) {
 
 const NO_STOCK: Owned = new Map()
 
-function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices: PriceBook, owned: Owned) {
+/** The units the plan buys of each item, summed over every step. */
+type Demand = ReadonlyMap<ItemId, number>
+
+function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices: PriceBook, owned: Owned, demand: Demand) {
   const choices = new Map<ItemId, Choice>()
   const visiting = new Set<ItemId>()
   // Stock is spent in tree order, so a material two steps need shares one budget.
@@ -72,7 +75,7 @@ function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices:
     if (known) return known
     if (visiting.has(itemId)) return NONE
     visiting.add(itemId)
-    const quote = prices.quote(itemId)
+    const quote = prices.quote(itemId, demand.get(itemId))
     const buy: Choice | null = quote.kind === 'none' ? null : { kind: 'buy', unit: quote.unit, quote }
     const allowed = { craft: options.allowCraft || !buy, morph: options.allowMorph || !buy }
     const routes: Choice[] = routesFor(itemId)
@@ -153,7 +156,8 @@ function collectLeaves(step: StepPlan, leaves: Leaves) {
     else if (acquisition.method !== 'buy') collectLeaves(acquisition.step, leaves)
     else {
       const { shopping } = leaves
-      const entry = shopping.get(line.itemId) ?? { itemId: line.itemId, expected: 0, owned: 0, unit: acquisition.unit, subtotal: 0 }
+      const depth = acquisition.quote.kind === 'market' ? acquisition.quote.depth : null
+      const entry = shopping.get(line.itemId) ?? { itemId: line.itemId, expected: 0, owned: 0, unit: acquisition.unit, subtotal: 0, depth }
       entry.expected += line.expected
       entry.owned += line.owned
       entry.subtotal += line.subtotal
@@ -162,21 +166,53 @@ function collectLeaves(step: StepPlan, leaves: Leaves) {
   }
 }
 
+function leavesOf(root: StepPlan): Leaves {
+  const leaves: Leaves = { shopping: new Map(), missing: new Set(), blocked: new Set() }
+  collectLeaves(root, leaves)
+  return leaves
+}
+
+const demandOf = (root: StepPlan): Demand =>
+  new Map([...leavesOf(root).shopping.values()].map(({ itemId, expected, owned }) => [itemId, expected - owned]))
+
+const sameDemand = (a: Demand, b: Demand) => a.size === b.size && [...a].every(([itemId, units]) => Math.abs((b.get(itemId) ?? 0) - units) < 1e-9)
+
+const MAX_PASSES = 4
+
+// Depth-aware prices depend on how many units the plan buys, which depends on the prices, so the plan is
+// re-run with the previous pass's demand until it settles. The first pass quotes every item for one unit.
+function settle(prices: PriceBook, plan: (demand: Demand) => StepPlan | null): StepPlan | null {
+  const laddered = (demand: Demand) =>
+    [...demand].some(([itemId, units]) => {
+      const quote = prices.quote(itemId, units)
+      return quote.kind === 'market' && quote.depth !== null
+    })
+  let demand: Demand = new Map()
+  let root = plan(demand)
+  for (let pass = 1; root && pass < MAX_PASSES; pass++) {
+    const next = demandOf(root)
+    // Another pass changes nothing unless a ladder priced the old demand or would price the new one.
+    if (sameDemand(next, demand) || !(laddered(next) || laddered(demand))) break
+    demand = next
+    root = plan(demand)
+  }
+  return root
+}
+
 export function planCraft({ target, mastery, options, world, prices, owned = NO_STOCK }: PlanInput): PlanResult | null {
-  const root = planner(world, mastery, options, prices, owned)(target.itemId, target.quantity)
+  const root = settle(prices, (demand) => planner(world, mastery, options, prices, owned, demand)(target.itemId, target.quantity))
   if (!root) return null
 
-  const quote = prices.quote(target.itemId)
+  const quote = prices.quote(target.itemId, target.quantity)
   const market =
-    quote.kind === 'market' ? { lowest: quote.unit, soldAvg: quote.soldAvg, listings: quote.listings }
-    : quote.kind === 'manual' ? { lowest: quote.unit, soldAvg: null, listings: 0 }
+    quote.kind === 'market' ? { lowest: quote.lowest, soldAvg: quote.soldAvg, listings: quote.listings, cost: quote.unit * target.quantity, depth: quote.depth }
+    : quote.kind === 'manual' ? { lowest: quote.unit, soldAvg: null, listings: 0, cost: quote.unit * target.quantity, depth: null }
     : null
   const margin = market && Number.isFinite(root.cost)
     ? market.lowest * (1 - options.taxRate) * target.quantity - root.cost
     : null
 
-  const leaves: Leaves = { shopping: new Map(), missing: new Set(), blocked: new Set() }
-  collectLeaves(root, leaves)
+  const leaves = leavesOf(root)
 
   return {
     target,

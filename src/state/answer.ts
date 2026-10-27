@@ -61,7 +61,7 @@ function verdictOf(plan: PlanResult, craft: number | null, buy: number | null, {
 
 export function answerOf(plan: PlanResult, context: AnswerContext): Answer {
   const craft = Number.isFinite(plan.cost) ? plan.cost : null
-  const buy = plan.market ? plan.market.lowest * plan.target.quantity : null
+  const buy = plan.market?.cost ?? null
   return { verdict: verdictOf(plan, craft, buy, context), craft, buy, margin: plan.margin, marginPct: plan.marginPct }
 }
 
@@ -156,7 +156,7 @@ export function successNote(step: Pick<StepPlan, 'successRate' | 'rateSource'>):
 }
 
 export type BuyLine =
-  | { kind: 'buy'; itemId: ItemId; expected: number; owned: number; unit: number; subtotal: number }
+  | ({ kind: 'buy' } & PlanResult['shopping'][number])
   | { kind: 'missing'; itemId: ItemId; expected: number; owned: number }
   | { kind: 'owned'; itemId: ItemId; expected: number; owned: number }
 

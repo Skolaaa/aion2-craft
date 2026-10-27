@@ -57,8 +57,31 @@ export interface MarketQuote {
   capturedAt: string
 }
 
+export interface LadderLevel {
+  unitPrice: number
+  listings: number
+  units: number
+}
+
+export interface DepthLadder {
+  capturedAt: string
+  complete: boolean
+  units: number
+  levels: LadderLevel[]
+}
+
+export interface Depth {
+  units: number
+  cost: number
+  listings: number
+  levels: number
+  available: number
+  complete: boolean
+  capturedAt: string
+}
+
 export type PriceQuote =
-  | { kind: 'market'; unit: number; listings: number; soldAvg: number | null; capturedAt: string }
+  | { kind: 'market'; unit: number; lowest: number; listings: number; soldAvg: number | null; capturedAt: string; depth: Depth | null }
   | { kind: 'manual'; unit: number }
   | { kind: 'npc'; unit: number }
   | { kind: 'none' }
@@ -66,7 +89,7 @@ export type PriceQuote =
 export type Price = Exclude<PriceQuote, { kind: 'none' }>
 
 export interface PriceBook {
-  quote(itemId: ItemId): PriceQuote
+  quote(itemId: ItemId, units?: number): PriceQuote
 }
 
 export interface PlanOptions {
@@ -127,11 +150,11 @@ export interface PlanResult {
   root: StepPlan
   cost: number
   unitCost: number
-  market: { lowest: number; soldAvg: number | null; listings: number } | null
+  market: { lowest: number; soldAvg: number | null; listings: number; cost: number; depth: Depth | null } | null
   margin: number | null
   marginPct: number | null
-  /** Every bought leaf, summed over the steps that use it. `expected` includes the `owned` part; `subtotal` is for the rest. */
-  shopping: { itemId: ItemId; expected: number; owned: number; unit: number; subtotal: number }[]
+  /** Every bought leaf, summed over the steps that use it. `expected` includes the `owned` part; `subtotal` and `depth` are for the rest. */
+  shopping: { itemId: ItemId; expected: number; owned: number; unit: number; subtotal: number; depth: Depth | null }[]
   missing: ItemId[]
   blocked: RecipeId[]
 }

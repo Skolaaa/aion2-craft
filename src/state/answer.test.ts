@@ -142,7 +142,7 @@ describe('buyList', () => {
     const { lines, credit } = buyList(plan)
     expect(lines).toEqual([
       { kind: 'missing', itemId: WOOD, expected: 5, owned: 0 },
-      { kind: 'buy', itemId: IRON, expected: 1, owned: 0, unit: 50, subtotal: 50 },
+      { kind: 'buy', itemId: IRON, expected: 1, owned: 0, unit: 50, subtotal: 50, depth: null },
     ])
     expect(credit).toBe(0)
   })
@@ -152,7 +152,7 @@ describe('buyList', () => {
     const { plan } = answer(recipes, { [IRON]: 50, [WOOD]: 10 }, 1, MASTERY, new Map([[WOOD, 2], [IRON, 5]]))
     const { lines } = buyList(plan)
     expect(lines).toEqual([
-      { kind: 'buy', itemId: WOOD, expected: 5, owned: 2, unit: 10, subtotal: 30 },
+      { kind: 'buy', itemId: WOOD, expected: 5, owned: 2, unit: 10, subtotal: 30, depth: null },
       { kind: 'owned', itemId: IRON, expected: 1, owned: 1 },
     ])
     expect(plan.cost).toBe(30)
