@@ -19,7 +19,7 @@ either closes a gap those tools have already filled, or widens that edge.
 - Per-component source choice: buy, craft or morph per part under steps, held per world, with what the choice costs over the cheapest way on the row.
 - Where to get it: each item in the buy table and under steps links to its AION2 Hub page, which lists where it is gathered, dropped, crafted or sold.
 - Multi-craft list: several items on one per-world list, planned in one pass with stock spent once and bulk prices for the total, as one buy table, one Copy list text and a link that carries the list.
-- Price history: a seven-day line of the lowest listing under the buy figure with the week's low and high, so a margin reads as a trend or a one-hour blip.
+- Price history: a seven-day line of the lowest listing under the buy figure with the week's low and high, so a margin reads as a trend or a one-hour blip, and behind it the full chart over 7 or 30 days with the low-high band and a readout per bucket.
 
 ## Next: widen the edge
 
