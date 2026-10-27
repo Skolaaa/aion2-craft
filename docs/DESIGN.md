@@ -82,12 +82,17 @@ setting in place (Arena's idea on Ledger's line):
   what a sale pays out, so it moves the margin".
 - The mastery group shows five mono pairs `BS 100` with the full profession name and the
   in-game name on hover and as screen-reader text. It opens a popover with five rows (name,
-  in-game name, number input, slider). Under 1100 px the five pairs collapse to one chip
+  in-game name, number input, slider). Under 1280 px the five pairs collapse to one chip
   `mastery 5×100` or `mastery 100/60/…`.
 - `plan 3/3` opens the settings drawer (plan options and your prices), from the right, 400 px.
 - The freshness pill at the right shows age and a dot (gold when fresh, loss colour when stale);
   it is the only refresh button. The line under the answer and under the scanner title states the
   capture time, or the stale or missing warning, as text.
+- Copy link sits right of the freshness pill as a link glyph, and shows a check for two seconds
+  after it copies. The address bar always holds the same link: world, item, quantity, mastery
+  off 100, tax off 5%, plan options off their defaults, and the scanner view. Prices and Have
+  counts stay in the browser. Opening a link never changes what the recipient has saved; a
+  setting is saved once they change it.
 - The settings button goes away. Everything it held is reachable from a chip.
 
 World picker, one component used from the region and world chips, desktop popover 440 px under
@@ -129,8 +134,13 @@ drops to the bottom with "your stock" as its source.
 States: as the second pass (loading line, stale pill, proxy-down notice, world list failed with
 retry, missing price input in the row, mastery too low in the sentence, no listing).
 
+Link notes: a link to a world the recipient has not used waits on the world list loading line;
+if the list fails, the notice offers Try again and "Open your own plan instead". A world id
+that is not on the list opens on the recipient's own world, and an item that side cannot craft
+opens no item. Each shows a notice with Dismiss, once, above the page.
+
 Mobile (under 640 px): the status line wraps to two rows (chips, then the mastery strip) with the
-freshness pill on a short third row at the right, the
+freshness pill and Copy link on a short third row at the right, the
 figures stack, the buy table collapses to item plus subtotal with the math as a sub-line, the
 picker and popovers become bottom sheets, the drawer takes the full width.
 

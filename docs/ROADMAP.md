@@ -14,17 +14,12 @@ either closes a gap those tools have already filled, or widens that edge.
 - The Ledger UI in Aion's own art direction, the game's grade colours and names.
 - Public copy on Vercel with the two proxy rewrites.
 - Owned materials: a Have column per world, the plan spends stock first, Copy list as text.
+- Share links: the address bar holds the plan's world, item, quantity, mastery and options, and Copy link copies it.
 
 ## Now: make a plan shareable
 
 These are table stakes. Every competitor has them, and they are what turns one player's
 calculator into something a Legion passes around.
-
-### 1. Share links (S)
-
-The item, quantity, world, mastery and plan options go into the URL, so a pasted link opens
-the same plan. Prices and owned counts stay local. Depends on nothing. Changes
-`src/state/target.ts`, `setup.ts` and the App's state wiring.
 
 ### 2. Depth-aware prices (M)
 
@@ -42,8 +37,8 @@ vendors and quests. No data work; the catalog's item ids come from aion2t alread
 
 Add several items to one list and get a single merged buy table, with owned stock shared
 across them. The planner already takes a quantity; the work is a basket in state, a merged
-`buyList`, and the Copy list text for several targets. Depends on 1 if the basket should
-be shareable.
+`buyList`, and the Copy list text for several targets. A shareable basket extends the share
+link query in `src/state/shareLink.ts`.
 
 ## Next: widen the edge
 
