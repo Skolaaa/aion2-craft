@@ -1,10 +1,11 @@
-import type { ItemId } from '../domain/types.ts'
+import type { ItemId, Method } from '../domain/types.ts'
 import { itemName } from '../state/craftables.ts'
 import { kina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
 import { PLAN_FLAGS, type PlanFlag, type Setup, type SetupPatch } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { OwnedStock } from '../state/useOwned.ts'
+import type { Sources } from '../state/useSources.ts'
 import { Button } from './Button.tsx'
 import { CountCell } from './CountCell.tsx'
 import { ItemCell } from './ItemCell.tsx'
@@ -32,12 +33,30 @@ interface Props {
   planning: Planning
   overrides: PriceOverrides
   owned: OwnedStock
+  sources: Sources
 }
 
-export function PlanSettings({ setup, patch, planning, overrides, owned }: Props) {
+export function PlanSettings({ setup, patch, planning, overrides, owned, sources }: Props) {
   const { world, catalog, market } = planning
   const entries = [...overrides.prices]
   const stock = [...owned.counts]
+  const chosen = [...sources.choices]
+  const sourceColumns: Column<[ItemId, Method]>[] = [
+    { key: 'item', header: 'Item', render: ([itemId]) => <ItemCell item={catalog.items.get(itemId)} /> },
+    {
+      key: 'method',
+      header: 'You chose',
+      numeric: true,
+      render: ([itemId, method]) => (
+        <span className="price-actions">
+          <span>{method}</span>
+          <Button className="button-small" aria-label={`Let the plan pick how to get ${itemName(catalog, itemId)}`} onClick={() => sources.save(itemId, null)}>
+            Clear
+          </Button>
+        </span>
+      ),
+    },
+  ]
   const stockColumns: Column<[ItemId, number]>[] = [
     { key: 'item', header: 'Item', render: ([itemId]) => <ItemCell item={catalog.items.get(itemId)} /> },
     {
@@ -124,6 +143,21 @@ export function PlanSettings({ setup, patch, planning, overrides, owned }: Props
           rows={stock}
           rowKey={([itemId]) => String(itemId)}
           empty="None yet. Click a count under Have in the buy table."
+        />
+      </section>
+
+      <section className="settings-group" aria-labelledby="your-sources">
+        <div className="group-head">
+          <h3 className="section-title" id="your-sources"><span>Your sources on {world.name}</span></h3>
+          {chosen.length > 1 && <Button className="button-small" onClick={sources.resetAll}>Clear all</Button>}
+        </div>
+        <p className="meta">The plan gets these the way you chose wherever they appear, even when another way is cheaper.</p>
+        <Table
+          label={`Your sources on ${world.name}`}
+          columns={sourceColumns}
+          rows={chosen}
+          rowKey={([itemId]) => String(itemId)}
+          empty="None yet. Pick buy, craft or morph on a row under steps."
         />
       </section>
     </>

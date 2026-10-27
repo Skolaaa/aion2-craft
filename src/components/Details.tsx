@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
-import type { Acquisition, ItemId, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
-import { buyList, childStep, depthNote, estimateGap, stepCount, stepSummary, successNote, type BuyLine, type BuyList } from '../state/answer.ts'
+import type { Acquisition, ItemId, Method, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
+import {
+  buyList, childStep, depthNote, estimateGap, extraCost, stepCount, stepSummary, successNote, type BuyLine, type BuyList,
+} from '../state/answer.ts'
 import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
@@ -8,6 +10,7 @@ import { MAX_MASTERY } from '../state/setup.ts'
 import { shoppingText } from '../state/shopping.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { OwnedStock } from '../state/useOwned.ts'
+import type { Sources } from '../state/useSources.ts'
 import { useExchangeEstimate } from '../state/useExchangeEstimate.ts'
 import { useClipboard } from '../state/useClipboard.ts'
 import { useNow } from '../state/useNow.ts'
@@ -16,6 +19,7 @@ import { CountCell } from './CountCell.tsx'
 import { Glyph } from './Glyph.tsx'
 import { ItemCell } from './ItemCell.tsx'
 import { PriceCell } from './PriceCell.tsx'
+import { SourceCell } from './SourceCell.tsx'
 import { Table, type Column } from './Table.tsx'
 
 const TABS = [
@@ -31,12 +35,13 @@ interface Props {
   planning: Planning
   overrides: PriceOverrides
   owned: OwnedStock
+  sources: Sources
   link: string
   tab: DetailTab
   onTab(tab: DetailTab): void
 }
 
-export function Details({ plan, planning, overrides, owned, link, tab, onTab }: Props) {
+export function Details({ plan, planning, overrides, owned, sources, link, tab, onTab }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const list = buyList(plan)
@@ -78,7 +83,9 @@ export function Details({ plan, planning, overrides, owned, link, tab, onTab }: 
       </div>
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
         {tab === 'buy' && <WhatToBuy plan={plan} list={list} planning={planning} overrides={overrides} owned={owned} link={link} />}
-        {tab === 'steps' && <HowItIsMade key={plan.target.itemId} plan={plan} credit={list.credit} planning={planning} overrides={overrides} />}
+        {tab === 'steps' && (
+          <HowItIsMade key={plan.target.itemId} plan={plan} credit={list.credit} planning={planning} overrides={overrides} sources={sources} />
+        )}
         {tab === 'rates' && <Rates plan={plan} planning={planning} />}
       </div>
     </section>
@@ -261,6 +268,7 @@ function flatten(plan: PlanResult, open: ReadonlySet<string>): LadderRow[] {
 }
 
 const BUY_FROM = { market: 'Buy on the Market', manual: 'Buy at your price', npc: 'Buy from an NPC shop' } as const
+const OVER: Record<Method, string> = { buy: 'buying', craft: 'crafting', morph: 'morphing' }
 
 function howText({ acquisition }: LadderRow, recipeOf: (step: StepPlan) => Recipe | undefined, planning: Planning) {
   if (acquisition.method === 'buy') {
@@ -273,11 +281,29 @@ function howText({ acquisition }: LadderRow, recipeOf: (step: StepPlan) => Recip
   return `${verb}, ${stepSummary(acquisition.step, recipeOf(acquisition.step), planning.mastery)}`
 }
 
-function HowItIsMade({ plan, credit, planning, overrides }: { plan: PlanResult; credit: number; planning: Planning; overrides: PriceOverrides }) {
+interface HowProps {
+  plan: PlanResult
+  credit: number
+  planning: Planning
+  overrides: PriceOverrides
+  sources: Sources
+}
+
+function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
   const { catalog } = planning
   const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(['root']))
   const rows = flatten(plan, open)
   const recipeOf = (step: StepPlan) => catalog.recipes.get(step.recipeId)
+
+  // The target is always crafted, and a line that stock covers or that nobody prices has nothing to pick between.
+  const choiceOf = ({ depth, itemId, acquisition, expected, owned }: LadderRow) => {
+    const { method } = acquisition
+    if (depth === 0 || method === 'owned' || method === 'none') return null
+    const options = plan.alternatives.get(itemId) ?? []
+    if (options.length < 2) return null
+    const pinned = sources.choices.get(itemId) === method
+    return { options, method, pinned, extra: pinned ? extraCost(options, method, expected - owned) : null }
+  }
 
   const toggle = (key: string) =>
     setOpen((previous) => {
@@ -294,12 +320,30 @@ function HowItIsMade({ plan, credit, planning, overrides }: { plan: PlanResult; 
         const name = itemName(catalog, row.itemId)
         const step = childStep(row.acquisition)
         const expandable = step !== null && step.materials.length > 0
+        const choice = choiceOf(row)
         return (
           <ItemCell
             item={catalog.items.get(row.itemId)}
             depth={row.depth}
-            meta={howText(row, recipeOf, planning)}
+            meta={
+              <>
+                {howText(row, recipeOf, planning)}
+                {choice?.pinned && <>, <span className="yours">yours</span></>}
+                {choice?.extra && <>, {kina(choice.extra.kina)} Kina more than {OVER[choice.extra.over]}</>}
+              </>
+            }
             narrowMeta={`${decimal(row.expected)} needed${row.owned > 0 && row.acquisition.method !== 'owned' ? `, ${decimal(row.owned)} yours` : ''}`}
+            controls={
+              choice && (
+                <SourceCell
+                  itemName={name}
+                  options={choice.options}
+                  value={choice.method}
+                  planning={planning}
+                  onChange={(method) => sources.save(row.itemId, method)}
+                />
+              )
+            }
             toggle={
               expandable ? (
                 <button

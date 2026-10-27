@@ -7,6 +7,7 @@ import { bestMargins } from '../state/scan.ts'
 import type { Target } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { OwnedStock } from '../state/useOwned.ts'
+import type { Sources } from '../state/useSources.ts'
 import type { Freshness } from '../state/useFreshness.ts'
 import { useScan } from '../state/useScan.ts'
 import { AnswerPanel } from './AnswerPanel.tsx'
@@ -21,17 +22,18 @@ interface Props {
   target: Target
   overrides: PriceOverrides
   owned: OwnedStock
+  sources: Sources
   link: string
   onTarget(change: Partial<Target>): void
 }
 
-export function Calculator({ planning, freshness, requestLadders, target, overrides, owned, link, onTarget }: Props) {
+export function Calculator({ planning, freshness, requestLadders, target, overrides, owned, sources, link, onTarget }: Props) {
   const { index } = planning
   const [tab, setTab] = useState<DetailTab>('buy')
   const craftable = target.itemId === null ? null : (index.byId.get(target.itemId) ?? null)
   const plan = useMemo(
-    () => (craftable ? planOne(planning, craftable.item.id, target.quantity, owned.counts) : null),
-    [planning, craftable, target.quantity, owned.counts],
+    () => (craftable ? planOne(planning, craftable.item.id, target.quantity, owned.counts, sources.choices) : null),
+    [planning, craftable, target.quantity, owned.counts, sources.choices],
   )
 
   // Items the plan buys in bulk get their depth ladder; the plan then re-runs with it and may ask for more.
@@ -55,7 +57,9 @@ export function Calculator({ planning, freshness, requestLadders, target, overri
             overrides={overrides}
             onTarget={onTarget}
           />
-          {plan && !freshness.pending && <Details plan={plan} planning={planning} overrides={overrides} owned={owned} link={link} tab={tab} onTab={setTab} />}
+          {plan && !freshness.pending && (
+            <Details plan={plan} planning={planning} overrides={overrides} owned={owned} sources={sources} link={link} tab={tab} onTab={setTab} />
+          )}
         </>
       )}
     </>

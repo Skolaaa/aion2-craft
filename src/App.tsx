@@ -25,6 +25,7 @@ import { useOwned } from './state/useOwned.ts'
 import { usePersistentState } from './state/usePersistentState.ts'
 import { usePrices, type PriceFeed } from './state/usePrices.ts'
 import { useAddressBar, useLinkOpening } from './state/useShareLink.ts'
+import { useSources } from './state/useSources.ts'
 import { readyDirectory, useWorlds, type WorldsState } from './state/useWorlds.ts'
 
 const NO_QUOTES: ReadonlyMap<ItemId, MarketQuote> = new Map()
@@ -134,6 +135,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
   const ladders = useLadders(world.id)
   const overrides = useOverrides(world.id)
   const owned = useOwned(world.id)
+  const sources = useSources(world.id)
   const surface = useOpenSetting()
 
   const options = useMemo<PlanOptions>(
@@ -182,6 +184,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
         planning={planning}
         overrides={overrides}
         owned={owned}
+        sources={sources}
       />
     </>
   )
@@ -198,7 +201,17 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
       )}
       {feed.status === 'failed' && <FeedNotice feed={feed} worldName={world.name} />}
       {view === 'calculator' && (
-        <Calculator planning={planning} freshness={freshness} requestLadders={ladders.request} target={target} overrides={overrides} owned={owned} link={link} onTarget={patchTarget} />
+        <Calculator
+          planning={planning}
+          freshness={freshness}
+          requestLadders={ladders.request}
+          target={target}
+          overrides={overrides}
+          owned={owned}
+          sources={sources}
+          link={link}
+          onTarget={patchTarget}
+        />
       )}
       {view === 'scanner' && <Scanner planning={planning} freshness={freshness} onOpen={openItem} />}
     </Shell>
