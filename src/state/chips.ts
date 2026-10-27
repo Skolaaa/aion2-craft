@@ -1,13 +1,13 @@
 import { SIDE, type Listed } from '../market/worlds.ts'
-import { shortDate, taxPercent } from './format.ts'
+import { percent, shortDate } from './format.ts'
 import { PLAN_FLAGS, PROFESSIONS, type Setup } from './setup.ts'
 
-export interface Chip {
+interface Chip {
   value: string
   title: string
 }
 
-export interface MasteryPair {
+interface MasteryPair {
   abbr: string
   value: number
   title: string
@@ -32,7 +32,6 @@ function collapsed(values: readonly number[]) {
   return values.every((value) => value === first) ? `${values.length}×${first}` : `${first}/${second}/…`
 }
 
-// Every string the status line shows, so the header only lays them out.
 export function statusChips(setup: Pick<Setup, 'mastery' | 'taxRate' | 'allowCraft' | 'allowMorph' | 'byproductCredit'>, current: Listed): StatusChips {
   const { world } = current
   const pairs = PROFESSIONS.map(({ id, label, inGame, abbr }) => ({
@@ -45,7 +44,7 @@ export function statusChips(setup: Pick<Setup, 'mastery' | 'taxRate' | 'allowCra
   return {
     region: { value: world.region, title: world.regionName },
     world: { value: world.name, title: matchNote(current), badge: SIDE[world.race].badge, side: SIDE[world.race].name },
-    tax: { value: `${taxPercent(setup.taxRate).toFixed(1)}%`, title: 'Market tax' },
+    tax: { value: percent(setup.taxRate, 1), title: 'Market tax' },
     mastery: {
       pairs,
       collapsed: collapsed(pairs.map((pair) => pair.value)),

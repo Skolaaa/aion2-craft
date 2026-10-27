@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { ItemId } from '../domain/types.ts'
 import { kina, plural, signedKina, toneOf } from '../state/format.ts'
 import type { ScanKey, ScanRow, ScanSort } from '../state/scan.ts'
@@ -66,7 +66,7 @@ interface Props {
 }
 
 export function ScanTable({ label, rows, empty, onOpen, sort, onSort }: Props) {
-  const columns = useMemo(() => scanColumns(onOpen), [onOpen])
+  const columns = scanColumns(onOpen)
   return (
     <>
       {sort && onSort && (

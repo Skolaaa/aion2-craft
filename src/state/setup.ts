@@ -28,7 +28,7 @@ export interface Setup {
   byproductCredit: boolean
 }
 
-// Everything a form may change. world and recent change together through setWorld.
+// world and recent change together through setWorld.
 export type SetupPatch = Partial<Omit<Setup, 'world' | 'recent'>>
 
 const DEFAULT_MASTERY: Mastery = {
@@ -82,7 +82,6 @@ export function parseSetup(raw: unknown): Setup | null {
   }
 }
 
-// The only writer of world and recent, so the two cannot disagree.
 export const setWorld = (setup: Setup, world: World): Setup => ({
   ...setup,
   world,

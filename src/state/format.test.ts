@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { parseKina, percent, rate, signedKina, toneOf } from './format.ts'
+import { parseKina, percent, rate, shownTenths, signedKina, toneOf } from './format.ts'
+import { heatOf } from './heat.ts'
 
 describe('parseKina', () => {
   it('reads plain, grouped and shortened amounts', () => {
@@ -29,6 +30,16 @@ describe('number text', () => {
     expect(toneOf(0.0004, 'fraction')).toBeUndefined()
     expect(toneOf(0.0006, 'fraction')).toBe('is-gain')
     expect(toneOf(null, 'fraction')).toBeUndefined()
+  })
+
+  it('counts a fraction in the tenths of a percent it shows as, for both tone and heat', () => {
+    expect(shownTenths(0.0004)).toBe(0)
+    expect(shownTenths(0.0006)).toBe(1)
+    expect(shownTenths(0.2534)).toBe(253)
+    for (const fraction of [0.0004, 0.0005, 0.0006, -0.0004]) {
+      expect(toneOf(fraction, 'fraction') === undefined, `${fraction}`).toBe(shownTenths(fraction) === 0)
+      expect(heatOf(fraction) === null, `${fraction}`).toBe(shownTenths(fraction) <= 0)
+    }
   })
 
   it('drops a trailing zero from rates', () => {

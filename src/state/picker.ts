@@ -14,12 +14,12 @@ export interface PickerOption {
   listed: Listed
 }
 
-export interface PickerGroup {
+interface PickerGroup {
   region: RegionGroup
   options: readonly PickerOption[]
 }
 
-export interface PickerView {
+interface PickerView {
   recent: readonly PickerOption[]
   groups: readonly PickerGroup[]
   keyboardOrder: readonly PickerOption[]

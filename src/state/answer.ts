@@ -17,7 +17,7 @@ export interface Answer {
   marginPct: number | null
 }
 
-export interface AnswerContext {
+interface AnswerContext {
   catalog: Catalog
   mastery: Mastery
 }
@@ -65,7 +65,7 @@ export function answerOf(plan: PlanResult, context: AnswerContext): Answer {
   return { verdict: verdictOf(plan, craft, buy, context), craft, buy, margin: plan.margin, marginPct: plan.marginPct }
 }
 
-export interface Names {
+interface Names {
   itemName(itemId: ItemId): string
   worldName: string
   taxRate: number

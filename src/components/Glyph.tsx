@@ -4,7 +4,7 @@ const PATHS = {
   arrow: 'M8 3v10m-4-4 4 4 4-4',
 } as const
 
-export type GlyphName = keyof typeof PATHS
+type GlyphName = keyof typeof PATHS
 
 export function Glyph({ name, className }: { name: GlyphName; className?: string }) {
   return (

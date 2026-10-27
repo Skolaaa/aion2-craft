@@ -16,9 +16,12 @@ export function percent(fraction: number, digits = 1, signed = false) {
   return `${sign}${text}%`
 }
 
+// A fraction as the tenths of a percent it displays as, so a value shown as 0.0% counts as zero.
+export const shownTenths = (fraction: number) => Math.round(fraction * 1000)
+
 // Rounds the way the value is displayed (whole Kina, a tenth of a percent), so one shown as zero gets no tone.
 export function toneOf(value: number | null, unit: 'kina' | 'fraction'): 'is-gain' | 'is-loss' | undefined {
-  const shown = value === null ? 0 : Math.round(unit === 'kina' ? value : value * 1000)
+  const shown = value === null ? 0 : unit === 'kina' ? Math.round(value) : shownTenths(value)
   return shown === 0 ? undefined : shown > 0 ? 'is-gain' : 'is-loss'
 }
 

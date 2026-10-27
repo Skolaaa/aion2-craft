@@ -7,19 +7,18 @@ interface NumberInputProps {
   min: number
   max: number
   step?: number
-  className?: string
   describedBy?: string
   initialFocus?: boolean
   onChange(value: number): void
 }
 
-export function NumberInput({ id, value, min, max, step = 1, className, describedBy, initialFocus, onChange }: NumberInputProps) {
+export function NumberInput({ id, value, min, max, step = 1, describedBy, initialFocus, onChange }: NumberInputProps) {
   const [text, setText] = useState(String(value))
   useEffect(() => setText(String(value)), [value])
   return (
     <input
       id={id}
-      className={`input input-number ${className ?? ''}`}
+      className="input input-number"
       type="number"
       inputMode="decimal"
       min={min}
