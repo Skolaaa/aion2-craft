@@ -19,6 +19,7 @@ import { encodeLink, type LinkNote, type Opened } from './state/shareLink.ts'
 import { DEFAULT_TARGET, DEFAULT_VIEW, parseTarget, parseView, type Target, type View } from './state/target.ts'
 import { useNow } from './state/useNow.ts'
 import { useFreshness } from './state/useFreshness.ts'
+import { useLadders } from './state/useLadders.ts'
 import { useOverrides } from './state/useOverrides.ts'
 import { useOwned } from './state/useOwned.ts'
 import { usePersistentState } from './state/usePersistentState.ts'
@@ -130,6 +131,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
   const index = craftIndexFor(catalog)
   const feed = usePrices(world, catalog)
   const freshness = useFreshness(feed)
+  const ladders = useLadders(world.id)
   const overrides = useOverrides(world.id)
   const owned = useOwned(world.id)
   const surface = useOpenSetting()
@@ -140,8 +142,8 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
   )
   const market = feed.snapshot?.quotes ?? NO_QUOTES
   const prices = useMemo(
-    () => makePriceBook({ manual: overrides.prices, market, npc: catalog.npcPrices }),
-    [overrides.prices, market, catalog],
+    () => makePriceBook({ manual: overrides.prices, market, npc: catalog.npcPrices, ladders: ladders.ladders }),
+    [overrides.prices, market, catalog, ladders.ladders],
   )
   const planning = useMemo<Planning>(
     () => ({ world, catalog, index, mastery: setup.mastery, options, prices, market }),
@@ -196,7 +198,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
       )}
       {feed.status === 'failed' && <FeedNotice feed={feed} worldName={world.name} />}
       {view === 'calculator' && (
-        <Calculator planning={planning} freshness={freshness} target={target} overrides={overrides} owned={owned} link={link} onTarget={patchTarget} />
+        <Calculator planning={planning} freshness={freshness} requestLadders={ladders.request} target={target} overrides={overrides} owned={owned} link={link} onTarget={patchTarget} />
       )}
       {view === 'scanner' && <Scanner planning={planning} freshness={freshness} onOpen={openItem} />}
     </Shell>

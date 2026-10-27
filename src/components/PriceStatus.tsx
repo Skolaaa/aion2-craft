@@ -1,7 +1,16 @@
+import { age as ageOf, isStale, timeOf } from '../state/format.ts'
 import type { Freshness } from '../state/useFreshness.ts'
+import { useNow } from '../state/useNow.ts'
 
-export function PriceStatus({ freshness, worldName }: { freshness: Freshness; worldName: string }) {
-  const { pending, age, stale } = freshness
+interface Props {
+  freshness: Freshness
+  worldName: string
+  depthCapturedAt?: string | null
+}
+
+export function PriceStatus({ freshness, worldName, depthCapturedAt }: Props) {
+  const now = useNow()
+  const { pending, capturedAt, age, stale } = freshness
   if (pending) return <p className="price-status meta" role="status">Loading prices from aion2.exchange.</p>
   const text =
     age === null
@@ -9,7 +18,12 @@ export function PriceStatus({ freshness, worldName }: { freshness: Freshness; wo
       : stale
         ? `Prices are ${age} old. aion2.exchange may have stopped updating ${worldName}.`
         : `Prices from aion2.exchange, captured ${age} ago.`
-  return <p className={`price-status meta ${stale ? 'is-stale' : ''}`}>{text}</p>
+  // The exchange polls listing depth less often than prices, so a ladder stale against the prices is said to be.
+  const depthText =
+    depthCapturedAt != null && capturedAt !== null && isStale(depthCapturedAt, timeOf(capturedAt))
+      ? ` Bulk prices follow the listing ladder from ${ageOf(depthCapturedAt, now)} ago, scaled to today's lowest listing.`
+      : ''
+  return <p className={`price-status meta ${stale ? 'is-stale' : ''}`}>{text}{depthText}</p>
 }
 
 export function FreshnessPill({ freshness }: { freshness: Freshness }) {

@@ -1,4 +1,6 @@
-import type { Acquisition, Catalog, ItemId, Mastery, PlanResult, Profession, RateFamily, Recipe, RecipeId, StepPlan } from '../domain/types.ts'
+import type {
+  Acquisition, Catalog, Depth, ItemId, Mastery, PlanResult, PriceBook, Profession, RateFamily, Recipe, RecipeId, StepPlan,
+} from '../domain/types.ts'
 import { decimal, kina, plural, rate, taxLabel } from './format.ts'
 
 export type Verdict =
@@ -205,6 +207,26 @@ export const stepCount = (root: StepPlan): number => [...stepsOf(root)].length
 
 /** Whether any line of the plan draws on what the player holds. */
 export const usesStock = (root: StepPlan): boolean => [...stepsOf(root)].some((step) => step.materials.some((line) => line.owned > 0))
+
+/** The listings the depth-aware price spans, out of `listed` when given, or the gap when the ladder holds fewer units than the plan buys. */
+export function depthNote(depth: Depth, listed?: number): string {
+  const span = `${depth.listings} ${plural(depth.listings, 'listing', 'listings')}`
+  if (depth.units <= depth.available) return listed === undefined ? `across ${span}` : `across ${span} of ${listed}`
+  return depth.complete ? `across all ${span}, only ${decimal(depth.available, 0)} listed` : `across the ${span} captured`
+}
+
+/** Market-priced items the plan buys more than one of beyond the player's stock, and the target when it buys several: the ones worth a ladder. */
+export function bulkBuys(plan: PlanResult, prices: PriceBook): ItemId[] {
+  const bought = plan.shopping.filter((entry) => entry.expected - entry.owned > 1).map((entry) => entry.itemId)
+  const ids = plan.target.quantity > 1 ? [plan.target.itemId, ...bought] : bought
+  return ids.filter((itemId) => prices.quote(itemId).kind === 'market')
+}
+
+/** The oldest depth poll the plan relies on, or null when it prices every unit flat. */
+export function depthCapturedAt(plan: PlanResult): string | null {
+  const depths = [plan.market?.depth ?? null, ...plan.shopping.map((entry) => entry.depth)]
+  return depths.reduce<string | null>((oldest, depth) => (depth && (oldest === null || depth.capturedAt < oldest) ? depth.capturedAt : oldest), null)
+}
 
 export const estimateGap = (plan: PlanResult, theirs: number): number | null =>
   Number.isFinite(plan.unitCost) ? plan.unitCost - theirs : null

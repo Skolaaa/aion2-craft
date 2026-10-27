@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ItemId, PlanResult } from '../domain/types.ts'
-import { answerOf, sentenceOf, stepSummary, usesStock, type Answer, type Segment } from '../state/answer.ts'
+import { answerOf, depthCapturedAt, depthNote, sentenceOf, stepSummary, usesStock, type Answer, type Segment } from '../state/answer.ts'
 import { itemName, type Craftable } from '../state/craftables.ts'
 import { kina, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
 import { gradeName } from '../state/grade.ts'
@@ -95,7 +95,7 @@ export function AnswerPanel({ craftable, plan, planning, freshness, quantity, ov
         />
       )}
 
-      <PriceStatus freshness={freshness} worldName={world.name} />
+      <PriceStatus freshness={freshness} worldName={world.name} depthCapturedAt={plan ? depthCapturedAt(plan) : null} />
     </section>
   )
 }
@@ -134,6 +134,8 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
       <>nothing listed on {world.name}, {priceEditor('enter your price')}</>
     ) : ownPrice ? (
       <>{each ? `${kina(market.lowest)} each, ` : ''}your price, {priceEditor('change it')}</>
+    ) : market.depth ? (
+      <>{kina(market.cost / target.quantity)} each {depthNote(market.depth)}</>
     ) : (
       <>
         {each ? `${kina(market.lowest)} each, ` : ''}

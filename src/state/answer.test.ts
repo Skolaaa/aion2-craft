@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { buildCatalog, type RatesFile, type RecipesFile } from '../domain/catalog.ts'
 import { planCraft } from '../domain/planCraft.ts'
 import { makePriceBook } from '../domain/priceBook.ts'
-import type { Catalog, ItemId, Mastery, Owned, PlanResult, Recipe } from '../domain/types.ts'
-import { answerOf, buyList, sentenceOf, stepSummary, successNote, type Answer } from './answer.ts'
+import type { Catalog, ItemId, Mastery, Owned, PlanResult, PriceBook, Recipe } from '../domain/types.ts'
+import { answerOf, bulkBuys, buyList, depthCapturedAt, depthNote, sentenceOf, stepSummary, successNote, type Answer } from './answer.ts'
 
 const SWORD = 1
 const BLADE = 2
@@ -42,7 +42,9 @@ function catalogOf(recipes: Recipe[]): Catalog {
 
 const ONE_STEP = [recipe(100, SWORD, [[IRON, 2]])]
 
-function answer(recipes: Recipe[], market: Record<number, number>, quantity = 1, mastery = MASTERY, owned?: Owned): { plan: PlanResult; answer: Answer; catalog: Catalog } {
+function answer(
+  recipes: Recipe[], market: Record<number, number>, quantity = 1, mastery = MASTERY, owned?: Owned,
+): { plan: PlanResult; answer: Answer; catalog: Catalog; prices: PriceBook } {
   const catalog = catalogOf(recipes)
   const prices = makePriceBook({
     manual: new Map(),
@@ -58,7 +60,7 @@ function answer(recipes: Recipe[], market: Record<number, number>, quantity = 1,
     owned,
   })
   if (!plan) throw new Error('no plan')
-  return { plan, answer: answerOf(plan, { catalog, mastery }), catalog }
+  return { plan, answer: answerOf(plan, { catalog, mastery }), catalog, prices }
 }
 
 const segments = (result: ReturnType<typeof answer>) =>
@@ -169,5 +171,40 @@ describe('stepSummary', () => {
 
     const locked = answer([recipe(100, SWORD, [[IRON, 2]], { masteryLevel: 30 })], {})
     expect(stepSummary(locked.plan.root, locked.catalog.recipes.get(100), MASTERY)).toBe('needs Blacksmithing 30, yours is 10')
+  })
+})
+
+describe('depth helpers', () => {
+  const depth = (units: number, available: number, listings = 3, complete = true, capturedAt = '2026-10-06T11:53:19Z') => ({
+    units, cost: 0, listings, levels: 2, available, complete, capturedAt,
+  })
+
+  it('names the listings spanned and the shortfall when the ladder runs out', () => {
+    expect(depthNote(depth(5, 20))).toBe('across 3 listings')
+    expect(depthNote(depth(5, 20), 15)).toBe('across 3 listings of 15')
+    expect(depthNote(depth(5, 20, 1))).toBe('across 1 listing')
+    expect(depthNote(depth(25, 20))).toBe('across all 3 listings, only 20 listed')
+    expect(depthNote(depth(25, 20), 15)).toBe('across all 3 listings, only 20 listed')
+    expect(depthNote(depth(25, 20, 3, false))).toBe('across the 3 listings captured')
+  })
+
+  it('asks for ladders of market-priced items bought in bulk beyond the stock held, and the target when buying several', () => {
+    const recipes = [recipe(100, SWORD, [[BLADE, 1], [WOOD, 2], [IRON, 1]])]
+    const { plan, prices } = answer(recipes, { [SWORD]: 500, [BLADE]: 50, [IRON]: 50, [WOOD]: 5 })
+    expect(bulkBuys(plan, prices)).toEqual([WOOD])
+    const held = answer(recipes, { [SWORD]: 500, [BLADE]: 50, [IRON]: 50, [WOOD]: 5 }, 1, MASTERY, new Map([[WOOD, 1]]))
+    expect(bulkBuys(held.plan, held.prices)).toEqual([])
+    const several = answer(recipes, { [SWORD]: 500, [BLADE]: 50, [IRON]: 50, [WOOD]: 5 }, 2)
+    expect(several.plan.market?.cost).toBe(1000)
+    expect(bulkBuys(several.plan, several.prices)).toEqual([SWORD, BLADE, IRON, WOOD])
+  })
+
+  it('reports the oldest depth poll a plan relies on', () => {
+    const recipes = [recipe(100, SWORD, [[WOOD, 2]])]
+    const { plan } = answer(recipes, { [WOOD]: 5 })
+    expect(depthCapturedAt(plan)).toBeNull()
+    const shopping = [{ ...plan.shopping[0], depth: depth(2, 9, 2, true, '2026-10-20T00:00:00Z') }]
+    const market = { lowest: 1, soldAvg: null, listings: 1, cost: 1, depth: depth(1, 1) }
+    expect(depthCapturedAt({ ...plan, shopping, market })).toBe('2026-10-06T11:53:19Z')
   })
 })
