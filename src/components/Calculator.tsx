@@ -19,10 +19,11 @@ interface Props {
   target: Target
   overrides: PriceOverrides
   owned: OwnedStock
+  link: string
   onTarget(change: Partial<Target>): void
 }
 
-export function Calculator({ planning, freshness, target, overrides, owned, onTarget }: Props) {
+export function Calculator({ planning, freshness, target, overrides, owned, link, onTarget }: Props) {
   const { index } = planning
   const [tab, setTab] = useState<DetailTab>('buy')
   const craftable = target.itemId === null ? null : (index.byId.get(target.itemId) ?? null)
@@ -47,7 +48,7 @@ export function Calculator({ planning, freshness, target, overrides, owned, onTa
             overrides={overrides}
             onTarget={onTarget}
           />
-          {plan && !freshness.pending && <Details plan={plan} planning={planning} overrides={overrides} owned={owned} tab={tab} onTab={setTab} />}
+          {plan && !freshness.pending && <Details plan={plan} planning={planning} overrides={overrides} owned={owned} link={link} tab={tab} onTab={setTab} />}
         </>
       )}
     </>

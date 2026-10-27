@@ -5,7 +5,7 @@ import { kina } from './format.ts'
 export interface ShoppingNames {
   itemName(itemId: ItemId): string
   worldName: string
-  site: string
+  link: string
 }
 
 const units = (count: number) => Math.ceil(count - 1e-9)
@@ -14,7 +14,7 @@ const units = (count: number) => Math.ceil(count - 1e-9)
  * The buy table as plain text for a chat message. Counts are whole units, rounded up,
  * so the Kina on each line is what buying that many costs, not the expected value.
  */
-export function shoppingText(plan: PlanResult, { lines, credit }: BuyList, { itemName, worldName, site }: ShoppingNames): string {
+export function shoppingText(plan: PlanResult, { lines, credit }: BuyList, { itemName, worldName, link }: ShoppingNames): string {
   const out: string[] = [`What to buy for ${plan.target.quantity} × ${itemName(plan.target.itemId)} on ${worldName}`]
   let total = 0
   const held = lines.filter((line) => line.kind === 'owned')
@@ -36,6 +36,6 @@ export function shoppingText(plan: PlanResult, { lines, credit }: BuyList, { ite
   }
   const expected = Number.isFinite(plan.cost) ? ` Expected crafting cost ${kina(plan.cost)} Kina at your mastery${credit > 0 ? ', leftovers credited' : ''}.` : ''
   out.push(`Total to buy ${kina(total)} Kina.${expected}`)
-  out.push(site)
+  out.push(link)
   return out.join('\n')
 }

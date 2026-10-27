@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { noteText, type LinkNote } from '../state/shareLink.ts'
 import { Button } from './Button.tsx'
 import { Glyph } from './Glyph.tsx'
 
@@ -25,3 +26,16 @@ export function Notice({ title, children, detail, onRetry }: Props) {
 export const WorldsFailed = ({ message, onRetry, children }: { message: string; onRetry(): void; children: ReactNode }) => (
   <Notice title="The world list did not load" detail={message} onRetry={onRetry}>{children}</Notice>
 )
+
+export function LinkNotice({ note, onDismiss }: { note: LinkNote; onDismiss(): void }) {
+  const { title, body } = noteText(note)
+  return (
+    <div className="notice" role="status">
+      <div className="notice-text">
+        <p className="notice-title">{title}</p>
+        <p>{body}</p>
+      </div>
+      <Button onClick={onDismiss}>Dismiss</Button>
+    </div>
+  )
+}

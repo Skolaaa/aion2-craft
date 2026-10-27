@@ -1,7 +1,7 @@
-import { useMemo, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Calculator } from './components/Calculator.tsx'
 import { Footer } from './components/Footer.tsx'
-import { Notice, WorldsFailed } from './components/Notice.tsx'
+import { LinkNotice, Notice, WorldsFailed } from './components/Notice.tsx'
 import { Scanner } from './components/Scanner.tsx'
 import { SettingHost } from './components/SettingHost.tsx'
 import { TopBar } from './components/TopBar.tsx'
@@ -14,7 +14,8 @@ import { craftIndexFor, itemFor } from './state/craftables.ts'
 import { age } from './state/format.ts'
 import { useOpenSetting } from './state/openSetting.ts'
 import type { Planning } from './state/planning.ts'
-import { DEFAULT_SETUP, parseSetup, setWorld, type Setup, type SetupPatch } from './state/setup.ts'
+import { DEFAULT_SETUP, parseSetup, settingsOf, SETUP_KEY, setWorld, type Setup, type SetupPatch } from './state/setup.ts'
+import { encodeLink, type LinkNote, type Opened } from './state/shareLink.ts'
 import { DEFAULT_TARGET, DEFAULT_VIEW, parseTarget, parseView, type Target, type View } from './state/target.ts'
 import { useNow } from './state/useNow.ts'
 import { useFreshness } from './state/useFreshness.ts'
@@ -22,30 +23,37 @@ import { useOverrides } from './state/useOverrides.ts'
 import { useOwned } from './state/useOwned.ts'
 import { usePersistentState } from './state/usePersistentState.ts'
 import { usePrices, type PriceFeed } from './state/usePrices.ts'
+import { useAddressBar, useLinkOpening } from './state/useShareLink.ts'
 import { readyDirectory, useWorlds, type WorldsState } from './state/useWorlds.ts'
 
 const NO_QUOTES: ReadonlyMap<ItemId, MarketQuote> = new Map()
 
 export function App() {
   const { state: worlds, retry } = useWorlds()
-  const [setup, updateSetup] = usePersistentState('setup', DEFAULT_SETUP, parseSetup)
-  const [view, updateView] = usePersistentState<View>('view', DEFAULT_VIEW, parseView)
-  const [target, updateTarget] = usePersistentState('target', DEFAULT_TARGET, parseTarget)
-  const directory = readyDirectory(worlds)
-  const current = resolveWorld(directory, setup.world)
+  const opened = useLinkOpening(worlds)
+  if (opened === 'waiting') {
+    return (
+      <WorldsGate worlds={worlds} retry={retry} bar={<TopBar view="calculator" />}>
+        The plan in this link needs the world list to open. <a href={window.location.pathname}>Open your own plan instead</a>.
+      </WorldsGate>
+    )
+  }
+  return <Session opened={opened} worlds={worlds} retry={retry} />
+}
+
+function Session({ opened, worlds, retry }: { opened: Opened; worlds: WorldsState; retry(): void }) {
+  const { seed } = opened
+  const [setup, updateSetup] = usePersistentState(SETUP_KEY, DEFAULT_SETUP, parseSetup, seed?.setup)
+  const [view, updateView] = usePersistentState<View>('view', DEFAULT_VIEW, parseView, seed?.view)
+  const [target, updateTarget] = usePersistentState('target', DEFAULT_TARGET, parseTarget, seed?.target)
+  const current = resolveWorld(readyDirectory(worlds), setup.world)
   const onView = (next: View) => updateView(() => next)
 
   if (current === null) {
     return (
-      <Shell bar={<TopBar view={view} onView={onView} />}>
-        {worlds.status === 'failed' ? (
-          <WorldsFailed message={worlds.message} onRetry={retry}>
-            The app reads the world list through the local dev server, so it has to be running.
-          </WorldsFailed>
-        ) : (
-          <p className="meta" role="status">Loading the world list from aion2.exchange.</p>
-        )}
-      </Shell>
+      <WorldsGate worlds={worlds} retry={retry} bar={<TopBar view={view} onView={onView} />}>
+        The app reads the world list through the local dev server, so it has to be running.
+      </WorldsGate>
     )
   }
 
@@ -54,6 +62,7 @@ export function App() {
       current={current}
       worlds={worlds}
       retryWorlds={retry}
+      notes={opened.notes}
       setup={setup}
       updateSetup={updateSetup}
       view={view}
@@ -61,6 +70,18 @@ export function App() {
       target={target}
       updateTarget={updateTarget}
     />
+  )
+}
+
+function WorldsGate({ worlds, retry, bar, children }: { worlds: WorldsState; retry(): void; bar: ReactNode; children: ReactNode }) {
+  return (
+    <Shell bar={bar}>
+      {worlds.status === 'failed' ? (
+        <WorldsFailed message={worlds.message} onRetry={retry}>{children}</WorldsFailed>
+      ) : (
+        <p className="meta" role="status">Loading the world list from aion2.exchange.</p>
+      )}
+    </Shell>
   )
 }
 
@@ -92,6 +113,7 @@ interface WorkspaceProps {
   current: Listed
   worlds: WorldsState
   retryWorlds(): void
+  notes: readonly LinkNote[]
   setup: Setup
   updateSetup(change: (previous: Setup) => Setup): void
   view: View
@@ -100,8 +122,10 @@ interface WorkspaceProps {
   updateTarget(change: (previous: Target) => Target): void
 }
 
-function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onView, target, updateTarget }: WorkspaceProps) {
+function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, view, onView, target, updateTarget }: WorkspaceProps) {
   const { world } = current
+  const [linkNotes, setLinkNotes] = useState(notes)
+  const link = useAddressBar(encodeLink({ worldId: world.id, view, target, settings: settingsOf(setup) }))
   const catalog = catalogFor(world.race)
   const index = craftIndexFor(catalog)
   const feed = usePrices(world, catalog)
@@ -143,7 +167,7 @@ function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onV
       <TopBar
         view={view}
         onView={onView}
-        context={{ chips: statusChips(setup, current), freshness, opened: surface.opened?.setting ?? null, open: surface.open }}
+        context={{ chips: statusChips(setup, current), freshness, opened: surface.opened?.setting ?? null, open: surface.open, link }}
       />
       <SettingHost
         surface={surface}
@@ -162,6 +186,9 @@ function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onV
 
   return (
     <Shell side={world.race} bar={bar}>
+      {linkNotes.map((note) => (
+        <LinkNotice key={note.kind} note={note} onDismiss={() => setLinkNotes((previous) => previous.filter((other) => other !== note))} />
+      ))}
       {worlds.status === 'failed' && (
         <WorldsFailed message={worlds.message} onRetry={retryWorlds}>
           You can keep working on {world.name}, the world you used last. The world chip lists the others once the list loads.
@@ -169,7 +196,7 @@ function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onV
       )}
       {feed.status === 'failed' && <FeedNotice feed={feed} worldName={world.name} />}
       {view === 'calculator' && (
-        <Calculator planning={planning} freshness={freshness} target={target} overrides={overrides} owned={owned} onTarget={patchTarget} />
+        <Calculator planning={planning} freshness={freshness} target={target} overrides={overrides} owned={owned} link={link} onTarget={patchTarget} />
       )}
       {view === 'scanner' && <Scanner planning={planning} freshness={freshness} onOpen={openItem} />}
     </Shell>

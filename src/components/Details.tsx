@@ -9,6 +9,7 @@ import { shoppingText } from '../state/shopping.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { OwnedStock } from '../state/useOwned.ts'
 import { useExchangeEstimate } from '../state/useExchangeEstimate.ts'
+import { useClipboard } from '../state/useClipboard.ts'
 import { useNow } from '../state/useNow.ts'
 import { Button } from './Button.tsx'
 import { CountCell } from './CountCell.tsx'
@@ -30,11 +31,12 @@ interface Props {
   planning: Planning
   overrides: PriceOverrides
   owned: OwnedStock
+  link: string
   tab: DetailTab
   onTab(tab: DetailTab): void
 }
 
-export function Details({ plan, planning, overrides, owned, tab, onTab }: Props) {
+export function Details({ plan, planning, overrides, owned, link, tab, onTab }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const list = buyList(plan)
@@ -75,7 +77,7 @@ export function Details({ plan, planning, overrides, owned, tab, onTab }: Props)
         ))}
       </div>
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
-        {tab === 'buy' && <WhatToBuy plan={plan} list={list} planning={planning} overrides={overrides} owned={owned} />}
+        {tab === 'buy' && <WhatToBuy plan={plan} list={list} planning={planning} overrides={overrides} owned={owned} link={link} />}
         {tab === 'steps' && <HowItIsMade key={plan.target.itemId} plan={plan} credit={list.credit} planning={planning} overrides={overrides} />}
         {tab === 'rates' && <Rates plan={plan} planning={planning} />}
       </div>
@@ -99,12 +101,12 @@ interface WhatToBuyProps {
   planning: Planning
   overrides: PriceOverrides
   owned: OwnedStock
+  link: string
 }
 
 const MISSING = <span className="is-warn">no price yet</span>
-const SITE = 'https://aion2-craft.vercel.app'
 
-function WhatToBuy({ plan, list, planning, overrides, owned }: WhatToBuyProps) {
+function WhatToBuy({ plan, list, planning, overrides, owned, link }: WhatToBuyProps) {
   const { catalog, prices, market, world } = planning
   const { lines, credit } = list
   // Shares are of the shopping total before the byproduct credit, so they add up to 100%.
@@ -181,7 +183,7 @@ function WhatToBuy({ plan, list, planning, overrides, owned }: WhatToBuyProps) {
     subtotal: <strong>{Number.isFinite(plan.cost) ? kina(plan.cost) : <span className="meta">needs every price</span>}</strong>,
   }
 
-  const text = () => shoppingText(plan, list, { itemName: (itemId) => itemName(catalog, itemId), worldName: world.name, site: SITE })
+  const text = () => shoppingText(plan, list, { itemName: (itemId) => itemName(catalog, itemId), worldName: world.name, link })
 
   return (
     <>
@@ -201,39 +203,24 @@ function WhatToBuy({ plan, list, planning, overrides, owned }: WhatToBuyProps) {
   )
 }
 
-type CopyState = 'idle' | 'copied' | 'failed'
-
 /** Copies the list as plain text. When the clipboard is unavailable, shows the text to copy by hand. */
 function CopyButton({ text }: { text(): string }) {
-  const [state, setState] = useState<CopyState>('idle')
+  const { state, copy } = useClipboard()
   const [shown, setShown] = useState<string | null>(null)
   const areaRef = useRef<HTMLTextAreaElement>(null)
-
-  useEffect(() => {
-    if (state !== 'copied') return
-    const timer = setTimeout(() => setState('idle'), 2000)
-    return () => clearTimeout(timer)
-  }, [state])
 
   useEffect(() => {
     if (shown !== null) areaRef.current?.select()
   }, [shown])
 
-  const copy = async () => {
+  const onCopy = async () => {
     const value = text()
-    try {
-      await navigator.clipboard.writeText(value)
-      setShown(null)
-      setState('copied')
-    } catch {
-      setShown(value)
-      setState('failed')
-    }
+    setShown((await copy(value)) ? null : value)
   }
 
   return (
     <>
-      <Button className="button-small" aria-live="polite" onClick={copy}>
+      <Button className="button-small" aria-live="polite" onClick={onCopy}>
         {state === 'copied' ? 'Copied' : 'Copy list'}
       </Button>
       {shown !== null && (

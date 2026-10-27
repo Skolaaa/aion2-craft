@@ -2,7 +2,10 @@ import type { ReactNode } from 'react'
 import type { StatusChips } from '../state/chips.ts'
 import { SETTINGS, settingKey, type Setting } from '../state/openSetting.ts'
 import type { View } from '../state/target.ts'
+import { useClipboard } from '../state/useClipboard.ts'
 import type { Freshness } from '../state/useFreshness.ts'
+import { Button } from './Button.tsx'
+import { Glyph } from './Glyph.tsx'
 import { FreshnessPill } from './PriceStatus.tsx'
 
 const VIEWS: readonly { id: View; label: string }[] = [
@@ -15,24 +18,47 @@ interface Context {
   freshness: Freshness
   opened: Setting | null
   open(setting: Setting, anchor: HTMLElement): void
+  link: string
 }
 
-export function TopBar({ view, onView, context }: { view: View; onView(view: View): void; context?: Context }) {
+/** Without `onView` the views show but cannot be switched, as while a link waits for the world list. */
+export function TopBar({ view, onView, context }: { view: View; onView?(view: View): void; context?: Context }) {
   return (
     <header className="top-bar">
       <div className="top-bar-inner">
         <p className="brand">Craft or buy</p>
         <nav className="nav" aria-label="Views">
           {VIEWS.map(({ id, label }) => (
-            <button key={id} type="button" className="nav-item" aria-current={view === id ? 'page' : undefined} onClick={() => onView(id)}>
+            <button
+              key={id}
+              type="button"
+              className="nav-item"
+              aria-current={view === id ? 'page' : undefined}
+              disabled={onView === undefined}
+              onClick={() => onView?.(id)}
+            >
               {label}
             </button>
           ))}
         </nav>
         {context && <ContextChips {...context} />}
         {context && <FreshnessPill freshness={context.freshness} />}
+        {context && <CopyLinkButton link={context.link} />}
       </div>
     </header>
+  )
+}
+
+function CopyLinkButton({ link }: { link: string }) {
+  const { state, copy } = useClipboard()
+  const label = state === 'copied' ? 'Link copied' : state === 'failed' ? 'Copy the link from the address bar' : 'Copy link'
+  return (
+    <>
+      <Button className="button-small copy-link" title={label} aria-label={label} onClick={() => void copy(link)}>
+        <Glyph name={state === 'copied' ? 'check' : 'link'} />
+      </Button>
+      <span className="sr-only" role="status">{state === 'idle' ? '' : label}</span>
+    </>
   )
 }
 

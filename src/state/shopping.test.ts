@@ -4,7 +4,7 @@ import type { BuyList } from './answer.ts'
 import { shoppingText } from './shopping.ts'
 
 const NAMES: Record<number, string> = { 1: 'Sword', 2: 'Blade', 10: 'Iron', 11: 'Wood' }
-const names = { itemName: (id: number) => NAMES[id] ?? String(id), worldName: 'Siel', site: 'aion2-craft.vercel.app' }
+const names = { itemName: (id: number) => NAMES[id] ?? String(id), worldName: 'Siel', link: 'https://aion2-craft.vercel.app/?world=11301&item=1' }
 const planOf = (cost: number, quantity = 1) => ({ target: { itemId: 1, quantity }, cost }) as PlanResult
 
 describe('shoppingText', () => {
@@ -25,7 +25,7 @@ describe('shoppingText', () => {
         'From your own stock',
         '  1 × Blade',
         'Total to buy 4,800 Kina. Expected crafting cost 12,346 Kina at your mastery.',
-        'aion2-craft.vercel.app',
+        'https://aion2-craft.vercel.app/?world=11301&item=1',
       ].join('\n'),
     )
   })
@@ -34,6 +34,6 @@ describe('shoppingText', () => {
     const all: BuyList = { lines: [{ kind: 'owned', itemId: 10, expected: 2, owned: 2 }], credit: 0 }
     expect(shoppingText(planOf(0, 2), all, names)).toContain('  Nothing, you have it all.\nFrom your own stock\n  2 × Iron\nTotal to buy 0 Kina.')
     const missing: BuyList = { lines: [{ kind: 'missing', itemId: 11, expected: 1, owned: 0 }], credit: 0 }
-    expect(shoppingText(planOf(Infinity), missing, names)).toContain('Total to buy 0 Kina.\naion2-craft')
+    expect(shoppingText(planOf(Infinity), missing, names)).toContain('Total to buy 0 Kina.\nhttps://aion2-craft.vercel.app/?world=11301')
   })
 })
