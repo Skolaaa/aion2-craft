@@ -14,7 +14,7 @@ interface Props {
   onView(view: View): void
   world: World | null
   mastery: Mastery
-  onSettings?(): void
+  onSettings?(anchor: HTMLElement): void
 }
 
 export function TopBar({ view, onView, world, mastery, onSettings }: Props) {
@@ -46,7 +46,7 @@ export function TopBar({ view, onView, world, mastery, onSettings }: Props) {
             </span>
           </div>
         )}
-        {onSettings && <Button className="settings-button" onClick={onSettings}>Settings</Button>}
+        {onSettings && <Button className="settings-button" onClick={(event) => onSettings(event.currentTarget)}>Settings</Button>}
       </div>
     </header>
   )

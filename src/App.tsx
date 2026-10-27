@@ -106,7 +106,7 @@ function Workspace({ world, directory, worlds, retryWorlds, setup, updateSetup, 
   const index = craftIndexFor(catalog)
   const feed = usePrices(world, catalog)
   const overrides = useOverrides(world.id)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement | null>(null)
 
   const options = useMemo<PlanOptions>(
     () => ({ allowCraft: setup.allowCraft, allowMorph: setup.allowMorph, byproductCredit: setup.byproductCredit, taxRate: setup.taxRate }),
@@ -145,7 +145,7 @@ function Workspace({ world, directory, worlds, retryWorlds, setup, updateSetup, 
   return (
     <div className="app">
       <a className="skip-link" href="#main">Skip to content</a>
-      <TopBar view={view} onView={onView} world={world} mastery={setup.mastery} onSettings={() => setSettingsOpen(true)} />
+      <TopBar view={view} onView={onView} world={world} mastery={setup.mastery} onSettings={setSettingsAnchor} />
       <main className="page" id="main">
         {worlds.status === 'failed' && (
           <Notice
@@ -163,16 +163,21 @@ function Workspace({ world, directory, worlds, retryWorlds, setup, updateSetup, 
         {view === 'scanner' && <Scanner planning={planning} feed={feed} onOpen={openItem} />}
       </main>
       <Footer />
-      <Settings
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        directory={directory}
-        planning={planning}
-        setup={setup}
-        patch={patchSetup}
-        onWorld={chooseWorld}
-        overrides={overrides}
-      />
+      {settingsAnchor && (
+        <Settings
+          anchor={settingsAnchor}
+          onClose={(focusAnchor) => {
+            setSettingsAnchor(null)
+            if (focusAnchor) queueMicrotask(() => settingsAnchor.focus())
+          }}
+          directory={directory}
+          planning={planning}
+          setup={setup}
+          patch={patchSetup}
+          onWorld={chooseWorld}
+          overrides={overrides}
+        />
+      )}
     </div>
   )
 }

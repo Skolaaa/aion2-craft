@@ -6,16 +6,16 @@ import type { Planning } from '../state/planning.ts'
 import { MAX_MASTERY, PROFESSIONS, type Setup, type SetupPatch } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import { Button } from './Button.tsx'
-import { Dialog } from './Dialog.tsx'
 import { Field, NumberInput } from './Field.tsx'
 import { Glyph } from './Glyph.tsx'
 import { ItemCell } from './ItemCell.tsx'
 import { PriceCell } from './PriceCell.tsx'
+import { Surface } from './Surface.tsx'
 import { Table, type Column } from './Table.tsx'
 
 interface Props {
-  open: boolean
-  onClose(): void
+  anchor: HTMLElement
+  onClose(focusAnchor: boolean): void
   directory: WorldDirectory | null
   planning: Planning
   setup: Setup
@@ -42,15 +42,21 @@ const OPTIONS = [
   },
 ] as const
 
-export function Settings({ open, onClose, ...body }: Props) {
+export function Settings({ anchor, onClose, ...body }: Props) {
   return (
-    <Dialog open={open} title="Settings" onClose={onClose} footer={<Button variant="primary" onClick={onClose}>Done</Button>}>
+    <Surface
+      anchor={anchor}
+      placement="drawer"
+      title="Settings"
+      onClose={onClose}
+      footer={<Button variant="primary" onClick={() => onClose(true)}>Done</Button>}
+    >
       <SettingsBody {...body} />
-    </Dialog>
+    </Surface>
   )
 }
 
-function SettingsBody({ directory, planning, setup, patch, onWorld, overrides }: Omit<Props, 'open' | 'onClose'>) {
+function SettingsBody({ directory, planning, setup, patch, onWorld, overrides }: Omit<Props, 'anchor' | 'onClose'>) {
   const { world, catalog, market } = planning
   const regions = directory?.regions ?? [{ code: world.region, name: world.regionName, worlds: [{ world, match: null }] }]
   const entries = [...overrides.prices]
