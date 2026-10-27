@@ -1,6 +1,7 @@
 import { stepRates, type StepRates } from './rates.ts'
 import type {
-  Acquisition, Catalog, ItemId, Mastery, Owned, PlanInput, PlanOptions, PlanResult, Price, PriceBook, Recipe, RecipeId, StepPlan,
+  Acquisition, Alternative, Catalog, Forced, ItemId, Mastery, Method, Owned, PlanInput, PlanOptions, PlanResult, Price, PriceBook, Recipe, RecipeId,
+  StepPlan,
 } from './types.ts'
 
 interface Route {
@@ -8,16 +9,33 @@ interface Route {
   wanted: ItemId
 }
 
-type Choice =
+type Candidate =
   | { kind: 'buy'; unit: number; quote: Price }
   | { kind: 'route'; unit: number; route: Route }
-  | { kind: 'none'; unit: number }
+
+type Choice = Candidate | { kind: 'none'; unit: number }
 
 const NONE: Choice = { kind: 'none', unit: Infinity }
 
 const sum = <T>(list: readonly T[], value: (entry: T) => number) => list.reduce((total, entry) => total + value(entry), 0)
 const cheapest = <T extends { unit: number }>(list: T[]) => list.reduce((best, next) => (next.unit < best.unit ? next : best))
 const methodOf = (recipe: Recipe) => (recipe.section === 'conversion' ? 'morph' : 'craft')
+const candidateMethod = (candidate: Candidate): Method => (candidate.kind === 'buy' ? 'buy' : methodOf(candidate.route.recipe))
+const alternativeOf = (candidate: Candidate): Alternative =>
+  candidate.kind === 'buy'
+    ? { method: 'buy', unit: candidate.unit }
+    : { method: methodOf(candidate.route.recipe), unit: candidate.unit, recipeId: candidate.route.recipe.id }
+
+/** The cheapest candidate of each method, in the order the methods were offered. */
+function alternativesOf(offered: Candidate[]): Alternative[] {
+  const best = new Map<Method, Candidate>()
+  for (const candidate of offered) {
+    const method = candidateMethod(candidate)
+    const held = best.get(method)
+    if (!held || candidate.unit < held.unit) best.set(method, candidate)
+  }
+  return [...best.values()].map(alternativeOf)
+}
 
 function outcomes(recipe: Recipe, rates: StepRates) {
   const { product, combo } = recipe
@@ -29,12 +47,19 @@ function outcomes(recipe: Recipe, rates: StepRates) {
 }
 
 const NO_STOCK: Owned = new Map()
+const NO_CHOICES: Forced = new Map()
 
 /** The units the plan buys of each item, summed over every step. */
 type Demand = ReadonlyMap<ItemId, number>
 
-function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices: PriceBook, owned: Owned, demand: Demand) {
+interface Pass {
+  root: StepPlan | null
+  alternatives: PlanResult['alternatives']
+}
+
+function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices: PriceBook, owned: Owned, forced: Forced, demand: Demand) {
   const choices = new Map<ItemId, Choice>()
+  const alternatives = new Map<ItemId, Alternative[]>()
   const visiting = new Set<ItemId>()
   // Stock is spent in tree order, so a material two steps need shares one budget.
   const stock = new Map(owned)
@@ -76,15 +101,22 @@ function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices:
     if (visiting.has(itemId)) return NONE
     visiting.add(itemId)
     const quote = prices.quote(itemId, demand.get(itemId))
-    const buy: Choice | null = quote.kind === 'none' ? null : { kind: 'buy', unit: quote.unit, quote }
-    const allowed = { craft: options.allowCraft || !buy, morph: options.allowMorph || !buy }
-    const routes: Choice[] = routesFor(itemId)
-      .filter((route) => allowed[methodOf(route.recipe)])
-      .map((route) => ({ kind: 'route', unit: routeUnit(route), route }))
-    const candidates = buy ? [buy, ...routes] : routes
-    const choice = candidates.length > 0 ? cheapest(candidates) : NONE
+    const buy: Candidate | null = quote.kind === 'none' ? null : { kind: 'buy', unit: quote.unit, quote }
+    const routes: Candidate[] = routesFor(itemId).map((route) => ({ kind: 'route', unit: routeUnit(route), route }))
+    const offered = buy ? [buy, ...routes] : routes
+    const want = forced.get(itemId)
+    // An explicit choice is narrower than the global switch, so a forced craft or morph competes with that switch off.
+    const allowed: Record<Method, boolean> = {
+      buy: true,
+      craft: options.allowCraft || !buy || want === 'craft',
+      morph: options.allowMorph || !buy || want === 'morph',
+    }
+    const candidates = offered.filter((candidate) => allowed[candidateMethod(candidate)])
+    const wanted = candidates.filter((candidate) => candidateMethod(candidate) === want && Number.isFinite(candidate.unit))
+    const choice = wanted.length > 0 ? cheapest(wanted) : candidates.length > 0 ? cheapest(candidates) : NONE
     visiting.delete(itemId)
     choices.set(itemId, choice)
+    alternatives.set(itemId, alternativesOf(offered))
     return choice
   }
 
@@ -133,11 +165,11 @@ function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices:
     return { ...step, attempts, materials, byproducts, cost }
   }
 
-  return function planRoot(itemId: ItemId, quantity: number): StepPlan | null {
+  return function planRoot(itemId: ItemId, quantity: number): Pass {
     const routes = (world.byProduct.get(itemId) ?? []).map((recipe) => ({ recipe, wanted: itemId }))
-    if (routes.length === 0) return null
+    if (routes.length === 0) return { root: null, alternatives }
     const best = cheapest(routes.map((route) => ({ route, unit: routeUnit(route) })))
-    return buildStep(best.route, quantity)
+    return { root: buildStep(best.route, quantity), alternatives }
   }
 }
 
@@ -181,26 +213,28 @@ const MAX_PASSES = 4
 
 // Depth-aware prices depend on how many units the plan buys, which depends on the prices, so the plan is
 // re-run with the previous pass's demand until it settles. The first pass quotes every item for one unit.
-function settle(prices: PriceBook, plan: (demand: Demand) => StepPlan | null): StepPlan | null {
+function settle(prices: PriceBook, plan: (demand: Demand) => Pass): Pass {
   const laddered = (demand: Demand) =>
     [...demand].some(([itemId, units]) => {
       const quote = prices.quote(itemId, units)
       return quote.kind === 'market' && quote.depth !== null
     })
   let demand: Demand = new Map()
-  let root = plan(demand)
-  for (let pass = 1; root && pass < MAX_PASSES; pass++) {
-    const next = demandOf(root)
+  let pass = plan(demand)
+  for (let count = 1; pass.root && count < MAX_PASSES; count++) {
+    const next = demandOf(pass.root)
     // Another pass changes nothing unless a ladder priced the old demand or would price the new one.
     if (sameDemand(next, demand) || !(laddered(next) || laddered(demand))) break
     demand = next
-    root = plan(demand)
+    pass = plan(demand)
   }
-  return root
+  return pass
 }
 
-export function planCraft({ target, mastery, options, world, prices, owned = NO_STOCK }: PlanInput): PlanResult | null {
-  const root = settle(prices, (demand) => planner(world, mastery, options, prices, owned, demand)(target.itemId, target.quantity))
+export function planCraft({ target, mastery, options, world, prices, owned = NO_STOCK, forced = NO_CHOICES }: PlanInput): PlanResult | null {
+  const { root, alternatives } = settle(prices, (demand) =>
+    planner(world, mastery, options, prices, owned, forced, demand)(target.itemId, target.quantity),
+  )
   if (!root) return null
 
   const quote = prices.quote(target.itemId, target.quantity)
@@ -225,5 +259,6 @@ export function planCraft({ target, mastery, options, world, prices, owned = NO_
     shopping: [...leaves.shopping.values()].sort((a, b) => b.subtotal - a.subtotal),
     missing: [...leaves.missing],
     blocked: [...leaves.blocked],
+    alternatives,
   }
 }
