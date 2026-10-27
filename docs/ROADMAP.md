@@ -16,6 +16,7 @@ either closes a gap those tools have already filled, or widens that edge.
 - Owned materials: a Have column per world, the plan spends stock first, Copy list as text.
 - Share links: the address bar holds the plan's world, item, quantity, mastery and options, and Copy link copies it.
 - Depth-aware prices: a bulk buy follows the exchange's listing ladder for the units the player does not hold, and the row says how many listings it spans.
+- Per-component source choice: buy, craft or morph per part under steps, held per world, with what the choice costs over the cheapest way on the row.
 
 ## Now: make a plan shareable
 
