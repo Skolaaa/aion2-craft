@@ -73,7 +73,7 @@ export function ScanTable({ label, rows, empty, onOpen, sort, onSort }: Props) {
         <div className="sort-chips" role="group" aria-label="Sort by">
           <span className="chip-key" aria-hidden="true">sort by</span>
           {columns
-            .filter((column) => column.sortable && !column.hideNarrow)
+            .filter((column) => column.sortable)
             .map(({ key, header }) => (
               <button key={key} type="button" className="chip" aria-pressed={sort.key === key} onClick={() => onSort(key)}>
                 {header}
