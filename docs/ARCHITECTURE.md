@@ -46,7 +46,7 @@ plan.blocked         // recipes in the tree above the player's mastery
 | `src/state/picker.ts` | `pickerView`, `withText`, `initialActive`, `groupNote`, `pairingNote`, `currentNote` for the world list; pure |
 | `src/state/combobox.ts` | `moveActive(ids, active, step)` and `useCombobox(ids, onPick, initial)`: the active option, arrow keys, Enter and scrolling into view, shared by `WorldPicker` and `Search` |
 | `src/state/answer.ts` | `answerOf`, `sentenceOf` (the verdict as `Segment`s), `buyList`, `stepCount` and the step notes; one `stepsOf` walker over the plan tree; pure |
-| `src/state/grade.ts` | `GRADE_COLOUR: Record<Grade, string>` and `gradeRules()`, the `[data-grade]` CSS that `main.tsx` injects once |
+| `src/state/grade.ts` | `GRADE: Record<Grade, { name, colour }>`, the game's own grade table (Global display name and colour per NC internal id), `gradeName()` and `gradeRules()`, the `[data-grade]` CSS that `main.tsx` injects once |
 | `src/state/useFreshness.ts` | `useFreshness(feed)`: age, stale, refreshing, the "these are the newest" note and `refresh`, called once per workspace |
 | `src/state/heat.ts` | `heatOf(marginPct)`: the margin heat colour and its ink; pure |
 | `src/state/format.ts` | number and date text; `shownTenths`, the one rule for when a fraction shows as 0.0%, used by `toneOf` and `heatOf` |
@@ -134,11 +134,13 @@ with `world`. Forms change the rest through `SetupPatch`, which excludes both.
 Asmodian violet. A picker row and a matched-world name carry their own `data-side`, so no
 component picks a side colour in code.
 
-`Item.grade` is the closed union `Grade` (`Common`, `Rare`, `Legend`, `Unique`, `Epic`,
-`Special`), parsed at the catalog boundary. `GRADE_COLOUR` holds the six colours, and
-`gradeRules()` turns them into `[data-grade='…'] { --grade: … }` rules that `main.tsx` injects
-once, so `styles.css` holds no grade list. `grade.test.ts` fails when the bundled catalog uses a
-grade outside the union or a colour drops under 4.5:1 on `--page`.
+`Item.grade` is the closed union `Grade` of NC's internal ids (`Common`, `Rare`, `Legend`,
+`Unique`, `Epic`, `Mythic`, `Special`), parsed at the catalog boundary. `GRADE` holds the game's
+own display name and colour for each (the Global client prints `Legend` as "Epic" and `Epic` as
+"Heroic"; every label on screen goes through `gradeName`), and `gradeRules()` turns the colours
+into `[data-grade='…'] { --grade: … }` rules that `main.tsx` injects once, so `styles.css` holds
+no grade list. `grade.test.ts` fails when the bundled catalog uses a grade outside the union, a
+display name drifts from the client's, or a colour drops under 4.5:1 on `--page`.
 
 `heatOf(marginPct)` blends `#B35317` to `#FFDC8F` with alpha 0.14 to 1 over `--page` and returns
 the opaque background with a black or white ink, whichever contrasts more. The scale is absolute:

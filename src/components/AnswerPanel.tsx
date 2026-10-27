@@ -3,6 +3,7 @@ import type { ItemId, PlanResult } from '../domain/types.ts'
 import { answerOf, sentenceOf, stepSummary, type Answer, type Segment } from '../state/answer.ts'
 import { itemName, type Craftable } from '../state/craftables.ts'
 import { kina, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
+import { gradeName } from '../state/grade.ts'
 import { SIDE } from '../market/worlds.ts'
 import type { Planning } from '../state/planning.ts'
 import { MAX_QUANTITY, type Target } from '../state/target.ts'
@@ -53,7 +54,7 @@ export function AnswerPanel({ craftable, plan, planning, freshness, quantity, ov
   const pair = index.pairOf.get(item.id)
   const profession = recipe?.profession ?? craftable.profession
   const level = recipe?.masteryLevel ?? craftable.level
-  const facts = [profession ?? 'Any profession', `recipe level ${level}`, item.grade, recipe?.section === 'succession' ? 'transfer' : null]
+  const facts = [profession ?? 'Any profession', `recipe level ${level}`, gradeName(item.grade), recipe?.section === 'succession' ? 'transfer' : null]
 
   return (
     <section className="answer" aria-labelledby="answer-name">

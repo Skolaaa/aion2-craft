@@ -27,7 +27,7 @@ function curveFrom(codes: CurveCodes, curves: RatesFile['curves']): RateCurve {
   return { success: row(codes.success), combo: codes.combo === null ? null : row(codes.combo) }
 }
 
-const GRADES: Readonly<Record<Grade, true>> = { Common: true, Rare: true, Legend: true, Unique: true, Epic: true, Special: true }
+const GRADES: Readonly<Record<Grade, true>> = { Common: true, Rare: true, Legend: true, Unique: true, Epic: true, Mythic: true, Special: true }
 
 export const parseGrade = (grade: string): Grade => (Object.prototype.hasOwnProperty.call(GRADES, grade) ? (grade as Grade) : 'Common')
 

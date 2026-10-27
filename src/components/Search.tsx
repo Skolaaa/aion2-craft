@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 
 import type { ItemId } from '../domain/types.ts'
 import { useCombobox } from '../state/combobox.ts'
 import type { Craftable } from '../state/craftables.ts'
+import { gradeName } from '../state/grade.ts'
 import { searchCraftables } from '../state/search.ts'
 import { ItemIcon } from './ItemIcon.tsx'
 
@@ -103,7 +104,7 @@ export function Search({ craftables, autoFocus, onPick }: Props) {
                 <span className="item-text">
                   <span>{craftable.item.name}</span>
                   <span className="meta">
-                    {craftable.profession ?? 'Any profession'}, level {craftable.level}, {craftable.item.grade}
+                    {craftable.profession ?? 'Any profession'}, level {craftable.level}, {gradeName(craftable.item.grade)}
                     {craftable.transfer ? ', transfer' : ''}
                   </span>
                 </span>

@@ -28,7 +28,7 @@ chose from are dark, and one theme halves the CSS to keep right.
 | `--gain` / `--loss` | `#5FD38D` / `#F0716B` | signed margin, change chips |
 | `--elyos` / `--elyos-l` | `#2E6FD1` / `#7EB3FF` | Elyos: side badge, the world chip, the answer panel's 2 px top border |
 | `--asmo` / `--asmo-l` | `#7B4FD6` / `#B89CFF` | Asmodian: the same places, and matched-world names |
-| grades | Common `#D9D9D9`, Rare `#5FB4FF`, Legend `#D08BFF`, Unique `#FFB347`, Epic `#FF6B6B`, Special `#7FE0D6` | item names in tables and the item header, 1 px icon frame with a 25% inner glow. Epic and Special are our own tokens; each keeps 4.5:1 on `--page`, and an unknown grade shows as Common |
+| grades | Common `#C3C3C3`, Rare `#19E048`, Legend `#379AFF`, Unique `#FFD02B`, Epic `#FF6C00`, Mythic `#FF3245`, Special `#00FFD8` | item names in tables and the item header, 1 px icon frame with a 25% inner glow. These are the game's own colours from NCSoft's icon index (as aion2.exchange serves it), keyed by NC's internal ids; the Global client prints Legend as "Epic" and Epic as "Heroic", and `gradeName` follows it. Each keeps 4.5:1 on `--page`, and an unknown grade shows as Common |
 
 Blue and violet mean a side and nothing else. Gold means money. Bronze means ornament.
 
