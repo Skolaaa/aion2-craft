@@ -130,6 +130,12 @@ costs over the cheapest way: "Craft, 4.1 attempts at 96.8%, yours, 1,230 Kina mo
 buying". A way the plan cannot use is disabled, with the reason on hover. The buy table stays
 a shopping list.
 
+Where to get it: in the buy table and under steps, a muted external-link glyph follows each
+item name and opens the item's AION2 Hub page in a new tab. The page lists where the item is
+gathered, dropped, crafted or sold. The glyph turns gold on hover and focus, and its hover text
+reads "Where to get Orichalcum Ore, on AION2 Hub". The scanner and the drawer keep plain names.
+On a phone the glyph can drop to its own line when the name fills the last one.
+
 Scanner: Ledger's left rail (All plus five professions with counts; a horizontal chip strip
 under 900 px), the name filter, the hidden-rows line with "Show them", and one table: Item
 (icon, grade-coloured name, profession and level in mono), Craft cost, Market lowest, Margin,

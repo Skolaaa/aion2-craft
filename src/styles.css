@@ -670,6 +670,24 @@ input[type='range'] {
   color: var(--muted);
 }
 
+/* The negative margins let the 24px hit area sit in a 16px line without making it taller. */
+.item-link {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: -4px 0 -4px var(--space-1);
+  vertical-align: top;
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.item-link:hover,
+.item-link:focus-visible {
+  color: var(--gold-hi);
+}
+
 .item-icon {
   flex: none;
   display: block;
@@ -1474,7 +1492,8 @@ input[type='range'] {
   .sort,
   .toggle,
   .price-value,
-  .item-open {
+  .item-open,
+  .item-link {
     transition: color 120ms ease-out, border-color 120ms ease-out, background-color 120ms ease-out;
   }
 

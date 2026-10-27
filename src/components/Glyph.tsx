@@ -4,6 +4,7 @@ const PATHS = {
   arrow: 'M8 3v10m-4-4 4 4 4-4',
   link: 'M6.7 8.7a3.3 3.3 0 0 0 5 .4l2-2A3.3 3.3 0 0 0 9 2.4L7.8 3.5M9.3 7.3a3.3 3.3 0 0 0-5-.4l-2 2A3.3 3.3 0 0 0 7 13.6l1.1-1.1',
   check: 'm3.5 8.5 3 3 6-7',
+  external: 'M6.5 3.5h-2A1.5 1.5 0 0 0 3 5v6.5A1.5 1.5 0 0 0 4.5 13H11a1.5 1.5 0 0 0 1.5-1.5v-2M9.5 2.5h4v4M13.5 2.5l-6 6',
 } as const
 
 type GlyphName = keyof typeof PATHS
