@@ -1,13 +1,17 @@
-import { useId, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { Acquisition, ItemId, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
 import { buyList, childStep, estimateGap, stepCount, stepSummary, successNote, type BuyLine, type BuyList } from '../state/answer.ts'
 import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
 import { MAX_MASTERY } from '../state/setup.ts'
+import { shoppingText } from '../state/shopping.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
+import type { OwnedStock } from '../state/useOwned.ts'
 import { useExchangeEstimate } from '../state/useExchangeEstimate.ts'
 import { useNow } from '../state/useNow.ts'
+import { Button } from './Button.tsx'
+import { CountCell } from './CountCell.tsx'
 import { Glyph } from './Glyph.tsx'
 import { ItemCell } from './ItemCell.tsx'
 import { PriceCell } from './PriceCell.tsx'
@@ -25,11 +29,12 @@ interface Props {
   plan: PlanResult
   planning: Planning
   overrides: PriceOverrides
+  owned: OwnedStock
   tab: DetailTab
   onTab(tab: DetailTab): void
 }
 
-export function Details({ plan, planning, overrides, tab, onTab }: Props) {
+export function Details({ plan, planning, overrides, owned, tab, onTab }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const list = buyList(plan)
@@ -70,7 +75,7 @@ export function Details({ plan, planning, overrides, tab, onTab }: Props) {
         ))}
       </div>
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
-        {tab === 'buy' && <WhatToBuy plan={plan} list={list} planning={planning} overrides={overrides} />}
+        {tab === 'buy' && <WhatToBuy plan={plan} list={list} planning={planning} overrides={overrides} owned={owned} />}
         {tab === 'steps' && <HowItIsMade key={plan.target.itemId} plan={plan} credit={list.credit} planning={planning} overrides={overrides} />}
         {tab === 'rates' && <Rates plan={plan} planning={planning} />}
       </div>
@@ -93,48 +98,66 @@ interface WhatToBuyProps {
   list: BuyList
   planning: Planning
   overrides: PriceOverrides
+  owned: OwnedStock
 }
 
 const MISSING = <span className="is-warn">no price yet</span>
+const SITE = 'https://aion2-craft.vercel.app'
 
-function WhatToBuy({ plan, list, planning, overrides }: WhatToBuyProps) {
-  const { catalog, prices, market } = planning
+function WhatToBuy({ plan, list, planning, overrides, owned }: WhatToBuyProps) {
+  const { catalog, prices, market, world } = planning
   const { lines, credit } = list
   // Shares are of the shopping total before the byproduct credit, so they add up to 100%.
   const gross = plan.cost + credit
+  const usesStock = lines.some((line) => line.owned > 0)
 
-  const source = (itemId: ItemId) => {
-    const quote = prices.quote(itemId)
+  const source = (row: BuyLine) => {
+    if (row.kind === 'owned') return 'your stock'
+    const quote = prices.quote(row.itemId)
     if (quote.kind === 'market') return `Market, ${quote.listings} ${plural(quote.listings, 'listing', 'listings')}`
     if (quote.kind === 'npc') return 'NPC shop'
     if (quote.kind === 'none') return MISSING
-    const lowest = market.get(itemId)?.lowest
+    const lowest = market.get(row.itemId)?.lowest
     return lowest == null ? 'not on the Market' : `Market lowest ${kina(lowest)}`
   }
+  const toBuy = (row: BuyLine) => (row.kind === 'owned' ? 0 : row.expected - row.owned)
 
   const columns: Column<BuyLine>[] = [
     {
       key: 'item',
       header: 'Item',
       render: (row) => (
-        <ItemCell item={catalog.items.get(row.itemId)} narrowMeta={<>{source(row.itemId)}, {decimal(row.expected)} needed</>} />
+        <ItemCell
+          item={catalog.items.get(row.itemId)}
+          narrowMeta={<>{source(row)}, {decimal(row.expected)} needed{row.owned > 0 && row.kind !== 'owned' && <>, {decimal(toBuy(row))} to buy</>}</>}
+        />
       ),
     },
-    { key: 'source', header: 'Source', hideNarrow: true, render: (row) => <span className="meta">{source(row.itemId)}</span> },
+    { key: 'source', header: 'Source', hideNarrow: true, render: (row) => <span className="meta">{source(row)}</span> },
     { key: 'expected', header: 'Expected', numeric: true, hideNarrow: true, render: (row) => decimal(row.expected) },
+    {
+      key: 'have',
+      header: 'Have',
+      numeric: true,
+      render: (row) => (
+        <CountCell itemName={itemName(catalog, row.itemId)} count={owned.counts.get(row.itemId) ?? null} onSave={(count) => owned.save(row.itemId, count)} />
+      ),
+    },
+    ...(usesStock ? [{ key: 'buy', header: 'To buy', numeric: true, hideNarrow: true, render: (row: BuyLine) => decimal(toBuy(row)) }] : []),
     {
       key: 'unit',
       header: 'Unit price',
       numeric: true,
-      render: (row) => (
-        <PriceCell
-          itemName={itemName(catalog, row.itemId)}
-          unit={row.kind === 'buy' ? row.unit : null}
-          own={overrides.prices.has(row.itemId)}
-          missing={row.kind === 'missing'}
-          onSave={(price) => overrides.save(row.itemId, price)}
-        />
-      ),
+      render: (row) =>
+        row.kind === 'owned' ? null : (
+          <PriceCell
+            itemName={itemName(catalog, row.itemId)}
+            unit={row.kind === 'buy' ? row.unit : null}
+            own={overrides.prices.has(row.itemId)}
+            missing={row.kind === 'missing'}
+            onSave={(price) => overrides.save(row.itemId, price)}
+          />
+        ),
     },
     { key: 'subtotal', header: 'Subtotal', numeric: true, render: (row) => (row.kind === 'buy' ? kina(row.subtotal) : null) },
     {
@@ -158,15 +181,65 @@ function WhatToBuy({ plan, list, planning, overrides }: WhatToBuyProps) {
     subtotal: <strong>{Number.isFinite(plan.cost) ? kina(plan.cost) : <span className="meta">needs every price</span>}</strong>,
   }
 
+  const text = () => shoppingText(plan, list, { itemName: (itemId) => itemName(catalog, itemId), worldName: world.name, site: SITE })
+
   return (
-    <Table
-      label="What to buy"
-      columns={columns}
-      rows={lines}
-      rowKey={(row) => String(row.itemId)}
-      empty="Nothing to buy until the recipe is within your mastery."
-      footer={lines.length === 0 ? undefined : credit > 0 ? [creditFooter(credit, 'credited at the lowest listing after tax'), total] : [total]}
-    />
+    <>
+      <div className="panel-tools">
+        <span className="meta">Have is what you hold on {world.name}. The plan uses it before buying.</span>
+        {lines.length > 0 && <CopyButton text={text} />}
+      </div>
+      <Table
+        label="What to buy"
+        columns={columns}
+        rows={lines}
+        rowKey={(row) => String(row.itemId)}
+        empty="Nothing to buy until the recipe is within your mastery."
+        footer={lines.length === 0 ? undefined : credit > 0 ? [creditFooter(credit, 'credited at the lowest listing after tax'), total] : [total]}
+      />
+    </>
+  )
+}
+
+type CopyState = 'idle' | 'copied' | 'failed'
+
+/** Copies the list as plain text. When the clipboard is unavailable, shows the text to copy by hand. */
+function CopyButton({ text }: { text(): string }) {
+  const [state, setState] = useState<CopyState>('idle')
+  const [shown, setShown] = useState<string | null>(null)
+  const areaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (state !== 'copied') return
+    const timer = setTimeout(() => setState('idle'), 2000)
+    return () => clearTimeout(timer)
+  }, [state])
+
+  useEffect(() => {
+    if (shown !== null) areaRef.current?.select()
+  }, [shown])
+
+  const copy = async () => {
+    const value = text()
+    try {
+      await navigator.clipboard.writeText(value)
+      setShown(null)
+      setState('copied')
+    } catch {
+      setShown(value)
+      setState('failed')
+    }
+  }
+
+  return (
+    <>
+      <Button className="button-small" aria-live="polite" onClick={copy}>
+        {state === 'copied' ? 'Copied' : 'Copy list'}
+      </Button>
+      {shown !== null && (
+        <textarea ref={areaRef} className="input copy-text" readOnly rows={6} aria-label="Shopping list to copy by hand" value={shown} />
+      )}
+    </>
   )
 }
 
@@ -175,6 +248,7 @@ interface LadderRow {
   depth: number
   itemId: ItemId
   expected: number
+  owned: number
   subtotal: number
   acquisition: Acquisition
 }
@@ -182,16 +256,16 @@ interface LadderRow {
 function flatten(plan: PlanResult, open: ReadonlySet<string>): LadderRow[] {
   const rows: LadderRow[] = []
   const walk = (step: StepPlan, key: string, depth: number) => {
-    for (const { itemId, expected, subtotal, acquisition } of step.materials) {
+    for (const { itemId, expected, owned, subtotal, acquisition } of step.materials) {
       const lineKey = `${key}/${itemId}`
-      rows.push({ key: lineKey, depth, itemId, expected, subtotal, acquisition })
+      rows.push({ key: lineKey, depth, itemId, expected, owned, subtotal, acquisition })
       const child = childStep(acquisition)
       if (child && open.has(lineKey)) walk(child, lineKey, depth + 1)
     }
   }
   const { root } = plan
   const made: Acquisition = { method: 'craft', unit: plan.unitCost, step: root }
-  rows.push({ key: 'root', depth: 0, itemId: root.itemId, expected: root.outputs, subtotal: plan.cost, acquisition: made })
+  rows.push({ key: 'root', depth: 0, itemId: root.itemId, expected: root.outputs, owned: 0, subtotal: plan.cost, acquisition: made })
   if (open.has('root')) walk(root, 'root', 1)
   return rows
 }
@@ -200,6 +274,7 @@ const BUY_FROM = { market: 'Buy on the Market', manual: 'Buy at your price', npc
 
 function howText({ acquisition }: LadderRow, recipeOf: (step: StepPlan) => Recipe | undefined, planning: Planning) {
   if (acquisition.method === 'buy') return BUY_FROM[acquisition.quote.kind]
+  if (acquisition.method === 'owned') return 'From your stock'
   if (acquisition.method === 'none') return <span className="is-warn">No price yet</span>
   const verb = acquisition.method === 'morph' ? 'Morph from Odyle' : 'Craft'
   return `${verb}, ${stepSummary(acquisition.step, recipeOf(acquisition.step), planning.mastery)}`
@@ -231,7 +306,7 @@ function HowItIsMade({ plan, credit, planning, overrides }: { plan: PlanResult; 
             item={catalog.items.get(row.itemId)}
             depth={row.depth}
             meta={howText(row, recipeOf, planning)}
-            narrowMeta={`${decimal(row.expected)} needed`}
+            narrowMeta={`${decimal(row.expected)} needed${row.owned > 0 && row.acquisition.method !== 'owned' ? `, ${decimal(row.owned)} yours` : ''}`}
             toggle={
               expandable ? (
                 <button
@@ -266,6 +341,7 @@ function HowItIsMade({ plan, credit, planning, overrides }: { plan: PlanResult; 
             />
           )
         }
+        if (acquisition.method === 'owned') return null
         return Number.isFinite(acquisition.unit) ? kina(acquisition.unit) : null
       },
     },

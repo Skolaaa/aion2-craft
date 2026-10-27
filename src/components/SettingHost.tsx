@@ -3,6 +3,7 @@ import { settingKey, type OpenSetting, type Setting } from '../state/openSetting
 import type { Planning } from '../state/planning.ts'
 import type { Setup, SetupPatch } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
+import type { OwnedStock } from '../state/useOwned.ts'
 import type { WorldsState } from '../state/useWorlds.ts'
 import { Button } from './Button.tsx'
 import { MasteryForm } from './MasteryForm.tsx'
@@ -22,6 +23,7 @@ interface Props {
   chooseWorld(world: World): void
   planning: Planning
   overrides: PriceOverrides
+  owned: OwnedStock
 }
 
 const FRAME: Record<Setting['kind'], { title: string; placement: Placement; width?: number }> = {
@@ -31,7 +33,7 @@ const FRAME: Record<Setting['kind'], { title: string; placement: Placement; widt
   plan: { title: 'Settings', placement: 'drawer' },
 }
 
-export function SettingHost({ surface, worlds, retryWorlds, current, setup, patch, chooseWorld, planning, overrides }: Props) {
+export function SettingHost({ surface, worlds, retryWorlds, current, setup, patch, chooseWorld, planning, overrides, owned }: Props) {
   const { opened, close } = surface
   if (opened === null) return null
   const { setting, anchor } = opened
@@ -65,7 +67,7 @@ export function SettingHost({ surface, worlds, retryWorlds, current, setup, patc
       case 'tax':
         return <TaxForm taxRate={setup.taxRate} patch={patch} />
       case 'plan':
-        return <PlanSettings setup={setup} patch={patch} planning={planning} overrides={overrides} />
+        return <PlanSettings setup={setup} patch={patch} planning={planning} overrides={overrides} owned={owned} />
       default: {
         const unknown: never = setting
         return unknown

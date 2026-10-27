@@ -121,7 +121,10 @@ It offers every sortable column, including Craft cost and Market lowest, which p
 No sparkline: it would cost one history request per row.
 
 Settings drawer: plan options with their one-line notes, then "Your prices on Kaisinel" with
-reset, as today.
+reset, as today, then "What you have on Kaisinel": the counts entered under Have in the buy
+table, each with Clear. The buy table's Have column edits in place like a unit price; a
+"To buy" column appears only once a count is set, and a line that stock covers in full
+drops to the bottom with "your stock" as its source.
 
 States: as the second pass (loading line, stale pill, proxy-down notice, world list failed with
 retry, missing price input in the row, mastery too low in the sentence, no listing).
