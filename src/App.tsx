@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Calculator } from './components/Calculator.tsx'
 import { Footer } from './components/Footer.tsx'
+import { ListView } from './components/ListView.tsx'
 import { LinkNotice, Notice, WorldsFailed } from './components/Notice.tsx'
 import { Scanner } from './components/Scanner.tsx'
 import { SettingHost } from './components/SettingHost.tsx'
@@ -164,10 +165,53 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
     updateSetup((previous) => setWorld(previous, next))
   }
 
-  const openItem = (itemId: ItemId) => {
-    updateTarget((previous) => ({ ...previous, itemId }))
+  /** Opens an item in the calculator, at `quantity` when a list line says so, else at the open quantity. */
+  const openItem = (itemId: ItemId, quantity?: number) => {
+    updateTarget((previous) => ({ itemId, quantity: quantity ?? previous.quantity }))
     onView('calculator')
     window.scrollTo({ top: 0 })
+  }
+
+  const body = () => {
+    switch (view) {
+      case 'calculator':
+        return (
+          <Calculator
+            planning={planning}
+            freshness={freshness}
+            requestLadders={ladders.request}
+            target={target}
+            overrides={overrides}
+            owned={owned}
+            sources={sources}
+            link={link}
+            onTarget={patchTarget}
+            list={list}
+            onView={onView}
+          />
+        )
+      case 'list':
+        return (
+          <ListView
+            planning={planning}
+            freshness={freshness}
+            requestLadders={ladders.request}
+            list={list}
+            overrides={overrides}
+            owned={owned}
+            sources={sources}
+            link={link}
+            onOpen={openItem}
+            onView={onView}
+          />
+        )
+      case 'scanner':
+        return <Scanner planning={planning} freshness={freshness} onOpen={openItem} />
+      default: {
+        const unknown: never = view
+        return unknown
+      }
+    }
   }
 
   const bar = (
@@ -175,6 +219,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
       <TopBar
         view={view}
         onView={onView}
+        listCount={list.wanted.size}
         context={{ chips: statusChips(setup, current), freshness, opened: surface.opened?.setting ?? null, open: surface.open, link }}
       />
       <SettingHost
@@ -204,20 +249,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
         </WorldsFailed>
       )}
       {feed.status === 'failed' && <FeedNotice feed={feed} worldName={world.name} />}
-      {view === 'calculator' && (
-        <Calculator
-          planning={planning}
-          freshness={freshness}
-          requestLadders={ladders.request}
-          target={target}
-          overrides={overrides}
-          owned={owned}
-          sources={sources}
-          link={link}
-          onTarget={patchTarget}
-        />
-      )}
-      {view === 'scanner' && <Scanner planning={planning} freshness={freshness} onOpen={openItem} />}
+      {body()}
     </Shell>
   )
 }

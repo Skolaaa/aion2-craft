@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ItemId, PlanResult } from '../domain/types.ts'
-import { answerOf, depthCapturedAt, depthNote, sentenceOf, stepSummary, usesStock, type Answer, type Segment } from '../state/answer.ts'
+import { answerOf, depthCapturedAt, depthNote, sentenceOf, stepSummary, usesStock, type Answer } from '../state/answer.ts'
 import { itemName, type Craftable } from '../state/craftables.ts'
 import { kina, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
 import { gradeName } from '../state/grade.ts'
@@ -9,6 +9,7 @@ import type { Planning } from '../state/planning.ts'
 import { MAX_QUANTITY, type Target } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { Freshness } from '../state/useFreshness.ts'
+import { Figure, typeset } from './Figure.tsx'
 import { NumberInput } from './NumberInput.tsx'
 import { HeatChip } from './HeatChip.tsx'
 import { ItemIcon } from './ItemIcon.tsx'
@@ -24,30 +25,11 @@ interface Props {
   quantity: number
   overrides: PriceOverrides
   onTarget(change: Partial<Target>): void
+  /** Rendered last among the controls, after the quantity. */
+  after?: ReactNode
 }
 
-interface FigureProps {
-  label: string
-  value: string | null
-  empty: string
-  tone?: string
-  children: ReactNode
-}
-
-const typeset = (segments: readonly Segment[]) =>
-  segments.map((segment, index) => (segment.kind === 'text' ? segment.text : <span className="mono" key={index}>{segment.text}</span>))
-
-function Figure({ label, value, empty, tone, children }: FigureProps) {
-  return (
-    <div className="figure">
-      <dt className="figure-label">{label}</dt>
-      <dd className={`figure-value ${value === null ? 'is-empty' : (tone ?? '')}`}>{value ?? empty}</dd>
-      <dd className="figure-note meta">{children}</dd>
-    </div>
-  )
-}
-
-export function AnswerPanel({ craftable, plan, planning, freshness, quantity, overrides, onTarget }: Props) {
+export function AnswerPanel({ craftable, plan, planning, freshness, quantity, overrides, onTarget, after }: Props) {
   const { catalog, world, index, mastery, prices } = planning
   const { item } = craftable
   const recipe = plan ? catalog.recipes.get(plan.targets[0].root.recipeId) : undefined
@@ -77,6 +59,7 @@ export function AnswerPanel({ craftable, plan, planning, freshness, quantity, ov
             <label className="lookup-key" htmlFor="quantity">qty</label>
             <NumberInput id="quantity" value={quantity} min={1} max={MAX_QUANTITY} onChange={(next) => onTarget({ quantity: next })} />
           </div>
+          {after}
         </div>
       </header>
 

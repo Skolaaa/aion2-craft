@@ -7,12 +7,14 @@ interface NumberInputProps {
   min: number
   max: number
   step?: number
+  /** The accessible name, for an input with no visible label, as in a table cell. */
+  label?: string
   describedBy?: string
   initialFocus?: boolean
   onChange(value: number): void
 }
 
-export function NumberInput({ id, value, min, max, step = 1, describedBy, initialFocus, onChange }: NumberInputProps) {
+export function NumberInput({ id, value, min, max, step = 1, label, describedBy, initialFocus, onChange }: NumberInputProps) {
   const [text, setText] = useState(String(value))
   useEffect(() => setText(String(value)), [value])
   return (
@@ -25,6 +27,7 @@ export function NumberInput({ id, value, min, max, step = 1, describedBy, initia
       max={max}
       step={step}
       value={text}
+      aria-label={label}
       aria-describedby={describedBy}
       data-autofocus={initialFocus || undefined}
       onChange={(event) => {

@@ -1342,6 +1342,12 @@ input[type='range'] {
   color: var(--muted);
 }
 
+.list-lines .input-number {
+  width: 72px;
+  min-height: 28px;
+  padding: 0 6px;
+}
+
 .share {
   display: inline-block;
   width: 64px;
@@ -1603,6 +1609,11 @@ input[type='range'] {
 
   .nav-item {
     padding: 0 var(--space-2);
+  }
+
+  /* Three views and the wordmark fill 386 px at 390 px; a count would wrap the nav to its own row. */
+  .nav .tab-count {
+    display: none;
   }
 
   .context {

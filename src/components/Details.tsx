@@ -40,27 +40,30 @@ interface Props {
   link: string
   tab: DetailTab
   onTab(tab: DetailTab): void
+  /** The target whose rates to show. The tab is offered only when given, since rates are per item. */
+  rates?: TargetPlan
 }
 
-export function Details({ plan, planning, overrides, owned, sources, link, tab, onTab }: Props) {
+export function Details({ plan, planning, overrides, owned, sources, link, tab, onTab, rates }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const list = buyList(plan)
+  const tabs = rates ? TABS : TABS.filter(({ id }) => id !== 'rates')
   const counts: Record<DetailTab, number | null> = { buy: list.lines.length, steps: stepCount(plan), rates: null }
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0
-    const target = event.key === 'Home' ? 0 : event.key === 'End' ? TABS.length - 1 : step ? (index + step + TABS.length) % TABS.length : null
+    const target = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : step ? (index + step + tabs.length) % tabs.length : null
     if (target === null) return
     event.preventDefault()
-    onTab(TABS[target].id)
+    onTab(tabs[target].id)
     tabRefs.current[target]?.focus()
   }
 
   return (
     <section className="details" aria-label="Details">
       <div className="tabs" role="tablist" aria-label="Details">
-        {TABS.map(({ id, label, title }, index) => (
+        {tabs.map(({ id, label, title }, index) => (
           <button
             key={id}
             ref={(element) => {
@@ -87,7 +90,7 @@ export function Details({ plan, planning, overrides, owned, sources, link, tab, 
         {tab === 'steps' && (
           <HowItIsMade key={targetsKey(plan)} plan={plan} credit={list.credit} planning={planning} overrides={overrides} sources={sources} />
         )}
-        {tab === 'rates' && <Rates target={plan.targets[0]} planning={planning} />}
+        {tab === 'rates' && rates && <Rates target={rates} planning={planning} />}
       </div>
     </section>
   )
