@@ -156,29 +156,55 @@ export function successNote(step: Pick<StepPlan, 'successRate' | 'rateSource'>):
 }
 
 export type BuyLine =
-  | { kind: 'buy'; itemId: ItemId; expected: number; unit: number; subtotal: number }
-  | { kind: 'missing'; itemId: ItemId; expected: number }
+  | { kind: 'buy'; itemId: ItemId; expected: number; owned: number; unit: number; subtotal: number }
+  | { kind: 'missing'; itemId: ItemId; expected: number; owned: number }
+  | { kind: 'owned'; itemId: ItemId; expected: number; owned: number }
 
 export interface BuyList {
   lines: BuyLine[]
   credit: number
 }
 
+type Tally = { expected: number; owned: number }
+
+const tally = (map: Map<ItemId, Tally>, itemId: ItemId, expected: number, owned: number) => {
+  const entry = map.get(itemId) ?? { expected: 0, owned: 0 }
+  entry.expected += expected
+  entry.owned += owned
+  map.set(itemId, entry)
+}
+
+/** Unpriced items first, then what is bought by subtotal, then what the player's stock covers in full. */
 export function buyList(plan: PlanResult): BuyList {
-  const missing = new Map<ItemId, number>()
+  const missing = new Map<ItemId, Tally>()
+  const covered = new Map<ItemId, Tally>()
   let credit = 0
   for (const step of stepsOf(plan.root)) {
     for (const byproduct of step.byproducts) credit += byproduct.credit
     for (const line of step.materials) {
-      if (line.acquisition.method === 'none') missing.set(line.itemId, (missing.get(line.itemId) ?? 0) + line.expected)
+      if (line.acquisition.method === 'none') tally(missing, line.itemId, line.expected, line.owned)
+      else if (line.acquisition.method === 'owned') tally(covered, line.itemId, line.expected, line.owned)
     }
   }
-  const unpriced: BuyLine[] = [...missing].map(([itemId, expected]) => ({ kind: 'missing', itemId, expected }))
+  const unpriced: BuyLine[] = [...missing].map(([itemId, { expected, owned }]) => ({ kind: 'missing', itemId, expected, owned }))
   const bought: BuyLine[] = plan.shopping.map((entry) => ({ kind: 'buy', ...entry }))
-  return { lines: [...unpriced, ...bought], credit }
+  for (const line of [...unpriced, ...bought]) {
+    const also = covered.get(line.itemId)
+    if (!also) continue
+    line.expected += also.expected
+    line.owned += also.owned
+    covered.delete(line.itemId)
+  }
+  const held: BuyLine[] = [...covered]
+    .map(([itemId, { expected, owned }]) => ({ kind: 'owned' as const, itemId, expected, owned }))
+    .sort((a, b) => b.expected - a.expected)
+  return { lines: [...unpriced, ...bought, ...held], credit }
 }
 
 export const stepCount = (root: StepPlan): number => [...stepsOf(root)].length
+
+/** Whether any line of the plan draws on what the player holds. */
+export const usesStock = (root: StepPlan): boolean => [...stepsOf(root)].some((step) => step.materials.some((line) => line.owned > 0))
 
 export const estimateGap = (plan: PlanResult, theirs: number): number | null =>
   Number.isFinite(plan.unitCost) ? plan.unitCost - theirs : null

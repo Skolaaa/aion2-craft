@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ItemId, PlanResult } from '../domain/types.ts'
-import { answerOf, sentenceOf, stepSummary, type Answer, type Segment } from '../state/answer.ts'
+import { answerOf, sentenceOf, stepSummary, usesStock, type Answer, type Segment } from '../state/answer.ts'
 import { itemName, type Craftable } from '../state/craftables.ts'
 import { kina, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
 import { gradeName } from '../state/grade.ts'
@@ -122,9 +122,7 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
       ? `needs ${verdict.profession ?? 'mastery'} ${verdict.level}`
       : craft === null
         ? <span className="is-warn">{plan.missing.length} {plural(plan.missing.length, 'price', 'prices')} missing</span>
-        : each
-          ? `${kina(plan.unitCost)} each, ${stepNote}`
-          : stepNote
+        : `${each ? `${kina(plan.unitCost)} each, ` : ''}${stepNote}${usesStock(plan.root) ? ', what you hold counted as free' : ''}`
 
   // One keyed editor across the three notes, so focus returns to it after a save.
   const priceEditor = (trigger: string) => (

@@ -1,6 +1,6 @@
 import { stepRates, type StepRates } from './rates.ts'
 import type {
-  Acquisition, Catalog, ItemId, Mastery, PlanInput, PlanOptions, PlanResult, Price, PriceBook, Recipe, RecipeId, StepPlan,
+  Acquisition, Catalog, ItemId, Mastery, Owned, PlanInput, PlanOptions, PlanResult, Price, PriceBook, Recipe, RecipeId, StepPlan,
 } from './types.ts'
 
 interface Route {
@@ -28,9 +28,20 @@ function outcomes(recipe: Recipe, rates: StepRates) {
   ]
 }
 
-function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices: PriceBook) {
+const NO_STOCK: Owned = new Map()
+
+function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices: PriceBook, owned: Owned) {
   const choices = new Map<ItemId, Choice>()
   const visiting = new Set<ItemId>()
+  // Stock is spent in tree order, so a material two steps need shares one budget.
+  const stock = new Map(owned)
+
+  const takeStock = (itemId: ItemId, wanted: number) => {
+    const held = stock.get(itemId) ?? 0
+    const taken = Math.min(held, wanted)
+    if (taken > 0) stock.set(itemId, held - taken)
+    return taken
+  }
 
   const creditValue = (itemId: ItemId) => {
     if (!options.byproductCredit) return 0
@@ -74,11 +85,13 @@ function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices:
     return choice
   }
 
-  function acquire(itemId: ItemId, quantity: number): Acquisition {
+  function acquire(itemId: ItemId, quantity: number): Exclude<Acquisition, { method: 'owned' }> {
     const choice = choose(itemId)
     if (choice.kind === 'none') return { method: 'none' }
     if (choice.kind === 'buy') return { method: 'buy', unit: choice.unit, quote: choice.quote }
-    return { method: methodOf(choice.route.recipe), unit: choice.unit, step: buildStep(choice.route, quantity) }
+    // The built step can cost less than the memoised route when stock covers part of it.
+    const step = buildStep(choice.route, quantity)
+    return { method: methodOf(choice.route.recipe), unit: step.cost / quantity, step }
   }
 
   function buildStep(route: Route, outputs: number): StepPlan {
@@ -100,9 +113,12 @@ function planner(world: Catalog, mastery: Mastery, options: PlanOptions, prices:
     const attempts = outputs / sum(results.filter((o) => o.itemId === wanted), (o) => o.perAttempt)
     const materials = recipe.ingredients.map((ing) => {
       const expected = attempts * ing.count
-      const acquisition = acquire(ing.itemId, expected)
-      const subtotal = acquisition.method === 'none' ? Infinity : expected * acquisition.unit
-      return { itemId: ing.itemId, perAttempt: ing.count, expected, acquisition, subtotal }
+      const owned = takeStock(ing.itemId, expected)
+      const rest = expected - owned
+      if (rest <= 1e-9) return { itemId: ing.itemId, perAttempt: ing.count, expected, owned, acquisition: { method: 'owned' } as const, subtotal: 0 }
+      const acquisition = acquire(ing.itemId, rest)
+      const subtotal = acquisition.method === 'none' ? Infinity : rest * acquisition.unit
+      return { itemId: ing.itemId, perAttempt: ing.count, expected, owned, acquisition, subtotal }
     })
     const byproducts = results
       .filter((o) => o.itemId !== wanted)
@@ -132,20 +148,22 @@ function collectLeaves(step: StepPlan, leaves: Leaves) {
   if (step.successRate === 0) leaves.blocked.add(step.recipeId)
   for (const line of step.materials) {
     const { acquisition } = line
+    if (acquisition.method === 'owned') continue
     if (acquisition.method === 'none') leaves.missing.add(line.itemId)
     else if (acquisition.method !== 'buy') collectLeaves(acquisition.step, leaves)
     else {
       const { shopping } = leaves
-      const entry = shopping.get(line.itemId) ?? { itemId: line.itemId, expected: 0, unit: acquisition.unit, subtotal: 0 }
+      const entry = shopping.get(line.itemId) ?? { itemId: line.itemId, expected: 0, owned: 0, unit: acquisition.unit, subtotal: 0 }
       entry.expected += line.expected
+      entry.owned += line.owned
       entry.subtotal += line.subtotal
       shopping.set(line.itemId, entry)
     }
   }
 }
 
-export function planCraft({ target, mastery, options, world, prices }: PlanInput): PlanResult | null {
-  const root = planner(world, mastery, options, prices)(target.itemId, target.quantity)
+export function planCraft({ target, mastery, options, world, prices, owned = NO_STOCK }: PlanInput): PlanResult | null {
+  const root = planner(world, mastery, options, prices, owned)(target.itemId, target.quantity)
   if (!root) return null
 
   const quote = prices.quote(target.itemId)

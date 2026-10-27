@@ -746,6 +746,27 @@ input[type='range'] {
   gap: var(--space-2);
 }
 
+.input-count {
+  width: 72px;
+  min-height: 28px;
+}
+
+.panel-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+.copy-text {
+  flex: 1 0 100%;
+  font: 12px / 1.4 var(--mono);
+  white-space: pre;
+  overflow-x: auto;
+}
+
 .heat {
   display: inline-block;
   font: 600 12px / 1 var(--mono);

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildCatalog, type RatesFile, type RecipesFile } from '../domain/catalog.ts'
 import { planCraft } from '../domain/planCraft.ts'
 import { makePriceBook } from '../domain/priceBook.ts'
-import type { Catalog, ItemId, Mastery, PlanResult, Recipe } from '../domain/types.ts'
+import type { Catalog, ItemId, Mastery, Owned, PlanResult, Recipe } from '../domain/types.ts'
 import { answerOf, buyList, sentenceOf, stepSummary, successNote, type Answer } from './answer.ts'
 
 const SWORD = 1
@@ -42,7 +42,7 @@ function catalogOf(recipes: Recipe[]): Catalog {
 
 const ONE_STEP = [recipe(100, SWORD, [[IRON, 2]])]
 
-function answer(recipes: Recipe[], market: Record<number, number>, quantity = 1, mastery = MASTERY): { plan: PlanResult; answer: Answer; catalog: Catalog } {
+function answer(recipes: Recipe[], market: Record<number, number>, quantity = 1, mastery = MASTERY, owned?: Owned): { plan: PlanResult; answer: Answer; catalog: Catalog } {
   const catalog = catalogOf(recipes)
   const prices = makePriceBook({
     manual: new Map(),
@@ -55,6 +55,7 @@ function answer(recipes: Recipe[], market: Record<number, number>, quantity = 1,
     options: { allowCraft: true, allowMorph: true, byproductCredit: false, taxRate: 0.05 },
     world: catalog,
     prices,
+    owned,
   })
   if (!plan) throw new Error('no plan')
   return { plan, answer: answerOf(plan, { catalog, mastery }), catalog }
@@ -140,10 +141,21 @@ describe('buyList', () => {
     const { plan } = answer(recipes, { [IRON]: 50 })
     const { lines, credit } = buyList(plan)
     expect(lines).toEqual([
-      { kind: 'missing', itemId: WOOD, expected: 5 },
-      { kind: 'buy', itemId: IRON, expected: 1, unit: 50, subtotal: 50 },
+      { kind: 'missing', itemId: WOOD, expected: 5, owned: 0 },
+      { kind: 'buy', itemId: IRON, expected: 1, owned: 0, unit: 50, subtotal: 50 },
     ])
     expect(credit).toBe(0)
+  })
+
+  it('merges a line that stock covers in one step with the same item bought in another, and lists fully held items last', () => {
+    const recipes = [recipe(100, SWORD, [[BLADE, 1], [WOOD, 2]]), recipe(101, BLADE, [[WOOD, 3], [IRON, 1]])]
+    const { plan } = answer(recipes, { [IRON]: 50, [WOOD]: 10 }, 1, MASTERY, new Map([[WOOD, 2], [IRON, 5]]))
+    const { lines } = buyList(plan)
+    expect(lines).toEqual([
+      { kind: 'buy', itemId: WOOD, expected: 5, owned: 2, unit: 10, subtotal: 30 },
+      { kind: 'owned', itemId: IRON, expected: 1, owned: 1 },
+    ])
+    expect(plan.cost).toBe(30)
   })
 })
 

@@ -4,7 +4,9 @@ import { kina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
 import { PLAN_FLAGS, type PlanFlag, type Setup, type SetupPatch } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
+import type { OwnedStock } from '../state/useOwned.ts'
 import { Button } from './Button.tsx'
+import { CountCell } from './CountCell.tsx'
 import { ItemCell } from './ItemCell.tsx'
 import { PriceCell } from './PriceCell.tsx'
 import { Table, type Column } from './Table.tsx'
@@ -29,11 +31,30 @@ interface Props {
   patch(change: SetupPatch): void
   planning: Planning
   overrides: PriceOverrides
+  owned: OwnedStock
 }
 
-export function PlanSettings({ setup, patch, planning, overrides }: Props) {
+export function PlanSettings({ setup, patch, planning, overrides, owned }: Props) {
   const { world, catalog, market } = planning
   const entries = [...overrides.prices]
+  const stock = [...owned.counts]
+  const stockColumns: Column<[ItemId, number]>[] = [
+    { key: 'item', header: 'Item', render: ([itemId]) => <ItemCell item={catalog.items.get(itemId)} /> },
+    {
+      key: 'count',
+      header: 'You have',
+      numeric: true,
+      render: ([itemId, count]) => {
+        const name = itemName(catalog, itemId)
+        return (
+          <span className="price-actions">
+            <CountCell itemName={name} count={count} onSave={(next) => owned.save(itemId, next)} />
+            <Button className="button-small" aria-label={`Forget how many ${name} you have`} onClick={() => owned.save(itemId, null)}>Clear</Button>
+          </span>
+        )
+      },
+    },
+  ]
   const priceColumns: Column<[ItemId, number]>[] = [
     { key: 'item', header: 'Item', render: ([itemId]) => <ItemCell item={catalog.items.get(itemId)} /> },
     {
@@ -88,6 +109,21 @@ export function PlanSettings({ setup, patch, planning, overrides }: Props) {
           rows={entries}
           rowKey={([itemId]) => String(itemId)}
           empty="None yet. Click a unit price in a table to set yours."
+        />
+      </section>
+
+      <section className="settings-group" aria-labelledby="your-stock">
+        <div className="group-head">
+          <h3 className="section-title" id="your-stock"><span>What you have on {world.name}</span></h3>
+          {stock.length > 1 && <Button className="button-small" onClick={owned.resetAll}>Clear all</Button>}
+        </div>
+        <p className="meta">The plan uses these before it buys or crafts. It still picks between buying and crafting at Market prices.</p>
+        <Table
+          label={`What you have on ${world.name}`}
+          columns={stockColumns}
+          rows={stock}
+          rowKey={([itemId]) => String(itemId)}
+          empty="None yet. Click a count under Have in the buy table."
         />
       </section>
     </>
