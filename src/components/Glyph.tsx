@@ -2,6 +2,8 @@ const PATHS = {
   chevron: 'm4 6 4 4 4-4',
   refresh: 'M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3.5H10',
   arrow: 'M8 3v10m-4-4 4 4 4-4',
+  link: 'M6.7 8.7a3.3 3.3 0 0 0 5 .4l2-2A3.3 3.3 0 0 0 9 2.4L7.8 3.5M9.3 7.3a3.3 3.3 0 0 0-5-.4l-2 2A3.3 3.3 0 0 0 7 13.6l1.1-1.1',
+  check: 'm3.5 8.5 3 3 6-7',
 } as const
 
 type GlyphName = keyof typeof PATHS

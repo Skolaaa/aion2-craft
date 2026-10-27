@@ -9,7 +9,7 @@ export const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 export const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
 
-function read<T>(key: string, fallback: T, parse: Parse<T>): T {
+export function peekPersisted<T>(key: string, fallback: T, parse: Parse<T>): T {
   try {
     const stored = localStorage.getItem(PREFIX + key)
     return stored === null ? fallback : (parse(JSON.parse(stored)) ?? fallback)
@@ -26,13 +26,39 @@ function write(key: string, value: unknown) {
   }
 }
 
-export function usePersistentState<T>(key: string, fallback: T, parse: Parse<T>) {
-  const [entry, setEntry] = useState(() => ({ key, value: read(key, fallback, parse) }))
-  if (entry.key !== key) setEntry({ key, value: read(key, fallback, parse) })
-  useEffect(() => write(entry.key, entry.value), [entry])
-  const update = useCallback(
-    (change: (previous: T) => T) => setEntry((previous) => ({ key: previous.key, value: change(previous.value) })),
-    [],
-  )
-  return [entry.key === key ? entry.value : read(key, fallback, parse), update] as const
+/** `stored` is what localStorage holds, `shown` what the page shows. They differ only after a seed. */
+export interface Entry<T> {
+  key: string
+  stored: T
+  shown: T
+}
+
+// A seed reaches storage one top-level field at a time, as the player changes that field. The forms
+// patch whole fields (MasteryForm sends the full mastery record), so editing one profession adopts all five.
+function commit<T>(stored: T, before: T, after: T): T {
+  if (after === before) return stored
+  if (!isRecord(stored) || !isRecord(before) || !isRecord(after)) return after
+  const touched = Object.entries(after).filter(([field, value]) => value !== before[field])
+  return touched.length === 0 ? stored : { ...stored, ...Object.fromEntries(touched) }
+}
+
+export function step<T>(entry: Entry<T>, change: (previous: T) => T): Entry<T> {
+  const shown = change(entry.shown)
+  const stored = entry.stored === entry.shown ? shown : commit(entry.stored, entry.shown, shown)
+  return { key: entry.key, stored, shown }
+}
+
+/** A `seed` wins over storage for what the slot shows, and reaches storage only through the fields a change touches. */
+export function usePersistentState<T>(key: string, fallback: T, parse: Parse<T>, seed?: T) {
+  const [entry, setEntry] = useState<Entry<T>>(() => {
+    const stored = peekPersisted(key, fallback, parse)
+    return { key, stored, shown: seed === undefined ? stored : seed }
+  })
+  if (entry.key !== key) {
+    const stored = peekPersisted(key, fallback, parse)
+    setEntry({ key, stored, shown: stored })
+  }
+  useEffect(() => write(entry.key, entry.stored), [entry])
+  const update = useCallback((change: (previous: T) => T) => setEntry((previous) => step(previous, change)), [])
+  return [entry.key === key ? entry.shown : peekPersisted(key, fallback, parse), update] as const
 }

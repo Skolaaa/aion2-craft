@@ -40,25 +40,29 @@ plan.blocked         // recipes in the tree above the player's mastery
 | `src/data/catalog.ts` | `catalogFor(race)`: the bundled JSON as a `Catalog`, built once per race |
 | `src/market/exchangeClient.ts` | fetch wrappers over `/ex/api/*` (proxied), batch by 100 keys, localStorage cache with `capturedAt`; `directoryFromServers(body)` parses `/servers` (faction names from `SIDE`, `game_server_key`) into a `WorldDirectory`, and `fetchWorlds()` calls it |
 | `src/market/worlds.ts` | `World`, `Listed { world, match }`, `WorldDirectory`, `SIDE`, `PAIRING`, `directoryOf`, `resolveWorld`; pure |
-| `src/state/setup.ts` | `Setup` (world, recent worlds, mastery, tax, plan flags), `parseSetup` at the storage boundary, `setWorld`, `PROFESSIONS`, `PLAN_FLAGS` |
+| `src/state/setup.ts` | `Setup` (world, recent worlds, mastery, tax, plan flags), `parseSetup` at the storage boundary, `PlanSettings` and `settingsOf` (the part a link carries), `peekSetup`, `setWorld`, `PROFESSIONS`, `PLAN_FLAGS` |
 | `src/state/chips.ts` | `statusChips(setup, current)`: every string the status line shows |
 | `src/state/openSetting.ts` | the `Setting` union, the `SETTINGS` each chip opens, `settingKey`, and `useOpenSetting()`, the one owner of which setting is open and of focus return |
 | `src/state/picker.ts` | `pickerView`, `withText`, `initialActive`, `groupNote`, `pairingNote`, `currentNote` for the world list; pure |
 | `src/state/combobox.ts` | `moveActive(ids, active, step)` and `useCombobox(ids, onPick, initial)`: the active option, arrow keys, Enter and scrolling into view, shared by `WorldPicker` and `Search` |
 | `src/state/answer.ts` | `answerOf`, `sentenceOf` (the verdict as `Segment`s), `buyList` (unpriced, bought, then lines stock covers in full, each with its `owned` part), `stepCount` and the step notes; one `stepsOf` walker over the plan tree; pure |
-| `src/state/shopping.ts` | `shoppingText(plan, list, names)`: the buy table as plain text with whole-unit counts, for the Copy list button; pure |
+| `src/state/shopping.ts` | `shoppingText(plan, list, names)`: the buy table as plain text with whole-unit counts, ending with the plan link, for the Copy list button; pure |
 | `src/state/grade.ts` | `GRADE: Record<Grade, { name, colour }>`, the game's own grade table (Global display name and colour per NC internal id), `gradeName()` and `gradeRules()`, the `[data-grade]` CSS that `main.tsx` injects once |
 | `src/state/useFreshness.ts` | `useFreshness(feed)`: age, stale, refreshing, the "these are the newest" note and `refresh`, called once per workspace |
 | `src/state/heat.ts` | `heatOf(marginPct)`: the margin heat colour and its ink; pure |
 | `src/state/format.ts` | number and date text; `shownTenths`, the one rule for when a fraction shows as 0.0%, used by `toneOf` and `heatOf` |
 | `src/state/useItemMap.ts` | `useItemMap(key, accept)`: a number per item in localStorage, the one hook behind `useOverrides` (prices) and `useOwned` (counts held, per world) |
+| `src/state/usePersistentState.ts` | `usePersistentState(key, fallback, parse, seed?)`: one slot in localStorage. A `seed` shows in place of the stored value and reaches storage only through the top-level fields a change touches (`step`); `peekPersisted` reads a slot outside React |
+| `src/state/shareLink.ts` | the share link query: `encodeLink(plan)` writes a key only where the plan differs from a frozen `BASELINE`; `openLink(search, stored, directory)` turns a query into a `Seed` for the three slots, `'waiting'` while only the world list can name its world, and a `LinkNote` for an unknown world or item; `noteText`; pure |
+| `src/state/useShareLink.ts` | `useLinkOpening(worlds)`, the boot gate, which keeps its first answer; `useAddressBar(query)`, the only `history.replaceState` caller, half a second behind the plan and flushed on `pagehide` |
+| `src/state/useClipboard.ts` | `useClipboard()`: the clipboard write and the two-second `copied` state behind Copy list and Copy link |
 | `src/state/` (rest) | React state: worlds, prices, overrides, target, scan rows, persisted in localStorage |
-| `src/components/TopBar.tsx` | wordmark, views, the context chips and `FreshnessPill`, the only refresh button |
+| `src/components/TopBar.tsx` | wordmark, views, the context chips, `FreshnessPill` (the only refresh button) and Copy link |
 | `src/components/SettingHost.tsx` | renders zero or one `Surface` for the open `Setting`, framed from a `Record<Setting['kind'], …>` of title, placement and width: `WorldPicker`, `MasteryForm`, `TaxForm` or `PlanSettings` |
 | `src/components/Surface.tsx` | the one native `<dialog>` for every in-place setting; `SHEET_BELOW = 640` |
 | `src/components/Segmented.tsx` | the one segmented control (a radio group): Normal and Splendent, the picker's regions and sides |
 | `src/components/PriceStatus.tsx` | `PriceStatus`, the capture time or the stale or missing warning as text, and `FreshnessPill` |
-| `src/components/Notice.tsx` | `Notice` with its Try again button, and `WorldsFailed` for the world list |
+| `src/components/Notice.tsx` | `Notice` with its Try again button, `WorldsFailed` for the world list, and `LinkNotice` with Dismiss for a link that did not fully apply |
 | `src/components/CountCell.tsx` | the Have count, a number edited in place like `PriceCell`; zero or empty clears it |
 | `src/components/` (rest) | calculator, scanner, tables, cells |
 | `vite.config.ts` | `server.proxy` and `preview.proxy`: `/ex` → `https://aion2.exchange`, `/a2t` → `https://aion2t.com` (icons) |
