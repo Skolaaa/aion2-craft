@@ -14,7 +14,7 @@ interface Props {
   directory: WorldDirectory
   current: Listed
   recent: readonly WorldId[]
-  from: 'region' | 'world'
+  from: 'region' | 'world' | 'first'
   onChoose(world: World): void
 }
 
@@ -30,6 +30,8 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
       if (chosen) onChoose(chosen.listed.world)
     },
     initialActive(view, current.world.id),
+    // On the first visit the highlighted world is only the default, and scrolling to it would hide the intro.
+    from !== 'first',
   )
 
   const filter = (change: Partial<PickerQuery>) => {
@@ -72,6 +74,9 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
 
   return (
     <div className="picker">
+      {from === 'first' && (
+        <p className="meta picker-intro">Pick the world you play on. You can change it any time from the status line.</p>
+      )}
       <div className="picker-search">
         <input
           className="input"

@@ -83,10 +83,11 @@ function Chip({ setting, label, spoken, title, className = '', opened, open, chi
     <button
       type="button"
       className={`chip ${className}`}
+      data-chip={settingKey(setting)}
       title={title}
       aria-label={`${label} ${spoken}`}
       aria-haspopup="dialog"
-      aria-expanded={opened !== null && settingKey(opened) === settingKey(setting)}
+      aria-expanded={opened !== null && (settingKey(opened) === settingKey(setting) || (opened.kind === 'world' && opened.from === 'first' && setting.kind === 'world' && setting.from === 'world'))}
       onClick={(event) => open(setting, event.currentTarget)}
     >
       <span className="chip-key">{label}</span>

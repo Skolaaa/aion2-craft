@@ -21,7 +21,7 @@ npm install
 npm run dev
 ```
 
-Open the URL that `npm run dev` prints, usually http://localhost:5173. The page starts on aion2.exchange's default world. To pick yours, click the world in the status line and choose it from the list.
+Open the URL that `npm run dev` prints, usually http://localhost:5173. The page starts on aion2.exchange's default world. The first visit opens the world list so you can pick yours; the world chip opens it again later.
 
 `npm run build` type-checks and builds into `dist/`. `npm run preview` serves that build. Both `dev` and `preview` proxy `/ex` to aion2.exchange and `/a2t` to aion2t.com, because aion2.exchange sends no CORS headers. A static file server without that proxy cannot load prices. The public copy at https://aion2-craft.vercel.app gets the same two routes from the rewrites in `vercel.json`; `vercel --prod` from this directory redeploys it.
 
@@ -45,6 +45,8 @@ The scripts keep every download in `.cache/`, which git ignores. They fetch only
 npm test
 node scripts/verify-model.mjs
 ```
+
+GitHub Actions runs the type check, the tests and the build on every pull request and on main, and main only takes a pull request whose check passed.
 
 `npm test` runs the vitest suites for the planner in `src/domain/`, the world pairing in `src/market/`, and the verdict, search, scanner, heat, world list, status line and setup helpers in `src/state/`. `npm run check` type-checks without building.
 

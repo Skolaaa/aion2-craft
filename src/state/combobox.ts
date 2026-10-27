@@ -7,9 +7,9 @@ export function moveActive(ids: readonly string[], active: string | null, step: 
 }
 
 // A hovered option never scrolls, so the list does not move under the pointer.
-export function useCombobox(ids: readonly string[], onPick: (id: string) => void, initial: string | null = null) {
+export function useCombobox(ids: readonly string[], onPick: (id: string) => void, initial: string | null = null, scrollToInitial = true) {
   const [active, setActive] = useState(initial)
-  const follow = useRef(true)
+  const follow = useRef(scrollToInitial)
   const activeId = active !== null && ids.includes(active) ? active : (ids[0] ?? null)
 
   useEffect(() => {

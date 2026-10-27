@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import type { ItemId } from '../domain/types.ts'
 
 export type Setting =
-  | { kind: 'world'; from: 'region' | 'world' }
+  | { kind: 'world'; from: 'region' | 'world' | 'first' }
   | { kind: 'mastery' }
   | { kind: 'tax' }
   | { kind: 'plan' }
@@ -11,6 +11,7 @@ export type Setting =
 export const SETTINGS = {
   region: { kind: 'world', from: 'region' },
   world: { kind: 'world', from: 'world' },
+  first: { kind: 'world', from: 'first' },
   tax: { kind: 'tax' },
   mastery: { kind: 'mastery' },
   plan: { kind: 'plan' },

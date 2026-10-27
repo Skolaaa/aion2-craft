@@ -40,8 +40,12 @@ const FRAME: Record<Setting['kind'], { placement: Placement; width?: number }> =
 }
 
 const TITLE: Record<Exclude<Setting['kind'], 'history'>, string> = { world: 'World', mastery: 'Mastery', tax: 'Market tax', plan: 'Settings' }
+const FIRST_VISIT_TITLE = 'Which world do you play on?'
 
-const titleOf = (setting: Setting, catalog: Catalog) => (setting.kind === 'history' ? itemName(catalog, setting.itemId) : TITLE[setting.kind])
+const titleOf = (setting: Setting, catalog: Catalog) =>
+  setting.kind === 'history' ? itemName(catalog, setting.itemId)
+  : setting.kind === 'world' && setting.from === 'first' ? FIRST_VISIT_TITLE
+  : TITLE[setting.kind]
 
 export function SettingHost({ surface, worlds, retryWorlds, current, setup, patch, chooseWorld, planning, overrides, owned, sources }: Props) {
   const { opened, close } = surface
@@ -91,8 +95,8 @@ export function SettingHost({ surface, worlds, retryWorlds, current, setup, patc
     <Surface
       key={settingKey(setting)}
       anchor={anchor}
-      title={titleOf(setting, planning.catalog)}
       {...FRAME[setting.kind]}
+      title={titleOf(setting, planning.catalog)}
       flush={setting.kind === 'world' && worlds.status === 'ready'}
       footer={setting.kind === 'plan' ? <Button variant="primary" onClick={() => close()}>Done</Button> : undefined}
       onClose={close}
