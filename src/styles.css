@@ -747,8 +747,13 @@ input[type='range'] {
 }
 
 .input-count {
-  width: 72px;
+  width: 56px;
   min-height: 28px;
+  padding: 0 6px;
+}
+
+.input-count.is-set {
+  color: var(--gold);
 }
 
 .panel-tools {
