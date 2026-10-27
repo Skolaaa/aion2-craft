@@ -100,6 +100,8 @@ const MISSING = <span className="is-warn">no price yet</span>
 function WhatToBuy({ plan, list, planning, overrides }: WhatToBuyProps) {
   const { catalog, prices, market } = planning
   const { lines, credit } = list
+  // Shares are of the shopping total before the byproduct credit, so they add up to 100%.
+  const gross = plan.cost + credit
 
   const source = (itemId: ItemId) => {
     const quote = prices.quote(itemId)
@@ -140,10 +142,10 @@ function WhatToBuy({ plan, list, planning, overrides }: WhatToBuyProps) {
       header: 'Share',
       hideNarrow: true,
       render: (row) => {
-        if (row.kind !== 'buy' || !Number.isFinite(plan.cost) || plan.cost <= 0) return null
-        const share = row.subtotal / plan.cost
+        if (row.kind !== 'buy' || !Number.isFinite(gross) || gross <= 0) return null
+        const share = row.subtotal / gross
         return (
-          <span className="share" title={`${percent(share, 1)} of the total`}>
+          <span className="share" title={`${percent(share, 1)} of what is bought`}>
             <span className="share-fill" style={{ width: `${Math.min(100, share * 100)}%` }} />
           </span>
         )

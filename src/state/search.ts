@@ -22,7 +22,7 @@ function entriesOf(craftables: readonly Craftable[]): Entry[] {
   if (known) return known
   const built = craftables.map((craftable) => {
     const name = normal(craftable.item.name)
-    return { craftable, name, haystack: `${name} ${normal(craftable.profession ?? '')} ${normal(gradeName(craftable.item.grade))}` }
+    return { craftable, name, haystack: `${name} ${normal(craftable.profession ?? '')} ${normal(craftable.item.grade)} ${normal(gradeName(craftable.item.grade))}` }
   })
   entries.set(craftables, built)
   return built
