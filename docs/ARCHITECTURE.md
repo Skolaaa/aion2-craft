@@ -50,9 +50,9 @@ crafted and never feeds another wanted item.
 | `src/market/worlds.ts` | `World`, `Listed { world, match }`, `WorldDirectory`, `SIDE`, `PAIRING`, `directoryOf`, `resolveWorld`; pure |
 | `src/state/setup.ts` | `Setup` (world, recent worlds, mastery, tax, plan flags), `parseSetup` at the storage boundary, `PlanSettings` and `settingsOf` (the part a link carries), `peekSetup`, `setWorld`, `PROFESSIONS`, `PLAN_FLAGS` |
 | `src/state/chips.ts` | `statusChips(setup, current)`: every string the status line shows |
-| `src/state/openSetting.ts` | the `Setting` union, the `SETTINGS` each chip opens, `settingKey`, and `useOpenSetting()`, the one owner of which setting is open and of focus return |
+| `src/state/openSetting.ts` | the `Setting` union, the `SETTINGS` each chip opens and `first`, the world picker `Workspace` opens by itself on a first visit, `settingKey`, and `useOpenSetting()`, the one owner of which setting is open and of focus return |
 | `src/state/picker.ts` | `pickerView`, `withText`, `initialActive`, `groupNote`, `pairingNote`, `currentNote` for the world list; pure |
-| `src/state/combobox.ts` | `moveActive(ids, active, step)` and `useCombobox(ids, onPick, initial)`: the active option, arrow keys, Enter and scrolling into view, shared by `WorldPicker` and `Search` |
+| `src/state/combobox.ts` | `moveActive(ids, active, step)` and `useCombobox(ids, onPick, initial, scrollToInitial)`: the active option, arrow keys, Enter and scrolling into view (not to `initial` when `scrollToInitial` is false), shared by `WorldPicker` and `Search` |
 | `src/state/answer.ts` | `answerOf` (craft, buy and margin summed over the targets, null when any lacks a listing), `sentenceOf` (the verdict as `Segment`s) and `listSentenceOf` (the same kinds worded for a list, naming the members cheaper to buy), `buyList` (unpriced, bought, then lines stock covers in full, each with its `owned` part), `stepCount`, `targetStatus` (a row's ready, unpriced or locked, walking its whole tree) and the step notes; `blockedNote` (why a listed way cannot be used) and `extraCost` (what a chosen way costs over the cheapest); `bulkBuys` (the items worth a ladder), `depthNote` and `depthCapturedAt`; one `stepsOfPlan` walker over every target's tree; pure |
 | `src/state/shopping.ts` | `shoppingText(plan, list, names)`: the buy table as plain text with whole-unit counts, ending with the plan link, for the Copy list button; one target heads it as "What to buy for 3 × Sword on Siel", a list as "To craft on Siel" with a line per member; pure |
 | `src/state/grade.ts` | `GRADE: Record<Grade, { name, colour }>`, the game's own grade table (Global display name and colour per NC internal id), `gradeName()` and `gradeRules()`, the `[data-grade]` CSS that `main.tsx` injects once |
@@ -65,7 +65,7 @@ crafted and never feeds another wanted item.
 | `src/state/target.ts` | `Target` (the open item and its quantity), `VIEWS`, the one list of views (`calculator`, `list`, `scanner`) that `View`, `parseView` and the nav derive from, `parseQuantity`, the one quantity rule |
 | `src/state/itemPage.ts` | `itemPageUrl(itemId)`: the AION2 Hub page of an item, the one place that names the host; pure. Not `useSources`, which holds the buy, craft or morph choice |
 | `src/state/useSources.ts` | `useSources(worldId)`: the method the player insists on per item, as the planner's `Forced` map; `parseMethod` accepts only `buy`, `craft` and `morph` |
-| `src/state/usePersistentState.ts` | `usePersistentState(key, fallback, parse, seed?)`: one slot in localStorage. A `seed` shows in place of the stored value and reaches storage only through the top-level fields a change touches (`step`); `peekPersisted` reads a slot outside React |
+| `src/state/usePersistentState.ts` | `usePersistentState(key, fallback, parse, seed?)`: one slot in localStorage. A `seed` shows in place of the stored value and reaches storage only through the top-level fields a change touches (`step`); `peekPersisted` reads a slot outside React and `hasPersisted` says whether one exists, which is how `Session` tells a first visit |
 | `src/state/shareLink.ts` | the share link query: `encodeLink(plan)` writes a key only where the plan differs from a frozen `BASELINE`, and on the list view one `list=<itemId>x<qty>` key per line (`x1` left off); `openLink(search, stored, directory)` turns a query into a `Seed` for the three slots and the list, fitting each list id to the side it opens on, `'waiting'` while only the world list can name its world, and a `LinkNote` for an unknown world, item or dropped list lines; a list view with no usable line opens the calculator; `noteText`; pure |
 | `src/state/useShareLink.ts` | `useLinkOpening(worlds)`, the boot gate, which keeps its first answer; `useAddressBar(query)`, the only `history.replaceState` caller, half a second behind the plan and flushed on `pagehide` |
 | `src/state/useClipboard.ts` | `useClipboard()`: the clipboard write and the two-second `copied` state behind Copy list and Copy link |
@@ -101,7 +101,7 @@ surface.close()                             // focus returns to the chip after t
 surface.close(false)                        // the user clicked or tabbed elsewhere; focus stays there
 ```
 
-- `Setting` is `{ kind: 'world', from: 'region' | 'world' } | { kind: 'mastery' } | { kind: 'tax' } | { kind: 'plan' }`.
+- `Setting` is `{ kind: 'world', from: 'region' | 'world' | 'first' } | { kind: 'mastery' } | { kind: 'tax' } | { kind: 'plan' }`.
   One value means two settings can never be open together. `SettingHost` frames the surface from
   a `Record` over `kind` and picks the body in a switch with a `never` default, so a new kind
   fails `tsc` in both places.
