@@ -30,7 +30,6 @@ describe('directoryOf', () => {
     expect(forward.regions.map((region) => region.code)).toEqual(['NAE', 'NAW', 'EU', 'LA', 'AS'])
     const eu = forward.regions.find((region) => region.code === 'EU')
     expect(eu?.worlds.slice(0, 4).map(({ world }) => world.name)).toEqual(['Siel', 'Israphel', 'Nezekan', 'Zikel'])
-    expect(eu?.matchedSince).toBe('2026-10-04')
   })
 
   it('leaves a world unmatched when the key points at the same side or another region', () => {
@@ -40,7 +39,6 @@ describe('directoryOf', () => {
     expect(sameSide.byId.get(11304)?.match).toBeNull()
     const otherRegion = directoryFromServers({ default: 11304, servers: [kaisinel, { ...server(12104), game_server_key: 2304 }] })
     expect(otherRegion.byId.get(11304)?.match).toBeNull()
-    expect(otherRegion.regions.find((region) => region.code === 'EU')?.matchedSince).toBeNull()
   })
 })
 

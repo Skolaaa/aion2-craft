@@ -27,7 +27,6 @@ export interface RegionGroup {
   code: string
   name: string
   worlds: readonly Listed[]
-  matchedSince: IsoDate | null
 }
 
 export interface WorldDirectory {
@@ -79,7 +78,7 @@ export function directoryOf(defaultId: WorldId, rows: readonly KeyedWorld[]): Wo
       byId.set(row.world.id, listed)
       return listed
     })
-    return { code, name, worlds, matchedSince: worlds.some((listed) => listed.match) ? PAIRING.since : null }
+    return { code, name, worlds }
   })
   return { defaultId, count: rows.length, regions, byId }
 }

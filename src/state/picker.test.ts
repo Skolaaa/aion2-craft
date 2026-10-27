@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { serverDirectory as directory } from '../market/worlds.fixture.ts'
-import { currentNote, groupNote, initialActive, moveActive, pickerView, type PickerQuery } from './picker.ts'
+import { currentNote, groupNote, initialActive, moveActive, pairingNote, pickerView, withText, type PickerQuery } from './picker.ts'
 
 const ALL: PickerQuery = { text: '', region: null, race: null }
 const names = (options: readonly { listed: { world: { name: string; region: string } } }[]) =>
@@ -12,14 +12,14 @@ describe('pickerView', () => {
     expect(names(view.recent)).toEqual(['EU Kaisinel', 'NAE Siel'])
     expect(view.recent[0]?.domId).toBe('picker-recent-11304')
     expect(view.groups.map((group) => group.region.code)).toEqual(['NAE', 'NAW', 'EU', 'LA', 'AS'])
-    expect(view.options).toHaveLength(2 + 106)
+    expect(view.keyboardOrder).toHaveLength(2 + 106)
   })
 
   it('finds a name in every region and drops the recent rows', () => {
     const view = pickerView(directory, { ...ALL, text: 'kai' }, [11304])
     expect(view.recent).toEqual([])
-    expect(names(view.options)).toEqual(['NAE Kaisinel', 'NAW Kaisinel', 'EU Kaisinel', 'LA Kaisinel', 'AS Kaisinel'])
-    expect(names(pickerView(directory, { ...ALL, text: 'eu kai' }, []).options)).toEqual(['EU Kaisinel'])
+    expect(names(view.keyboardOrder)).toEqual(['NAE Kaisinel', 'NAW Kaisinel', 'EU Kaisinel', 'LA Kaisinel', 'AS Kaisinel'])
+    expect(names(pickerView(directory, { ...ALL, text: 'eu kai' }, []).keyboardOrder)).toEqual(['EU Kaisinel'])
   })
 
   it('narrows rows and recent worlds to a region and a side', () => {
@@ -27,7 +27,16 @@ describe('pickerView', () => {
     expect(names(view.recent)).toEqual(['EU Lumiel'])
     expect(view.groups).toHaveLength(1)
     expect(view.groups[0]?.options).toHaveLength(23)
-    expect(view.options.every(({ listed }) => listed.world.race === 'Dark' && listed.world.region === 'EU')).toBe(true)
+    expect(view.keyboardOrder.every(({ listed }) => listed.world.race === 'Dark' && listed.world.region === 'EU')).toBe(true)
+  })
+})
+
+describe('withText', () => {
+  it('clears the region on the first letter typed and keeps it after that', () => {
+    const preset: PickerQuery = { text: '', region: 'EU', race: 'Dark' }
+    expect(withText(preset, 'k')).toEqual({ text: 'k', region: null, race: 'Dark' })
+    expect(withText({ ...preset, text: 'k' }, 'ka')).toEqual({ text: 'ka', region: 'EU', race: 'Dark' })
+    expect(withText(preset, '')).toEqual(preset)
   })
 })
 
@@ -49,10 +58,11 @@ describe('keyboard order', () => {
 })
 
 describe('picker text', () => {
-  it('counts the shown worlds and dates the pairing', () => {
+  it('counts the shown worlds in the group head and dates the pairing once', () => {
     const [nae] = pickerView(directory, { ...ALL, text: 'siel' }, []).groups
     if (!nae) throw new Error('no NAE group for siel')
-    expect(groupNote(nae)).toBe('North America East, 1 world, matched since 4 Oct 2026')
+    expect(groupNote(nae)).toBe('North America East, 1 world')
+    expect(pairingNote()).toBe("Pairs from NCSoft's notice of 4 Oct 2026.")
   })
 
   it('spells out the current world and its enemy world', () => {

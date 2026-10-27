@@ -1,12 +1,11 @@
 import { useEffect, useId, useMemo, useState, type KeyboardEvent } from 'react'
 import type { Race } from '../domain/types.ts'
 import { SIDE, type Listed, type World, type WorldDirectory, type WorldId } from '../market/worlds.ts'
-import { currentNote, groupNote, initialActive, moveActive, pickerView, type PickerOption, type PickerQuery } from '../state/picker.ts'
+import { currentNote, groupNote, initialActive, moveActive, pairingNote, pickerView, withText, type PickerOption, type PickerQuery } from '../state/picker.ts'
 
 const SIDES: readonly { race: Race | null; label: string }[] = [
   { race: null, label: 'both' },
-  { race: 'Light', label: SIDE.Light.name },
-  { race: 'Dark', label: SIDE.Dark.name },
+  ...Object.entries(SIDE).map(([race, side]) => ({ race: race as Race, label: side.name })),
 ]
 
 interface Props {
@@ -22,7 +21,7 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
   const [query, setQuery] = useState<PickerQuery>({ text: '', region: from === 'region' ? current.world.region : null, race: null })
   const view = useMemo(() => pickerView(directory, query, recent), [directory, query, recent])
   const [active, setActive] = useState(() => initialActive(view, current.world.id))
-  const activeId = view.options.some((option) => option.domId === active) ? active : (view.options[0]?.domId ?? null)
+  const activeId = view.keyboardOrder.some((option) => option.domId === active) ? active : (view.keyboardOrder[0]?.domId ?? null)
 
   useEffect(() => {
     if (activeId) document.getElementById(activeId)?.scrollIntoView({ block: 'nearest' })
@@ -39,7 +38,7 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
       setActive(moveActive(view, activeId, event.key === 'ArrowDown' ? 1 : -1))
     } else if (event.key === 'Enter') {
       event.preventDefault()
-      const chosen = view.options.find((option) => option.domId === activeId)
+      const chosen = view.keyboardOrder.find((option) => option.domId === activeId)
       if (chosen) onChoose(chosen.listed.world)
     }
   }
@@ -95,8 +94,8 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
           data-autofocus
           value={query.text}
           onChange={(event) => {
-            const text = event.target.value
-            filter(query.text === '' && text !== '' ? { text, region: null } : { text })
+            setQuery(withText(query, event.target.value))
+            setActive(null)
           }}
           onKeyDown={onKeyDown}
         />
@@ -133,7 +132,7 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
           </div>
         ))}
       </div>
-      {view.options.length === 0 && (
+      {view.keyboardOrder.length === 0 && (
         <p className="picker-empty" role="status">
           {query.region === null && query.race === null
             ? `No world matches "${query.text.trim()}".`
@@ -142,7 +141,7 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
       )}
       <p className="picker-foot">
         Each world is one side with its own market. NCSoft pairs it with an enemy world for the Abyss and changes the pair from time to
-        time.
+        time. {pairingNote()}
       </p>
     </div>
   )
