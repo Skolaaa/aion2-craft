@@ -17,16 +17,12 @@ either closes a gap those tools have already filled, or widens that edge.
 - Share links: the address bar holds the plan's world, item, quantity, mastery and options, and Copy link copies it.
 - Depth-aware prices: a bulk buy follows the exchange's listing ladder for the units the player does not hold, and the row says how many listings it spans.
 - Per-component source choice: buy, craft or morph per part under steps, held per world, with what the choice costs over the cheapest way on the row.
+- Where to get it: each item in the buy table and under steps links to its AION2 Hub page, which lists where it is gathered, dropped, crafted or sold.
 
 ## Now: make a plan shareable
 
 These are table stakes. Every competitor has them, and they are what turns one player's
 calculator into something a Legion passes around.
-
-### 3. Where to get it (S)
-
-Each material in the buy table links to its aion2t item page, which lists drops, nodes,
-vendors and quests. No data work; the catalog's item ids come from aion2t already.
 
 ### 4. Multi-craft list (M)
 
