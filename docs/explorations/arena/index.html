@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Craft or Buy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="band">
+  <div class="band-in">
+    <a class="brand" href="#"><span class="brand-mark" aria-hidden="true">C/B</span><span>Craft or Buy</span></a>
+    <nav class="views" aria-label="Views">
+      <a href="#calc" data-view="calc" class="view-tab">Calculator</a>
+      <a href="#scanner" data-view="scanner" class="view-tab">Scanner</a>
+    </nav>
+    <form class="search" role="search" onsubmit="return false">
+      <button type="button" class="search-region" data-pop="region" aria-label="Region"><span id="searchRegion">EU</span></button>
+      <input type="search" placeholder="Search an item, e.g. Orichalcum Helm" aria-label="Search an item">
+      <i data-lucide="search" class="search-ico" aria-hidden="true"></i>
+    </form>
+  </div>
+</header>
+
+<div class="filters" aria-label="Your setup">
+  <div class="filters-in" id="chips"></div>
+</div>
+
+<main id="main"></main>
+
+<div id="scrim" class="scrim" hidden></div>
+<div id="pop" class="pop" role="dialog" aria-modal="false" hidden></div>
+
+<script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

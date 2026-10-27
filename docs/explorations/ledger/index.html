@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Craft or buy, Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="#calc" aria-label="Craft or buy, home">craft<b>?</b>buy</a>
+  <nav class="views" aria-label="Views">
+    <a href="#calc" data-view="calc">calculator</a>
+    <a href="#scanner" data-view="scanner">scanner</a>
+  </nav>
+  <div class="ctx" aria-label="Plan context">
+    <button class="chip" data-open="world" aria-haspopup="dialog"><span class="k soft">region</span><span class="v" id="cRegion">EU</span></button>
+    <button class="chip" data-open="world" aria-haspopup="dialog" id="worldChip"><span class="k soft">world</span><span class="v" id="cWorld">Kaisinel</span></button>
+    <button class="chip" data-open="world" aria-haspopup="dialog"><span class="k soft">side</span><span class="v" id="cSide">Elyos</span></button>
+    <button class="chip" data-open="settings" data-focus="tax"><span class="k">tax</span><span class="v" id="cTax">5.0%</span></button>
+    <button class="chip mastery" data-open="settings" data-focus="mastery" id="cMastery" aria-label="Mastery, open settings"></button>
+  </div>
+  <span class="fresh" title="Prices from aion2.exchange"><i></i>prices 21 min ago</span>
+</header>
+
+<main>
+  <!-- CALCULATOR -->
+  <section id="view-calc" class="view" aria-label="Calculator">
+    <label class="lookup">
+      <span class="k">item</span>
+      <input type="search" value="Artisan's Splendent Orichalcum Helm" aria-label="Item to craft" autocomplete="off">
+      <kbd>/</kbd>
+    </label>
+
+    <div class="item-head">
+      <span class="icon g-unique"><img src="https://aion2t.com/db-item-icons/Icon_GM_0148_T03_Helmet.webp" alt="" width="44" height="44"></span>
+      <div class="item-id">
+        <h1>Artisan's Splendent Orichalcum Helm</h1>
+        <p class="meta">Tailoring, recipe level 30, <span class="grade g-unique">Unique</span></p>
+      </div>
+      <div class="controls">
+        <div class="seg" role="radiogroup" aria-label="Result">
+          <button role="radio" aria-checked="false">Normal</button>
+          <button role="radio" aria-checked="true">Splendent</button>
+        </div>
+        <label class="qty"><span class="k">qty</span><button aria-label="One fewer">-</button><input type="number" value="1" min="1" aria-label="Quantity"><button aria-label="One more">+</button></label>
+      </div>
+    </div>
+
+    <p class="verdict"><strong>Craft it if you need one.</strong> Expected cost is <span class="n">8,142,827</span> Kina under the lowest listing. Selling one earns <span class="n">7,242,827</span> Kina after 5% tax.</p>
+
+    <div class="figs">
+      <div class="fig"><span class="k">craft</span><span class="big">9,857,173</span><span class="note">4.1 attempts at 96.8% with a 25% combo</span></div>
+      <div class="fig"><span class="k">buy</span><span class="big">18,000,000</span><span class="note">lowest of 4 listings</span></div>
+      <div class="fig margin"><span class="k">margin</span><span class="big gain">+7,242,827</span><span class="note"><span class="heat-pill" data-h="0.735">+73.5%</span> after 5% tax</span></div>
+    </div>
+    <p class="freshline">Prices from aion2.exchange, captured 21 min ago. <button class="link">Refresh</button></p>
+
+    <div class="tabs" role="tablist" aria-label="Details">
+      <button role="tab" id="t-buy" aria-controls="p-buy" aria-selected="true">buy <span>9</span></button>
+      <button role="tab" id="t-steps" aria-controls="p-steps" aria-selected="false" tabindex="-1">steps <span>5</span></button>
+      <button role="tab" id="t-rates" aria-controls="p-rates" aria-selected="false" tabindex="-1">rates</button>
+    </div>
+    <div role="tabpanel" id="p-buy" aria-labelledby="t-buy"></div>
+    <div role="tabpanel" id="p-steps" aria-labelledby="t-steps" hidden></div>
+    <div role="tabpanel" id="p-rates" aria-labelledby="t-rates" hidden></div>
+  </section>
+
+  <!-- SCANNER -->
+  <section id="view-scanner" class="view" aria-label="Scanner" hidden>
+    <nav class="rail" aria-label="Profession filter"></nav>
+    <div class="scan-main">
+      <div class="scan-tools">
+        <label class="lookup small"><span class="k">name</span><input type="search" id="scanFilter" placeholder="filter recipes" aria-label="Filter by name"></label>
+        <p class="hidden-note"><span id="hiddenText">212 rows hidden: 180 need a price, 32 need more mastery.</span> <button class="link" id="hiddenToggle" aria-pressed="false">Show them</button></p>
+      </div>
+      <table class="grid scan">
+        <thead><tr>
+          <th scope="col" class="c-item">item</th>
+          <th scope="col" class="c-spark">7 days</th>
+          <th scope="col" class="num c-craft" data-sort="craft"><button>craft cost</button></th>
+          <th scope="col" class="num c-market" data-sort="market"><button>market lowest</button></th>
+          <th scope="col" class="num c-margin" data-sort="margin"><button>margin</button></th>
+          <th scope="col" class="num c-pct" data-sort="pct"><button>margin %</button></th>
+          <th scope="col" class="num c-chg" data-sort="chg"><button>7d</button></th>
+        </tr></thead>
+        <tbody id="scanBody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- WORLD PICKER -->
+<div class="picker" id="picker" role="dialog" aria-label="Choose a world" hidden>
+  <div class="sheet">
+    <div class="pick-search">
+      <input type="search" id="worldQ" placeholder="search all 106 worlds" aria-label="Search worlds" autocomplete="off" role="combobox" aria-controls="worldList" aria-expanded="true">
+      <button class="close" data-close aria-label="Close">esc</button>
+    </div>
+    <div class="pick-filters">
+      <div class="seg small" id="regionSeg" role="radiogroup" aria-label="Region"></div>
+      <div class="seg small" id="sideSeg" role="radiogroup" aria-label="Side"></div>
+    </div>
+    <div class="pick-list" id="worldList" role="listbox" aria-label="Worlds"></div>
+    <p class="pick-foot">Each world is one side with its own market. NCSoft pairs it with an enemy world for the Abyss and changes the pair from time to time.</p>
+  </div>
+</div>
+
+<!-- SETTINGS DRAWER -->
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Settings" hidden>
+  <div class="drawer-head"><h2>Settings</h2><button class="close" data-close aria-label="Close settings">esc</button></div>
+  <section class="set" id="setMastery">
+    <h3>Mastery</h3>
+    <p class="help">Your crafting level per profession. Higher mastery raises the success rate.</p>
+    <div id="masteryRows"></div>
+  </section>
+  <section class="set" id="setTax">
+    <h3>Market tax</h3>
+    <div class="taxrow">
+      <label for="taxIn">Market tax</label>
+      <span class="numin"><input id="taxIn" type="number" value="5.0" step="0.1" min="0" max="20"><span>%</span></span>
+    </div>
+    <p class="help">Market screen in game, top right. Changes the margin and what a sale pays out.</p>
+  </section>
+  <section class="set">
+    <h3>Plan</h3>
+    <label class="opt"><input type="checkbox" checked><span><b>Craft parts when that is cheaper</b><small>When off, every part with a listing is bought. Parts nobody lists are still crafted.</small></span></label>
+    <label class="opt"><input type="checkbox" checked><span><b>Morph materials from Odyle when that is cheaper</b><small>Substance Morph turns Odyle into the Bound version of a material, which recipes accept.</small></span></label>
+    <label class="opt"><input type="checkbox"><span><b>Count leftover normal items</b><small>Combo attempts also make normal items. Subtract them at the lowest listing after tax.</small></span></label>
+  </section>
+</aside>
+
+<script src="app.js"></script>
+</body>
+</html>

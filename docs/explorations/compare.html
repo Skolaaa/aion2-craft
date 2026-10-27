@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Three design systems</title>
+<style>
+:root{color-scheme:light dark;font:14px/1.45 system-ui,sans-serif}
+body{margin:0;padding:24px;background:#111;color:#eee}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:32px 0 8px}
+p{margin:0 0 16px;color:#aaa;max-width:70ch}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.row figure{margin:0}.row img{width:100%;border:1px solid #333;display:block}
+figcaption{font-size:12px;color:#999;margin-top:6px}
+a{color:#8ab4ff}
+</style></head><body>
+<h1>Three design systems for Craft or buy</h1>
+<p>Same content, same screens, three directions. Open each live: <a href="ledger/">Ledger</a> (dark data terminal), <a href="atlas/">Atlas</a> (fantasy editorial, Aion art direction), <a href="arena/">Arena</a> (light esports dashboard).</p>
+<div id="rows"></div>
+<script>
+const shots=[['desktop-calc','Calculator, desktop 1280'],['desktop-world','World picker open'],['desktop-scanner','Scanner'],['desktop-settings','Settings (Arena: mastery popover)'],['mobile-calc','Calculator, 390 wide'],['mobile-world','World picker, 390 wide']];
+const dirs=['ledger','atlas','arena'];
+const root=document.getElementById('rows');
+for(const [name,label] of shots){
+  const h=document.createElement('h2');h.textContent=label;root.append(h);
+  const row=document.createElement('div');row.className='row';
+  for(const d of dirs){
+    const alt=d==='arena'&&name==='desktop-settings'?'desktop-mastery':name;
+    const f=document.createElement('figure');
+    f.innerHTML=`<img src="${d}/shots/${alt}.png" alt="${d} ${label}" loading="lazy"><figcaption>${d}</figcaption>`;
+    row.append(f);
+  }
+  root.append(row);
+}
+</script></body></html>

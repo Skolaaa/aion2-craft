@@ -1,0 +1,721 @@
+[
+ {
+  "code": "NAE",
+  "name": "North America East",
+  "pairs": [
+   {
+    "n": 1,
+    "elyos": {
+     "id": 11101,
+     "name": "Siel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12101,
+     "name": "Israphel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 2,
+    "elyos": {
+     "id": 11102,
+     "name": "Nezekan",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12102,
+     "name": "Zikel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 3,
+    "elyos": {
+     "id": 11103,
+     "name": "Vaizel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12103,
+     "name": "Triniel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 4,
+    "elyos": {
+     "id": 11104,
+     "name": "Kaisinel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12104,
+     "name": "Lumiel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 5,
+    "elyos": {
+     "id": 11105,
+     "name": "Yustiel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12105,
+     "name": "Marchutan",
+     "hasData": true
+    }
+   },
+   {
+    "n": 6,
+    "elyos": {
+     "id": 11106,
+     "name": "Ariel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12106,
+     "name": "Azphel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 7,
+    "elyos": {
+     "id": 11107,
+     "name": "Fregion",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12107,
+     "name": "Ereshkigal",
+     "hasData": true
+    }
+   },
+   {
+    "n": 8,
+    "elyos": {
+     "id": 11108,
+     "name": "Meslamtaeda",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12108,
+     "name": "Beritra",
+     "hasData": true
+    }
+   },
+   {
+    "n": 9,
+    "elyos": {
+     "id": 11109,
+     "name": "Hithanya",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12109,
+     "name": "Nemon",
+     "hasData": true
+    }
+   }
+  ]
+ },
+ {
+  "code": "NAW",
+  "name": "North America West",
+  "pairs": [
+   {
+    "n": 1,
+    "elyos": {
+     "id": 11201,
+     "name": "Siel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12201,
+     "name": "Israphel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 2,
+    "elyos": {
+     "id": 11202,
+     "name": "Nezekan",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12202,
+     "name": "Zikel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 3,
+    "elyos": {
+     "id": 11203,
+     "name": "Vaizel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12203,
+     "name": "Triniel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 4,
+    "elyos": {
+     "id": 11204,
+     "name": "Kaisinel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12204,
+     "name": "Lumiel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 5,
+    "elyos": {
+     "id": 11205,
+     "name": "Yustiel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12205,
+     "name": "Marchutan",
+     "hasData": true
+    }
+   }
+  ]
+ },
+ {
+  "code": "EU",
+  "name": "Europe",
+  "pairs": [
+   {
+    "n": 1,
+    "elyos": {
+     "id": 11301,
+     "name": "Siel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12301,
+     "name": "Israphel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 2,
+    "elyos": {
+     "id": 11302,
+     "name": "Nezekan",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12302,
+     "name": "Zikel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 3,
+    "elyos": {
+     "id": 11303,
+     "name": "Vaizel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12303,
+     "name": "Triniel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 4,
+    "elyos": {
+     "id": 11304,
+     "name": "Kaisinel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12304,
+     "name": "Lumiel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 5,
+    "elyos": {
+     "id": 11305,
+     "name": "Yustiel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12305,
+     "name": "Marchutan",
+     "hasData": true
+    }
+   },
+   {
+    "n": 6,
+    "elyos": {
+     "id": 11306,
+     "name": "Ariel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12306,
+     "name": "Azphel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 7,
+    "elyos": {
+     "id": 11307,
+     "name": "Fregion",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12307,
+     "name": "Ereshkigal",
+     "hasData": true
+    }
+   },
+   {
+    "n": 8,
+    "elyos": {
+     "id": 11308,
+     "name": "Meslamtaeda",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12308,
+     "name": "Beritra",
+     "hasData": true
+    }
+   },
+   {
+    "n": 9,
+    "elyos": {
+     "id": 11309,
+     "name": "Hithanya",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12309,
+     "name": "Nemon",
+     "hasData": true
+    }
+   },
+   {
+    "n": 10,
+    "elyos": {
+     "id": 11310,
+     "name": "Nania",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12310,
+     "name": "Hadala",
+     "hasData": true
+    }
+   },
+   {
+    "n": 11,
+    "elyos": {
+     "id": 11311,
+     "name": "Tahavatha",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12311,
+     "name": "Ludra",
+     "hasData": true
+    }
+   },
+   {
+    "n": 12,
+    "elyos": {
+     "id": 11312,
+     "name": "Luteros",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12312,
+     "name": "Ulgorn",
+     "hasData": true
+    }
+   },
+   {
+    "n": 13,
+    "elyos": {
+     "id": 11313,
+     "name": "Phernos",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12313,
+     "name": "Munin",
+     "hasData": true
+    }
+   },
+   {
+    "n": 14,
+    "elyos": {
+     "id": 11314,
+     "name": "Daminu",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12314,
+     "name": "Odar",
+     "hasData": true
+    }
+   },
+   {
+    "n": 15,
+    "elyos": {
+     "id": 11315,
+     "name": "Kasaka",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12315,
+     "name": "Zemurru",
+     "hasData": true
+    }
+   },
+   {
+    "n": 16,
+    "elyos": {
+     "id": 11316,
+     "name": "Bakarma",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12316,
+     "name": "Kromede",
+     "hasData": true
+    }
+   },
+   {
+    "n": 17,
+    "elyos": {
+     "id": 11317,
+     "name": "Tsenka",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12317,
+     "name": "Quai",
+     "hasData": true
+    }
+   },
+   {
+    "n": 18,
+    "elyos": {
+     "id": 11318,
+     "name": "Kochi",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12318,
+     "name": "Baba",
+     "hasData": true
+    }
+   },
+   {
+    "n": 19,
+    "elyos": {
+     "id": 11319,
+     "name": "Ishtar",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12319,
+     "name": "Fafnir",
+     "hasData": true
+    }
+   },
+   {
+    "n": 20,
+    "elyos": {
+     "id": 11320,
+     "name": "Tiamat",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12320,
+     "name": "Indnath",
+     "hasData": true
+    }
+   },
+   {
+    "n": 21,
+    "elyos": {
+     "id": 11321,
+     "name": "Gauss",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12321,
+     "name": "Agnita",
+     "hasData": true
+    }
+   },
+   {
+    "n": 22,
+    "elyos": {
+     "id": 11322,
+     "name": "Lamuatan",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12322,
+     "name": "Atiel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 23,
+    "elyos": {
+     "id": 11323,
+     "name": "Nathara",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12323,
+     "name": "Tassin",
+     "hasData": true
+    }
+   }
+  ]
+ },
+ {
+  "code": "LA",
+  "name": "Latin America",
+  "pairs": [
+   {
+    "n": 1,
+    "elyos": {
+     "id": 11401,
+     "name": "Siel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12401,
+     "name": "Israphel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 2,
+    "elyos": {
+     "id": 11402,
+     "name": "Nezekan",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12402,
+     "name": "Zikel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 3,
+    "elyos": {
+     "id": 11403,
+     "name": "Vaizel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12403,
+     "name": "Triniel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 4,
+    "elyos": {
+     "id": 11404,
+     "name": "Kaisinel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12404,
+     "name": "Lumiel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 5,
+    "elyos": {
+     "id": 11405,
+     "name": "Yustiel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12405,
+     "name": "Marchutan",
+     "hasData": true
+    }
+   },
+   {
+    "n": 6,
+    "elyos": {
+     "id": 11406,
+     "name": "Ariel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12406,
+     "name": "Azphel",
+     "hasData": true
+    }
+   }
+  ]
+ },
+ {
+  "code": "AS",
+  "name": "Asia",
+  "pairs": [
+   {
+    "n": 1,
+    "elyos": {
+     "id": 11501,
+     "name": "Siel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12501,
+     "name": "Israphel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 2,
+    "elyos": {
+     "id": 11502,
+     "name": "Nezekan",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12502,
+     "name": "Zikel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 3,
+    "elyos": {
+     "id": 11503,
+     "name": "Vaizel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12503,
+     "name": "Triniel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 4,
+    "elyos": {
+     "id": 11504,
+     "name": "Kaisinel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12504,
+     "name": "Lumiel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 5,
+    "elyos": {
+     "id": 11505,
+     "name": "Yustiel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12505,
+     "name": "Marchutan",
+     "hasData": true
+    }
+   },
+   {
+    "n": 6,
+    "elyos": {
+     "id": 11506,
+     "name": "Ariel",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12506,
+     "name": "Azphel",
+     "hasData": true
+    }
+   },
+   {
+    "n": 7,
+    "elyos": {
+     "id": 11507,
+     "name": "Fregion",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12507,
+     "name": "Ereshkigal",
+     "hasData": true
+    }
+   },
+   {
+    "n": 8,
+    "elyos": {
+     "id": 11508,
+     "name": "Meslamtaeda",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12508,
+     "name": "Beritra",
+     "hasData": true
+    }
+   },
+   {
+    "n": 9,
+    "elyos": {
+     "id": 11509,
+     "name": "Hithanya",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12509,
+     "name": "Nemon",
+     "hasData": true
+    }
+   },
+   {
+    "n": 10,
+    "elyos": {
+     "id": 11510,
+     "name": "Nania",
+     "hasData": true
+    },
+    "asmodian": {
+     "id": 12510,
+     "name": "Hadala",
+     "hasData": true
+    }
+   }
+  ]
+ }
+]

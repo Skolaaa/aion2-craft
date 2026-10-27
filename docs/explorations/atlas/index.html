@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Craft or Buy, Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-side="Elyos">
+<header class="banner">
+  <a class="wordmark" href="#calc"><span class="wm-main">Craft or Buy</span><span class="wm-sub">Aion 2</span></a>
+  <nav class="tabs" aria-label="Views">
+    <a href="#calc" data-view="calc" class="tab">Calculator</a>
+    <a href="#scanner" data-view="scanner" class="tab">Scanner</a>
+  </nav>
+  <div class="crest" id="crest">
+    <button class="crest-world" id="open-world" aria-haspopup="dialog">
+      <span class="emblem emblem-sm" data-side="Elyos" id="crest-emblem" aria-hidden="true"></span>
+      <span class="crest-name" id="crest-name">Kaisinel</span>
+      <span class="side-badge" id="crest-side">Elyos</span>
+      <span class="crest-region" id="crest-region">Europe</span>
+    </button>
+    <div class="crest-line2">
+      <button class="gauges" id="open-mastery" aria-label="Mastery per profession, open settings">
+        <span class="gauges-label">Mastery</span>
+        <span id="gauge-row" class="gauge-row"></span>
+      </button>
+      <button class="tax" id="open-tax" aria-label="Market tax 5 percent, open settings">
+        <span class="coin" aria-hidden="true"></span><span>Tax <b id="tax-val">5%</b></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- CALCULATOR -->
+  <section id="view-calc" class="view">
+    <div class="search-row">
+      <label class="item-search">
+        <span class="sr">Item</span>
+        <input type="search" value="Artisan's Splendent Orichalcum Helm" aria-label="Item to craft or buy">
+      </label>
+    </div>
+
+    <article class="hero panel">
+      <div class="hero-head">
+        <span class="icon-frame g-Unique lg"><img id="hero-icon" alt="" width="64" height="64"></span>
+        <div>
+          <h1 class="item-name g-Unique">Artisan's Splendent Orichalcum Helm</h1>
+          <p class="facts">Tailoring, recipe level 30, Unique</p>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="seg" role="radiogroup" aria-label="Result">
+          <button role="radio" aria-checked="false">Normal</button>
+          <button role="radio" aria-checked="true">Splendent</button>
+        </div>
+        <label class="qty">Quantity
+          <span class="stepper"><button aria-label="Fewer">-</button><input value="1" inputmode="numeric" aria-label="Quantity"><button aria-label="More">+</button></span>
+        </label>
+      </div>
+      <p class="verdict">Craft it if you need one. Expected cost is <b class="gold">8,142,827 Kina</b> under the lowest listing. Selling one earns <b class="gold">7,242,827 Kina</b> after 5% tax.</p>
+      <div class="figures">
+        <div class="fig"><span class="fig-label">Craft</span><span class="fig-num"><i class="kina" aria-hidden="true"></i>9,857,173</span><span class="fig-note">4.1 attempts at 96.8% with a 25% combo</span></div>
+        <div class="fig"><span class="fig-label">Buy</span><span class="fig-num"><i class="kina" aria-hidden="true"></i>18,000,000</span><span class="fig-note">Lowest of 4 listings</span></div>
+        <div class="fig best"><span class="fig-label">Margin</span><span class="fig-num">+7,242,827</span><span class="fig-note">+73.5% after 5% tax</span></div>
+      </div>
+      <p class="fresh">Prices from aion2.exchange, captured 21 min ago. <button class="link">Refresh</button></p>
+    </article>
+
+    <nav class="anchors" aria-label="On this page">
+      <a href="#buy">What to buy</a><a href="#made">How it is made</a><a href="#rates">Rates</a>
+    </nav>
+
+    <section class="guide" id="buy">
+      <h2 class="orn"><span>What to buy</span></h2>
+      <table class="tbl stack" id="buy-table">
+        <thead><tr><th>Item</th><th>Source</th><th class="num">Expected</th><th class="num">Unit price</th><th class="num">Subtotal</th></tr></thead>
+        <tbody></tbody>
+        <tfoot><tr><td colspan="4">Total</td><td class="num gold">9,857,173</td></tr></tfoot>
+      </table>
+    </section>
+
+    <section class="guide" id="made">
+      <h2 class="orn"><span>How it is made</span></h2>
+      <ol class="ladder" id="ladder"></ol>
+    </section>
+
+    <section class="guide" id="rates">
+      <h2 class="orn"><span>Rates</span></h2>
+      <dl class="rates">
+        <div><dt>Success</dt><dd><b>96.8%</b> mastery 100 against recipe level 30, level difference +70</dd></div>
+        <div><dt>Combo chance</dt><dd><b>25%</b></dd></div>
+        <div><dt>Combo success</dt><dd><b>100%</b></dd></div>
+        <div><dt>Splendent per attempt</dt><dd><b>0.25</b></dd></div>
+        <div><dt>Attempts for one Splendent</dt><dd><b>4.13</b></dd></div>
+        <div><dt>Curve</dt><dd>metabot.gg for Tailoring level 30</dd></div>
+        <div><dt>aion2.exchange estimate</dt><dd><b>9,857,161</b> matches to 0.000%</dd></div>
+      </dl>
+    </section>
+  </section>
+
+  <!-- SCANNER -->
+  <section id="view-scanner" class="view" hidden>
+    <h1 class="orn page-title"><span>Recipe scanner</span></h1>
+    <p class="lead">Every recipe on <b id="scan-world">Kaisinel</b>, ranked by what crafting one earns against the lowest listing, after tax.</p>
+    <div class="filters">
+      <div class="prof-row" role="group" aria-label="Profession" id="prof-row"></div>
+      <label class="name-filter"><span class="sr">Filter by name</span><input type="search" id="name-filter" placeholder="Filter by name"></label>
+    </div>
+    <div class="panel tbl-panel">
+      <table class="tbl scan stack" id="scan-table">
+        <thead><tr>
+          <th><button data-sort="name">Item</button></th>
+          <th class="num"><button data-sort="craft">Craft cost</button></th>
+          <th class="num"><button data-sort="market">Market lowest</button></th>
+          <th class="num"><button data-sort="margin">Margin</button></th>
+          <th class="num"><button data-sort="pct">Margin %</button></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="hidden-note"><span id="hidden-text">212 rows hidden: 180 need a price, 32 need more mastery.</span> <button class="link" id="hidden-toggle" aria-expanded="false">Show them</button></div>
+    </div>
+  </section>
+</main>
+
+<!-- WORLD PICKER -->
+<dialog id="world-dlg" class="dlg world-dlg" aria-labelledby="world-title">
+  <div class="dlg-head">
+    <h2 class="dlg-title" id="world-title" tabindex="-1" autofocus>Choose your world</h2>
+    <button class="close" data-close aria-label="Close">&times;</button>
+  </div>
+  <label class="world-search"><span class="sr">Search all regions</span><input type="search" id="world-q" placeholder="Search a world in every region"></label>
+  <ol class="steps" id="steps" aria-label="Progress">
+    <li data-step="region"><button>Region</button></li><li data-step="side"><button>Side</button></li><li data-step="world"><button>World</button></li>
+  </ol>
+  <div class="cols" id="cols" data-step="region">
+    <div class="col col-region"><h3 class="col-h">Region</h3><ul id="region-list" class="list"></ul></div>
+    <div class="col col-side"><button class="back link" data-back="region">Back to regions</button><h3 class="col-h">Side</h3><div id="side-cards" class="side-cards"></div></div>
+    <div class="col col-world"><button class="back link" data-back="side">Back to sides</button><h3 class="col-h" id="world-col-h">Worlds</h3><ul id="wlist" class="list worlds"></ul></div>
+    <div class="col col-results" hidden><h3 class="col-h" id="results-h">Results</h3><ul id="results" class="list worlds"></ul></div>
+  </div>
+  <p class="dlg-foot">The market is per world. Matched worlds share the Abyss, never prices. NCSoft updates the matches from time to time.</p>
+</dialog>
+
+<!-- SETTINGS -->
+<dialog id="settings-dlg" class="dlg settings-dlg" aria-labelledby="settings-title">
+  <div class="dlg-head">
+    <h2 class="dlg-title" id="settings-title" tabindex="-1" autofocus>Settings</h2>
+    <button class="close" data-close aria-label="Close">&times;</button>
+  </div>
+  <section id="set-mastery">
+    <h3 class="orn sm"><span>Mastery</span></h3>
+    <div id="mastery-rows" class="mastery-rows"></div>
+  </section>
+  <section id="set-tax">
+    <h3 class="orn sm"><span>Market tax</span></h3>
+    <div class="tax-row">
+      <label class="m-name" for="tax-in">Market tax, <b id="tax-label">5%</b></label>
+      <span class="num-in"><input id="tax-in" type="number" min="0" max="30" value="5"><span>%</span></span>
+    </div>
+    <p class="help">Found on the Market screen, top right. It reduces what a sale pays out, so it moves the margin and the sell proceeds.</p>
+  </section>
+  <section id="set-plan">
+    <h3 class="orn sm"><span>Plan</span></h3>
+    <label class="check"><input type="checkbox" checked><span><span>Craft parts when that is cheaper</span><span class="help">When off, every part with a listing is bought. Parts nobody lists are still crafted.</span></span></label>
+    <label class="check"><input type="checkbox" checked><span><span>Morph materials from Odyle when that is cheaper</span><span class="help">Substance Morph turns Odyle into the Bound version of a material, which recipes accept.</span></span></label>
+    <label class="check"><input type="checkbox"><span><span>Count leftover normal items</span><span class="help">Combo attempts also make normal items. Subtract them at the lowest listing after tax.</span></span></label>
+  </section>
+  <div class="dlg-actions"><button class="pill" data-close>Done</button></div>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+[
+ {
+  "name": "Artisan's Splendent Orichalcum Greaves",
+  "grade": "Unique",
+  "icon": "https://aion2t.com/db-item-icons/Icon_GM_0148_T03_Pants.webp"
+ },
+ {
+  "name": "Artisan's Splendent Orichalcum Helm",
+  "grade": "Unique",
+  "icon": "https://aion2t.com/db-item-icons/Icon_GM_0148_T03_Helmet.webp"
+ },
+ {
+  "name": "True Dragon Lord Helm",
+  "grade": "Unique",
+  "icon": "https://aion2t.com/db-item-icons/Icon_GM_0061_T05_Helmet.webp"
+ },
+ {
+  "name": "Expert's Splendent Orichalcum Helm",
+  "grade": "Legend",
+  "icon": "https://aion2t.com/db-item-icons/Icon_Equip_AR_L_0004_T05_Helmet.webp"
+ },
+ {
+  "name": "Artisan's Splendent Orichalcum Gloves",
+  "grade": "Unique",
+  "icon": "https://aion2t.com/db-item-icons/Icon_GM_0148_T03_Gloves.webp"
+ },
+ {
+  "name": "True Dragon Lord Boots",
+  "grade": "Unique",
+  "icon": "https://aion2t.com/db-item-icons/Icon_GM_0061_T05_Boots.webp"
+ },
+ {
+  "name": "Refining Stone",
+  "grade": "Common",
+  "icon": "https://aion2t.com/db-item-icons/Icon_Item_Craft_SmeltStone_Equip_A_l_001.webp"
+ },
+ {
+  "name": "Expert's Refining Stone",
+  "grade": "Rare",
+  "icon": "https://aion2t.com/db-item-icons/Icon_Item_Craft_SmeltStone_Equip_A_u_001.webp"
+ },
+ {
+  "name": "Artisan's Refining Stone",
+  "grade": "Legend",
+  "icon": "https://aion2t.com/db-item-icons/Icon_Item_Craft_SmeltStone_Equip_A_e_001.webp"
+ },
+ {
+  "name": "Raw Leather",
+  "grade": "Common",
+  "icon": "https://aion2t.com/db-item-icons/Icon_BMShop_Craft_Skin_L_lv1_01.webp"
+ },
+ {
+  "name": "Odyle",
+  "grade": "Common",
+  "icon": "https://aion2t.com/db-item-icons/Icon_Item_Gather_Od_L_lv2_02a.webp"
+ },
+ {
+  "name": "Fine Odyle",
+  "grade": "Rare",
+  "icon": "https://aion2t.com/db-item-icons/Icon_Item_Gather_Od_L_lv4_02a.webp"
+ },
+ {
+  "name": "Pure Odyle",
+  "grade": "Legend",
+  "icon": "https://aion2t.com/db-item-icons/Icon_Item_Gather_Od_L_lv4_04a.webp"
+ },
+ {
+  "name": "Fine Orichalcum Ore",
+  "grade": "Rare",
+  "icon": "https://aion2t.com/db-item-icons/Icon_Item_Gather_Ore_A_r_002.webp"
+ },
+ {
+  "name": "Pure Orichalcum Ore",
+  "grade": "Legend",
+  "icon": "https://aion2t.com/db-item-icons/Icon_Item_Gather_Ore_A_l_002.webp"
+ },
+ {
+  "name": "Orichalcum Ingot",
+  "grade": "Common",
+  "icon": "https://aion2t.com/db-item-icons/Icon_Item_Craft_Ore_Ingot_A_c_001.webp"
+ }
+]
