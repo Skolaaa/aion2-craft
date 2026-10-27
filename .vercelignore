@@ -1,0 +1,5 @@
+docs
+scripts
+.cache
+dist
+node_modules

@@ -116,7 +116,7 @@ aion2.exchange sends each world with `game_server_key` = side Ã— 1000 + region Ã
 `directoryOf` pairs a key with the same key on the other side, and accepts the partner only when
 it is the other race in the same region; otherwise `match` is `null`. The rule reproduces all 53
 pairs in NC's notice of 2026-10-04. `worlds.test.ts` checks that notice
-(`docs/explorations/worlds.json`) against a captured `/api/servers` response
+(`src/market/pairing.notice.json`) against a captured `/api/servers` response
 (`src/market/servers.fixture.json`) parsed by the same `directoryFromServers` the app uses, so
 the rule is proven on the live keys. NC rotates pairs, so when that test fails, the fix is an
 override table inside `PAIRING` and a new `since`. The key never leaves `src/market`. The picker

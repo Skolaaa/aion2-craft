@@ -1,4 +1,4 @@
-import notice from '../../docs/explorations/worlds.json'
+import notice from './pairing.notice.json'
 import { directoryFromServers } from './exchangeClient.ts'
 import servers from './servers.fixture.json'
 

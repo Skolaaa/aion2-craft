@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/ex/:path*", "destination": "https://aion2.exchange/:path*" },
+    { "source": "/a2t/:path*", "destination": "https://aion2t.com/:path*" }
+  ]
+}
