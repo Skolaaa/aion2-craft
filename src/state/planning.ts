@@ -1,6 +1,6 @@
 import { planCraft } from '../domain/planCraft.ts'
 import type { Catalog, ItemId, MarketQuote, Mastery, PlanOptions, PlanResult, PriceBook } from '../domain/types.ts'
-import type { World } from '../market/exchangeClient.ts'
+import type { World } from '../market/worlds.ts'
 import type { CraftIndex } from './craftables.ts'
 
 export interface Planning {

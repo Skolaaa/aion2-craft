@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
-import { fetchWorlds, type WorldList } from '../market/exchangeClient.ts'
+import { fetchWorlds } from '../market/exchangeClient.ts'
+import type { WorldDirectory } from '../market/worlds.ts'
 import { messageOf } from './feedError.ts'
 
 export type WorldsState =
   | { status: 'loading' }
-  | { status: 'ready'; data: WorldList }
+  | { status: 'ready'; directory: WorldDirectory }
   | { status: 'failed'; message: string }
+
+export const readyDirectory = (state: WorldsState): WorldDirectory | null => (state.status === 'ready' ? state.directory : null)
 
 export function useWorlds() {
   const [attempt, setAttempt] = useState(0)
@@ -14,8 +17,8 @@ export function useWorlds() {
     let live = true
     setState({ status: 'loading' })
     fetchWorlds().then(
-      (data) => {
-        if (live) setState({ status: 'ready', data })
+      (directory) => {
+        if (live) setState({ status: 'ready', directory })
       },
       (error: unknown) => {
         if (live) setState({ status: 'failed', message: messageOf(error) })

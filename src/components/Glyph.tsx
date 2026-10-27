@@ -1,10 +1,10 @@
 const PATHS = {
-  search: 'M7 12.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11Zm4-1.5 3.5 3.5',
   chevron: 'm4 6 4 4 4-4',
   refresh: 'M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3.5H10',
+  arrow: 'M8 3v10m-4-4 4 4 4-4',
 } as const
 
-export type GlyphName = keyof typeof PATHS
+type GlyphName = keyof typeof PATHS
 
 export function Glyph({ name, className }: { name: GlyphName; className?: string }) {
   return (

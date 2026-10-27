@@ -1,7 +1,7 @@
-import type { Catalog, Item, ItemId, Race, RateCurve, RateFamily, Recipe, RecipeId } from './types.ts'
+import type { Catalog, Grade, Item, ItemId, Race, RateCurve, RateFamily, Recipe, RecipeId } from './types.ts'
 
 export interface RecipesFile {
-  items: Record<string, Omit<Item, 'id'>>
+  items: Record<string, Omit<Item, 'id' | 'grade'> & { grade: string }>
   recipes: Recipe[]
   substitutes: Record<string, ItemId>
   npcPrices: Record<string, number>
@@ -26,6 +26,10 @@ function curveFrom(codes: CurveCodes, curves: RatesFile['curves']): RateCurve {
   }
   return { success: row(codes.success), combo: codes.combo === null ? null : row(codes.combo) }
 }
+
+const GRADES: Readonly<Record<Grade, true>> = { Common: true, Rare: true, Legend: true, Unique: true, Epic: true, Mythic: true, Special: true }
+
+export const parseGrade = (grade: string): Grade => (Object.prototype.hasOwnProperty.call(GRADES, grade) ? (grade as Grade) : 'Common')
 
 const numericKeys = <T>(record: Record<string, T>): [number, T][] =>
   Object.entries(record).map(([key, value]) => [Number(key), value])
@@ -60,7 +64,7 @@ export function buildCatalog(race: Race, recipesFile: RecipesFile, ratesFile: Ra
 
   return {
     race,
-    items: new Map(numericKeys(recipesFile.items).map(([id, item]) => [id, { id, ...item }])),
+    items: new Map(numericKeys(recipesFile.items).map(([id, item]) => [id, { id, ...item, grade: parseGrade(item.grade) }])),
     recipes: new Map(recipes.map((r) => [r.id, r])),
     byProduct,
     boundOf,

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import type { Profession } from '../domain/types.ts'
+import type { Grade, Profession } from '../domain/types.ts'
 import type { Craftable } from './craftables.ts'
 import { searchCraftables } from './search.ts'
 
-const craftable = (id: number, name: string, profession: Profession = 'Blacksmithing', grade = 'Unique'): Craftable => ({
+const craftable = (id: number, name: string, profession: Profession = 'Blacksmithing', grade: Grade = 'Unique'): Craftable => ({
   item: { id, name, grade, icon: null },
   profession,
   level: 1,

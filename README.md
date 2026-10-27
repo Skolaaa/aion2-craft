@@ -2,11 +2,13 @@
 
 This fork turns the Grachy/aion2-craft starter into a calculator that runs on your own computer. For a craftable item, it computes the expected Kina to craft it at your mastery and compares that with the item's price on the Market of one world. Recipes and success rates ship with the repository. Market prices come live from [aion2.exchange](https://aion2.exchange).
 
-Pick an item and the page answers in one sentence whether to craft it or buy it, with three figures under it: the expected crafting cost, the lowest listing, and the margin after the Market tax. Three tabs hold the detail: what to buy, how each step is made, and the success rates, next to aion2.exchange's own estimate for the items it models. Click any unit price to enter your own, per world. The scanner ranks every recipe on your world by margin. Settings holds the world, your mastery per profession (100 until you change it, and shown in the top bar), the tax, and the prices you entered.
+Pick an item and the page answers in one sentence whether to craft it or buy it, with three figures under it: the expected crafting cost, the lowest listing, and the margin after the Market tax. Three tabs hold the detail: what to buy, how each step is made, and the success rates, next to aion2.exchange's own estimate for the items it models. Click any unit price to enter your own, per world. The scanner ranks every recipe on your world by margin.
 
-![The calculator in the dark theme](docs/screenshots/calculator-desktop-dark.png)
+The status line at the top shows what the plan assumes: the region, the world and its side, the Market tax, your mastery per profession (100 until you change it), and how many plan options are on. Each value opens its own setting in place. The region and world open one world list, which you can search across all 106 worlds, with each world's current enemy world and your three most recent worlds on top. The plan value opens a drawer with the plan options and the prices you entered.
 
-More screenshots in `docs/screenshots/`: the light theme, the scanner, a phone at 390 px, the settings dialog, and a recipe with missing prices.
+![The calculator with the status line, the answer and what to buy](docs/screenshots/calculator-desktop.png)
+
+More screenshots in `docs/screenshots/`: the scanner, the world list, the mastery popover, a phone at 390 px with the world list as a bottom sheet, and a recipe with missing prices.
 
 ## Run it
 
@@ -17,7 +19,7 @@ npm install
 npm run dev
 ```
 
-Open the URL that `npm run dev` prints, usually http://localhost:5173. The page starts on aion2.exchange's default world. To pick yours, open **Settings** and choose it under **World**.
+Open the URL that `npm run dev` prints, usually http://localhost:5173. The page starts on aion2.exchange's default world. To pick yours, click the world in the status line and choose it from the list.
 
 `npm run build` type-checks and builds into `dist/`. `npm run preview` serves that build. Both `dev` and `preview` proxy `/ex` to aion2.exchange and `/a2t` to aion2t.com, because aion2.exchange sends no CORS headers. A static file server without that proxy cannot load prices.
 
@@ -42,7 +44,7 @@ npm test
 node scripts/verify-model.mjs
 ```
 
-`npm test` runs the vitest suites for the planner in `src/domain/` and for the verdict, search and scanner helpers in `src/state/`.
+`npm test` runs the vitest suites for the planner in `src/domain/`, the world pairing in `src/market/`, and the verdict, search, scanner, heat, world list, status line and setup helpers in `src/state/`. `npm run check` type-checks without building.
 
 `node scripts/validate-recipes.mjs` cross-checks every cached recipe against metabot.gg, aion2.exchange's game-file model and gamewith.ai, and fails on the first disagreement. The result table is in `docs/RESEARCH.md`.
 

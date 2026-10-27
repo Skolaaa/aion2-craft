@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { Acquisition, ItemId, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
-import { buyList, childStep, estimateGap, stepSummary, successNote, type BuyLine } from '../state/answer.ts'
+import { buyList, childStep, estimateGap, stepCount, stepSummary, successNote, type BuyLine, type BuyList } from '../state/answer.ts'
 import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
@@ -14,9 +14,9 @@ import { PriceCell } from './PriceCell.tsx'
 import { Table, type Column } from './Table.tsx'
 
 const TABS = [
-  { id: 'buy', label: 'What to buy' },
-  { id: 'made', label: 'How it is made' },
-  { id: 'rates', label: 'Rates' },
+  { id: 'buy', label: 'buy', title: 'What to buy' },
+  { id: 'steps', label: 'steps', title: 'How it is made' },
+  { id: 'rates', label: 'rates', title: 'Rates' },
 ] as const
 
 export type DetailTab = (typeof TABS)[number]['id']
@@ -32,6 +32,8 @@ interface Props {
 export function Details({ plan, planning, overrides, tab, onTab }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const list = buyList(plan)
+  const counts: Record<DetailTab, number | null> = { buy: list.lines.length, steps: stepCount(plan.root), rates: null }
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0
@@ -45,7 +47,7 @@ export function Details({ plan, planning, overrides, tab, onTab }: Props) {
   return (
     <section className="details" aria-label="Details">
       <div className="tabs" role="tablist" aria-label="Details">
-        {TABS.map(({ id, label }, index) => (
+        {TABS.map(({ id, label, title }, index) => (
           <button
             key={id}
             ref={(element) => {
@@ -58,16 +60,18 @@ export function Details({ plan, planning, overrides, tab, onTab }: Props) {
             aria-selected={tab === id}
             aria-controls={`${base}-panel`}
             tabIndex={tab === id ? 0 : -1}
+            title={title}
             onClick={() => onTab(id)}
             onKeyDown={(event) => onKeyDown(event, index)}
           >
             {label}
+            {counts[id] !== null && <span className="tab-count">{counts[id]}</span>}
           </button>
         ))}
       </div>
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
-        {tab === 'buy' && <WhatToBuy plan={plan} planning={planning} overrides={overrides} />}
-        {tab === 'made' && <HowItIsMade key={plan.target.itemId} plan={plan} planning={planning} overrides={overrides} />}
+        {tab === 'buy' && <WhatToBuy plan={plan} list={list} planning={planning} overrides={overrides} />}
+        {tab === 'steps' && <HowItIsMade key={plan.target.itemId} plan={plan} credit={list.credit} planning={planning} overrides={overrides} />}
         {tab === 'rates' && <Rates plan={plan} planning={planning} />}
       </div>
     </section>
@@ -86,15 +90,18 @@ const creditFooter = (credit: number, note: string) => ({
 
 interface WhatToBuyProps {
   plan: PlanResult
+  list: BuyList
   planning: Planning
   overrides: PriceOverrides
 }
 
 const MISSING = <span className="is-warn">no price yet</span>
 
-function WhatToBuy({ plan, planning, overrides }: WhatToBuyProps) {
+function WhatToBuy({ plan, list, planning, overrides }: WhatToBuyProps) {
   const { catalog, prices, market } = planning
-  const { lines, credit } = buyList(plan)
+  const { lines, credit } = list
+  // Shares are of the shopping total before the byproduct credit, so they add up to 100%.
+  const gross = plan.cost + credit
 
   const source = (itemId: ItemId) => {
     const quote = prices.quote(itemId)
@@ -109,8 +116,11 @@ function WhatToBuy({ plan, planning, overrides }: WhatToBuyProps) {
     {
       key: 'item',
       header: 'Item',
-      render: (row) => <ItemCell item={catalog.items.get(row.itemId)} meta={source(row.itemId)} narrowMeta={`${decimal(row.expected)} needed`} />,
+      render: (row) => (
+        <ItemCell item={catalog.items.get(row.itemId)} narrowMeta={<>{source(row.itemId)}, {decimal(row.expected)} needed</>} />
+      ),
     },
+    { key: 'source', header: 'Source', hideNarrow: true, render: (row) => <span className="meta">{source(row.itemId)}</span> },
     { key: 'expected', header: 'Expected', numeric: true, hideNarrow: true, render: (row) => decimal(row.expected) },
     {
       key: 'unit',
@@ -127,6 +137,20 @@ function WhatToBuy({ plan, planning, overrides }: WhatToBuyProps) {
       ),
     },
     { key: 'subtotal', header: 'Subtotal', numeric: true, render: (row) => (row.kind === 'buy' ? kina(row.subtotal) : null) },
+    {
+      key: 'share',
+      header: 'Share',
+      hideNarrow: true,
+      render: (row) => {
+        if (row.kind !== 'buy' || !Number.isFinite(gross) || gross <= 0) return null
+        const share = row.subtotal / gross
+        return (
+          <span className="share" title={`${percent(share, 1)} of what is bought`}>
+            <span className="share-fill" style={{ width: `${Math.min(100, share * 100)}%` }} />
+          </span>
+        )
+      },
+    },
   ]
 
   const total = {
@@ -181,11 +205,10 @@ function howText({ acquisition }: LadderRow, recipeOf: (step: StepPlan) => Recip
   return `${verb}, ${stepSummary(acquisition.step, recipeOf(acquisition.step), planning.mastery)}`
 }
 
-function HowItIsMade({ plan, planning, overrides }: { plan: PlanResult; planning: Planning; overrides: PriceOverrides }) {
+function HowItIsMade({ plan, credit, planning, overrides }: { plan: PlanResult; credit: number; planning: Planning; overrides: PriceOverrides }) {
   const { catalog } = planning
   const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(['root']))
   const rows = flatten(plan, open)
-  const { credit } = buyList(plan)
   const recipeOf = (step: StepPlan) => catalog.recipes.get(step.recipeId)
 
   const toggle = (key: string) =>

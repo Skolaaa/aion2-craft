@@ -1,23 +1,26 @@
 import type { ReactNode } from 'react'
 import type { ItemId, PlanResult } from '../domain/types.ts'
-import { answerOf, sentenceOf, stepSummary, type Answer } from '../state/answer.ts'
+import { answerOf, sentenceOf, stepSummary, type Answer, type Segment } from '../state/answer.ts'
 import { itemName, type Craftable } from '../state/craftables.ts'
-import { kina, percent, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
+import { kina, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
+import { gradeName } from '../state/grade.ts'
+import { SIDE } from '../market/worlds.ts'
 import type { Planning } from '../state/planning.ts'
-import { FACTION } from '../state/setup.ts'
 import { MAX_QUANTITY, type Target } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
-import type { PriceFeed } from '../state/usePrices.ts'
-import { Field, NumberInput } from './Field.tsx'
+import type { Freshness } from '../state/useFreshness.ts'
+import { NumberInput } from './NumberInput.tsx'
+import { HeatChip } from './HeatChip.tsx'
 import { ItemIcon } from './ItemIcon.tsx'
 import { PriceCell } from './PriceCell.tsx'
 import { PriceStatus } from './PriceStatus.tsx'
+import { Segmented } from './Segmented.tsx'
 
 interface Props {
   craftable: Craftable
   plan: PlanResult | null
   planning: Planning
-  feed: PriceFeed
+  freshness: Freshness
   quantity: number
   overrides: PriceOverrides
   onTarget(change: Partial<Target>): void
@@ -31,6 +34,9 @@ interface FigureProps {
   children: ReactNode
 }
 
+const typeset = (segments: readonly Segment[]) =>
+  segments.map((segment, index) => (segment.kind === 'text' ? segment.text : <span className="mono" key={index}>{segment.text}</span>))
+
 function Figure({ label, value, empty, tone, children }: FigureProps) {
   return (
     <div className="figure">
@@ -41,18 +47,18 @@ function Figure({ label, value, empty, tone, children }: FigureProps) {
   )
 }
 
-export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrides, onTarget }: Props) {
+export function AnswerPanel({ craftable, plan, planning, freshness, quantity, overrides, onTarget }: Props) {
   const { catalog, world, index, mastery, prices } = planning
   const { item } = craftable
   const recipe = plan ? catalog.recipes.get(plan.root.recipeId) : undefined
   const pair = index.pairOf.get(item.id)
   const profession = recipe?.profession ?? craftable.profession
   const level = recipe?.masteryLevel ?? craftable.level
-  const facts = [profession ?? 'Any profession', `recipe level ${level}`, item.grade, recipe?.section === 'succession' ? 'transfer' : null]
+  const facts = [profession ?? 'Any profession', `recipe level ${level}`, gradeName(item.grade), recipe?.section === 'succession' ? 'transfer' : null]
 
   return (
     <section className="answer" aria-labelledby="answer-name">
-      <header className="answer-head">
+      <header className="answer-head" data-grade={item.grade}>
         <ItemIcon item={item} size={48} />
         <div className="answer-title">
           <h2 className="item-name" id="answer-name">{item.name}</h2>
@@ -60,34 +66,25 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
         </div>
         <div className="answer-controls">
           {pair && (
-            <fieldset className="field">
-              <legend className="label">Result</legend>
-              <div className="segmented-options">
-                {(['normal', 'splendent'] as const).map((kind) => (
-                  <label className="chip" key={kind}>
-                    <input
-                      type="radio"
-                      name="result"
-                      checked={item.id === pair[kind]}
-                      onChange={() => onTarget({ itemId: pair[kind] })}
-                    />
-                    {kind === 'normal' ? 'Normal' : 'Splendent'}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+            <Segmented
+              label="Result"
+              options={[{ value: pair.normal, label: 'Normal' }, { value: pair.splendent, label: 'Splendent' }]}
+              value={item.id}
+              onChange={(itemId) => onTarget({ itemId })}
+            />
           )}
-          <Field id="quantity" label="Quantity" className="quantity">
+          <div className="qty">
+            <label className="lookup-key" htmlFor="quantity">qty</label>
             <NumberInput id="quantity" value={quantity} min={1} max={MAX_QUANTITY} onChange={(next) => onTarget({ quantity: next })} />
-          </Field>
+          </div>
         </div>
       </header>
 
       {plan === null ? (
         <p className="verdict">
-          No {FACTION[world.race]} recipe makes {item.name}. Pick another item or a world of the other faction.
+          No {SIDE[world.race].name} recipe makes {item.name}. Pick another item or a world of the other faction.
         </p>
-      ) : feed.pending ? null : (
+      ) : freshness.pending ? null : (
         <Figures
           answer={answerOf(plan, { catalog, mastery })}
           plan={plan}
@@ -98,7 +95,7 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
         />
       )}
 
-      <PriceStatus feed={feed} worldName={world.name} />
+      <PriceStatus freshness={freshness} worldName={world.name} />
     </section>
   )
 }
@@ -148,7 +145,7 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
 
   const marginNote =
     marginPct !== null
-      ? `${percent(marginPct, 1, true)} after ${taxLabel(taxRate)} tax`
+      ? <><HeatChip marginPct={marginPct} /> after {taxLabel(taxRate)} tax</>
       : craft === null
         ? 'needs a craft cost'
         : buy === null
@@ -157,11 +154,11 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
 
   return (
     <>
-      <p className="verdict" aria-live="polite">{sentenceOf(verdict, { itemName: nameOf, worldName: world.name, taxRate })}</p>
+      <p className="verdict" aria-live="polite">{typeset(sentenceOf(verdict, { itemName: nameOf, worldName: world.name, taxRate }))}</p>
       <dl className="figures">
-        <Figure label="Craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
-        <Figure label="Buy" value={buy === null ? null : kina(buy)} empty="No listing">{buyNote}</Figure>
-        <Figure label="Margin" value={margin === null ? null : signedKina(margin)} empty="No margin" tone={toneOf(margin, 'kina')}>{marginNote}</Figure>
+        <Figure label="craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
+        <Figure label="buy" value={buy === null ? null : kina(buy)} empty="No listing">{buyNote}</Figure>
+        <Figure label="margin" value={margin === null ? null : signedKina(margin)} empty="No margin" tone={toneOf(margin, 'kina')}>{marginNote}</Figure>
       </dl>
     </>
   )

@@ -17,7 +17,7 @@ export interface Answer {
   marginPct: number | null
 }
 
-export interface AnswerContext {
+interface AnswerContext {
   catalog: Catalog
   mastery: Mastery
 }
@@ -25,13 +25,16 @@ export interface AnswerContext {
 export const childStep = (acquisition: Acquisition): StepPlan | null =>
   acquisition.method === 'craft' || acquisition.method === 'morph' ? acquisition.step : null
 
-function findStep(step: StepPlan, recipeId: RecipeId): StepPlan | null {
-  if (step.recipeId === recipeId) return step
+function* stepsOf(step: StepPlan): Generator<StepPlan> {
+  yield step
   for (const line of step.materials) {
     const child = childStep(line.acquisition)
-    const found = child && findStep(child, recipeId)
-    if (found) return found
+    if (child) yield* stepsOf(child)
   }
+}
+
+function findStep(root: StepPlan, recipeId: RecipeId): StepPlan | null {
+  for (const step of stepsOf(root)) if (step.recipeId === recipeId) return step
   return null
 }
 
@@ -62,38 +65,61 @@ export function answerOf(plan: PlanResult, context: AnswerContext): Answer {
   return { verdict: verdictOf(plan, craft, buy, context), craft, buy, margin: plan.margin, marginPct: plan.marginPct }
 }
 
-export interface Names {
+interface Names {
   itemName(itemId: ItemId): string
   worldName: string
   taxRate: number
 }
 
-function sellClause(margin: number, taxRate: number): string {
-  const tax = `${taxLabel(taxRate)} tax`
-  if (Math.round(margin) === 0) return ` Selling one would break even after ${tax}.`
-  return margin > 0 ? ` Selling one earns ${kina(margin)} Kina after ${tax}.` : ` Selling one would lose ${kina(-margin)} Kina after ${tax}.`
+export interface Segment {
+  kind: 'text' | 'kina' | 'percent'
+  text: string
 }
 
-export function sentenceOf(verdict: Verdict, { itemName, worldName, taxRate }: Names): string {
+const kinaOf = (value: number): Segment => ({ kind: 'kina', text: kina(value) })
+
+function said(strings: TemplateStringsArray, ...parts: (string | Segment | readonly Segment[])[]): Segment[] {
+  const segments: Segment[] = []
+  const add = (segment: Segment) => {
+    if (segment.text !== '') segments.push(segment)
+  }
+  strings.forEach((text, index) => {
+    add({ kind: 'text', text })
+    const part = parts[index]
+    if (part === undefined) return
+    if (typeof part === 'string') add({ kind: 'text', text: part })
+    else if ('kind' in part) add(part)
+    else part.forEach(add)
+  })
+  return segments
+}
+
+function sellClause(margin: number, taxRate: number): Segment[] {
+  const tax: Segment = { kind: 'percent', text: taxLabel(taxRate) }
+  if (Math.round(margin) === 0) return said` Selling one would break even after ${tax} tax.`
+  return margin > 0 ? said` Selling one earns ${kinaOf(margin)} Kina after ${tax} tax.` : said` Selling one would lose ${kinaOf(-margin)} Kina after ${tax} tax.`
+}
+
+export function sentenceOf(verdict: Verdict, { itemName, worldName, taxRate }: Names): Segment[] {
   switch (verdict.kind) {
     case 'craft':
-      return `Craft it if you need one. Expected cost is ${kina(verdict.gap)} Kina under the lowest listing.${sellClause(verdict.margin, taxRate)}`
+      return said`Craft it if you need one. Expected cost is ${kinaOf(verdict.gap)} Kina under the lowest listing.${sellClause(verdict.margin, taxRate)}`
     case 'buy':
-      return `Buy it if you need one. The lowest listing is ${kina(verdict.gap)} Kina under the expected cost.${sellClause(verdict.margin, taxRate)}`
+      return said`Buy it if you need one. The lowest listing is ${kinaOf(verdict.gap)} Kina under the expected cost.${sellClause(verdict.margin, taxRate)}`
     case 'even':
-      return 'Either works. Crafting costs the same as the lowest listing.'
+      return said`Either works. Crafting costs the same as the lowest listing.`
     case 'no-listing':
-      return `There is no listing on ${worldName} to compare with. Expected cost is ${kina(verdict.cost)} Kina.`
+      return said`There is no listing on ${worldName} to compare with. Expected cost is ${kinaOf(verdict.cost)} Kina.`
     case 'missing': {
       const [first] = verdict.items
       const lead =
         first === undefined ? '' : verdict.items.length === 1 ? `${itemName(first)} has no price. ` : `${verdict.items.length} materials have no price. `
-      return `${lead}Enter the missing prices to compare.`
+      return said`${lead}Enter the missing prices to compare.`
     }
     case 'blocked': {
       const need = verdict.profession ? `${verdict.profession} ${verdict.level}` : `mastery ${verdict.level}`
       const have = verdict.mastery === null ? '' : `, and your mastery is ${verdict.mastery}`
-      return `Crafting ${itemName(verdict.itemId)} needs ${need}${have}.`
+      return said`Crafting ${itemName(verdict.itemId)} needs ${need}${have}.`
     }
   }
 }
@@ -133,22 +159,26 @@ export type BuyLine =
   | { kind: 'buy'; itemId: ItemId; expected: number; unit: number; subtotal: number }
   | { kind: 'missing'; itemId: ItemId; expected: number }
 
-export function buyList(plan: PlanResult): { lines: BuyLine[]; credit: number } {
+export interface BuyList {
+  lines: BuyLine[]
+  credit: number
+}
+
+export function buyList(plan: PlanResult): BuyList {
   const missing = new Map<ItemId, number>()
   let credit = 0
-  const walk = (step: StepPlan) => {
+  for (const step of stepsOf(plan.root)) {
     for (const byproduct of step.byproducts) credit += byproduct.credit
     for (const line of step.materials) {
-      const child = childStep(line.acquisition)
-      if (child) walk(child)
-      else if (line.acquisition.method === 'none') missing.set(line.itemId, (missing.get(line.itemId) ?? 0) + line.expected)
+      if (line.acquisition.method === 'none') missing.set(line.itemId, (missing.get(line.itemId) ?? 0) + line.expected)
     }
   }
-  walk(plan.root)
   const unpriced: BuyLine[] = [...missing].map(([itemId, expected]) => ({ kind: 'missing', itemId, expected }))
   const bought: BuyLine[] = plan.shopping.map((entry) => ({ kind: 'buy', ...entry }))
   return { lines: [...unpriced, ...bought], credit }
 }
+
+export const stepCount = (root: StepPlan): number => [...stepsOf(root)].length
 
 export const estimateGap = (plan: PlanResult, theirs: number): number | null =>
   Number.isFinite(plan.unitCost) ? plan.unitCost - theirs : null

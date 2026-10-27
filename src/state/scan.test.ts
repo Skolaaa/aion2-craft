@@ -56,6 +56,14 @@ describe('viewScan', () => {
     expect(names({ name: 'sword steel' })).toEqual(['Steel Sword'])
   })
 
+  it('counts the rows each profession would show under the same name filter', () => {
+    const { counts } = viewScan(ROWS, query({ profession: 'Tailoring' }))
+    expect(counts.get(null)).toBe(4)
+    expect(counts.get('Blacksmithing')).toBe(2)
+    expect(viewScan(ROWS, query({ showHidden: true })).counts.get('Blacksmithing')).toBe(3)
+    expect(viewScan(ROWS, query({ name: 'sword' })).counts.get('Cooking')).toBeUndefined()
+  })
+
   it('keeps rows without a value last in both directions', () => {
     expect(names({ sort: { key: 'margin', direction: 'asc' } })).toEqual(['Silk Robe', 'Iron Sword', 'Steel Sword', 'Bread'])
     expect(names({ sort: { key: 'item', direction: 'asc' } })).toEqual(['Bread', 'Iron Sword', 'Silk Robe', 'Steel Sword'])

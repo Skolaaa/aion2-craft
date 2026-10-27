@@ -1,68 +1,56 @@
-import { useCallback, useMemo, useState } from 'react'
-import { Button } from './components/Button.tsx'
+import { useMemo, type ReactNode } from 'react'
 import { Calculator } from './components/Calculator.tsx'
 import { Footer } from './components/Footer.tsx'
-import { Glyph } from './components/Glyph.tsx'
-import { Notice } from './components/Notice.tsx'
+import { Notice, WorldsFailed } from './components/Notice.tsx'
 import { Scanner } from './components/Scanner.tsx'
-import { Settings } from './components/Settings.tsx'
+import { SettingHost } from './components/SettingHost.tsx'
 import { TopBar } from './components/TopBar.tsx'
 import { catalogFor } from './data/catalog.ts'
 import { makePriceBook } from './domain/priceBook.ts'
 import type { ItemId, MarketQuote, PlanOptions } from './domain/types.ts'
-import type { World } from './market/exchangeClient.ts'
+import { resolveWorld, type Listed, type World } from './market/worlds.ts'
+import { statusChips } from './state/chips.ts'
 import { craftIndexFor, remapItem } from './state/craftables.ts'
 import { age } from './state/format.ts'
+import { useOpenSetting } from './state/openSetting.ts'
 import type { Planning } from './state/planning.ts'
-import { DEFAULT_SETUP, parseSetup, type Setup } from './state/setup.ts'
+import { DEFAULT_SETUP, parseSetup, setWorld, type Setup, type SetupPatch } from './state/setup.ts'
 import { DEFAULT_TARGET, DEFAULT_VIEW, parseTarget, parseView, type Target, type View } from './state/target.ts'
 import { useNow } from './state/useNow.ts'
+import { useFreshness } from './state/useFreshness.ts'
 import { useOverrides } from './state/useOverrides.ts'
 import { usePersistentState } from './state/usePersistentState.ts'
 import { usePrices, type PriceFeed } from './state/usePrices.ts'
-import { useWorlds, type WorldsState } from './state/useWorlds.ts'
+import { readyDirectory, useWorlds, type WorldsState } from './state/useWorlds.ts'
 
 const NO_QUOTES: ReadonlyMap<ItemId, MarketQuote> = new Map()
-
-function pickWorld(worlds: WorldsState, saved: World | null): World | null {
-  if (worlds.status !== 'ready') return saved
-  const { defaultId, worlds: list } = worlds.data
-  return list.find((w) => w.id === saved?.id) ?? list.find((w) => w.id === defaultId) ?? list[0] ?? null
-}
 
 export function App() {
   const { state: worlds, retry } = useWorlds()
   const [setup, updateSetup] = usePersistentState('setup', DEFAULT_SETUP, parseSetup)
   const [view, updateView] = usePersistentState<View>('view', DEFAULT_VIEW, parseView)
   const [target, updateTarget] = usePersistentState('target', DEFAULT_TARGET, parseTarget)
-  const world = pickWorld(worlds, setup.world)
-  const onView = useCallback((next: View) => updateView(() => next), [updateView])
+  const directory = readyDirectory(worlds)
+  const current = resolveWorld(directory, setup.world)
+  const onView = (next: View) => updateView(() => next)
 
-  if (world === null) {
+  if (current === null) {
     return (
-      <div className="app">
-        <TopBar view={view} onView={onView} world={null} mastery={setup.mastery} />
-        <main className="page" id="main">
-          {worlds.status === 'failed' ? (
-            <Notice
-              title="The world list did not load"
-              detail={worlds.message}
-              action={<Button onClick={retry}><Glyph name="refresh" />Try again</Button>}
-            >
-              The app reads the world list through the local dev server, so it has to be running.
-            </Notice>
-          ) : (
-            <p className="meta" role="status">Loading the world list from aion2.exchange.</p>
-          )}
-        </main>
-        <Footer />
-      </div>
+      <Shell bar={<TopBar view={view} onView={onView} />}>
+        {worlds.status === 'failed' ? (
+          <WorldsFailed message={worlds.message} onRetry={retry}>
+            The app reads the world list through the local dev server, so it has to be running.
+          </WorldsFailed>
+        ) : (
+          <p className="meta" role="status">Loading the world list from aion2.exchange.</p>
+        )}
+      </Shell>
     )
   }
 
   return (
     <Workspace
-      world={world}
+      current={current}
       worlds={worlds}
       retryWorlds={retry}
       setup={setup}
@@ -75,15 +63,22 @@ export function App() {
   )
 }
 
+function Shell({ side, bar, children }: { side?: string; bar: ReactNode; children: ReactNode }) {
+  return (
+    <div className="app" data-side={side}>
+      <a className="skip-link" href="#main">Skip to content</a>
+      {bar}
+      <main className="page" id="main">{children}</main>
+      <Footer />
+    </div>
+  )
+}
+
 function FeedNotice({ feed, worldName }: { feed: PriceFeed; worldName: string }) {
   const now = useNow()
   const captured = feed.snapshot?.capturedAt
   return (
-    <Notice
-      title="Can't reach aion2.exchange"
-      detail={feed.message}
-      action={<Button onClick={() => void feed.refresh()}><Glyph name="refresh" />Try again</Button>}
-    >
+    <Notice title="Can't reach aion2.exchange" detail={feed.message} onRetry={() => void feed.refresh()}>
       {captured
         ? `The plan uses the copy saved on this computer, captured ${age(captured, now)} ago.`
         : `There is no saved copy for ${worldName} yet, so only NPC prices and yours count.`}{' '}
@@ -93,7 +88,7 @@ function FeedNotice({ feed, worldName }: { feed: PriceFeed; worldName: string })
 }
 
 interface WorkspaceProps {
-  world: World
+  current: Listed
   worlds: WorldsState
   retryWorlds(): void
   setup: Setup
@@ -104,12 +99,14 @@ interface WorkspaceProps {
   updateTarget(change: (previous: Target) => Target): void
 }
 
-function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onView, target, updateTarget }: WorkspaceProps) {
+function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onView, target, updateTarget }: WorkspaceProps) {
+  const { world } = current
   const catalog = catalogFor(world.race)
   const index = craftIndexFor(catalog)
   const feed = usePrices(world, catalog)
+  const freshness = useFreshness(feed)
   const overrides = useOverrides(world.id)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const surface = useOpenSetting()
 
   const options = useMemo<PlanOptions>(
     () => ({ allowCraft: setup.allowCraft, allowMorph: setup.allowMorph, byproductCredit: setup.byproductCredit, taxRate: setup.taxRate }),
@@ -125,7 +122,7 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
     [world, catalog, index, setup.mastery, options, prices, market],
   )
 
-  const patchSetup = (change: Partial<Setup>) => updateSetup((previous) => ({ ...previous, ...change }))
+  const patchSetup = (change: SetupPatch) => updateSetup((previous) => ({ ...previous, ...change }))
   const patchTarget = (change: Partial<Target>) => updateTarget((previous) => ({ ...previous, ...change }))
 
   const chooseWorld = (next: World) => {
@@ -133,49 +130,48 @@ function Workspace({ world, worlds, retryWorlds, setup, updateSetup, view, onVie
       const nextCatalog = catalogFor(next.race)
       updateTarget((previous) => ({ ...previous, itemId: previous.itemId === null ? null : remapItem(catalog, nextCatalog, previous.itemId) }))
     }
-    patchSetup({ world: next })
+    updateSetup((previous) => setWorld(previous, next))
   }
 
-  const openItem = useCallback(
-    (itemId: ItemId) => {
-      updateTarget((previous) => ({ ...previous, itemId }))
-      onView('calculator')
-      window.scrollTo({ top: 0 })
-    },
-    [updateTarget, onView],
+  const openItem = (itemId: ItemId) => {
+    updateTarget((previous) => ({ ...previous, itemId }))
+    onView('calculator')
+    window.scrollTo({ top: 0 })
+  }
+
+  const bar = (
+    <>
+      <TopBar
+        view={view}
+        onView={onView}
+        context={{ chips: statusChips(setup, current), freshness, opened: surface.opened?.setting ?? null, open: surface.open }}
+      />
+      <SettingHost
+        surface={surface}
+        worlds={worlds}
+        retryWorlds={retryWorlds}
+        current={current}
+        setup={setup}
+        patch={patchSetup}
+        chooseWorld={chooseWorld}
+        planning={planning}
+        overrides={overrides}
+      />
+    </>
   )
 
   return (
-    <div className="app">
-      <a className="skip-link" href="#main">Skip to content</a>
-      <TopBar view={view} onView={onView} world={world} mastery={setup.mastery} onSettings={() => setSettingsOpen(true)} />
-      <main className="page" id="main">
-        {worlds.status === 'failed' && (
-          <Notice
-            title="The world list did not load"
-            detail={worlds.message}
-            action={<Button onClick={retryWorlds}><Glyph name="refresh" />Try again</Button>}
-          >
-            You can keep working on {world.name}, the world you used last. Settings lists other worlds once the list loads.
-          </Notice>
-        )}
-        {feed.status === 'failed' && <FeedNotice feed={feed} worldName={world.name} />}
-        {view === 'calculator' && (
-          <Calculator planning={planning} feed={feed} target={target} overrides={overrides} onTarget={patchTarget} />
-        )}
-        {view === 'scanner' && <Scanner planning={planning} feed={feed} onOpen={openItem} />}
-      </main>
-      <Footer />
-      <Settings
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        worlds={worlds}
-        planning={planning}
-        setup={setup}
-        patch={patchSetup}
-        onWorld={chooseWorld}
-        overrides={overrides}
-      />
-    </div>
+    <Shell side={world.race} bar={bar}>
+      {worlds.status === 'failed' && (
+        <WorldsFailed message={worlds.message} onRetry={retryWorlds}>
+          You can keep working on {world.name}, the world you used last. The world chip lists the others once the list loads.
+        </WorldsFailed>
+      )}
+      {feed.status === 'failed' && <FeedNotice feed={feed} worldName={world.name} />}
+      {view === 'calculator' && (
+        <Calculator planning={planning} freshness={freshness} target={target} overrides={overrides} onTarget={patchTarget} />
+      )}
+      {view === 'scanner' && <Scanner planning={planning} freshness={freshness} onOpen={openItem} />}
+    </Shell>
   )
 }

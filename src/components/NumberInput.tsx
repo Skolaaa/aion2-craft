@@ -1,23 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { clamp } from '../state/number.ts'
-
-interface FieldProps {
-  id: string
-  label: string
-  hint?: ReactNode
-  className?: string
-  children: ReactNode
-}
-
-export function Field({ id, label, hint, className, children }: FieldProps) {
-  return (
-    <div className={`field ${className ?? ''}`}>
-      <label className="label" htmlFor={id}>{label}</label>
-      {children}
-      {hint && <p className="meta" id={`${id}-hint`}>{hint}</p>}
-    </div>
-  )
-}
 
 interface NumberInputProps {
   id: string
@@ -25,18 +7,18 @@ interface NumberInputProps {
   min: number
   max: number
   step?: number
-  className?: string
   describedBy?: string
+  initialFocus?: boolean
   onChange(value: number): void
 }
 
-export function NumberInput({ id, value, min, max, step = 1, className, describedBy, onChange }: NumberInputProps) {
+export function NumberInput({ id, value, min, max, step = 1, describedBy, initialFocus, onChange }: NumberInputProps) {
   const [text, setText] = useState(String(value))
   useEffect(() => setText(String(value)), [value])
   return (
     <input
       id={id}
-      className={`input input-number ${className ?? ''}`}
+      className="input input-number"
       type="number"
       inputMode="decimal"
       min={min}
@@ -44,6 +26,7 @@ export function NumberInput({ id, value, min, max, step = 1, className, describe
       step={step}
       value={text}
       aria-describedby={describedBy}
+      data-autofocus={initialFocus || undefined}
       onChange={(event) => {
         setText(event.target.value)
         const next = event.target.valueAsNumber

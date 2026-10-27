@@ -1,4 +1,5 @@
 import type { Craftable } from './craftables.ts'
+import { gradeName } from './grade.ts'
 
 const normal = (text: string) => text.toLowerCase().replace(/['’]/g, '')
 export const termsOf = (query: string) => normal(query).trim().split(/\s+/).filter(Boolean)
@@ -21,7 +22,7 @@ function entriesOf(craftables: readonly Craftable[]): Entry[] {
   if (known) return known
   const built = craftables.map((craftable) => {
     const name = normal(craftable.item.name)
-    return { craftable, name, haystack: `${name} ${normal(craftable.profession ?? '')} ${normal(craftable.item.grade)}` }
+    return { craftable, name, haystack: `${name} ${normal(craftable.profession ?? '')} ${normal(craftable.item.grade)} ${normal(gradeName(craftable.item.grade))}` }
   })
   entries.set(craftables, built)
   return built
