@@ -5,9 +5,8 @@ import type { Setup, SetupPatch } from '../state/setup.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { WorldsState } from '../state/useWorlds.ts'
 import { Button } from './Button.tsx'
-import { Glyph } from './Glyph.tsx'
 import { MasteryForm } from './MasteryForm.tsx'
-import { Notice } from './Notice.tsx'
+import { WorldsFailed } from './Notice.tsx'
 import { PlanSettings } from './PlanSettings.tsx'
 import { Surface, type Placement } from './Surface.tsx'
 import { TaxForm } from './TaxForm.tsx'
@@ -55,13 +54,9 @@ export function SettingHost({ surface, worlds, retryWorlds, current, setup, patc
           )
         }
         return worlds.status === 'failed' ? (
-          <Notice
-            title="The world list did not load"
-            detail={worlds.message}
-            action={<Button onClick={retryWorlds}><Glyph name="refresh" />Try again</Button>}
-          >
+          <WorldsFailed message={worlds.message} onRetry={retryWorlds}>
             You can keep working on {current.world.name}, the world you used last.
-          </Notice>
+          </WorldsFailed>
         ) : (
           <p className="meta" role="status">Loading the world list from aion2.exchange.</p>
         )

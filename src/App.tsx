@@ -1,9 +1,7 @@
-import { useCallback, useMemo } from 'react'
-import { Button } from './components/Button.tsx'
+import { useMemo, type ReactNode } from 'react'
 import { Calculator } from './components/Calculator.tsx'
 import { Footer } from './components/Footer.tsx'
-import { Glyph } from './components/Glyph.tsx'
-import { Notice } from './components/Notice.tsx'
+import { Notice, WorldsFailed } from './components/Notice.tsx'
 import { Scanner } from './components/Scanner.tsx'
 import { SettingHost } from './components/SettingHost.tsx'
 import { TopBar } from './components/TopBar.tsx'
@@ -33,27 +31,19 @@ export function App() {
   const [target, updateTarget] = usePersistentState('target', DEFAULT_TARGET, parseTarget)
   const directory = readyDirectory(worlds)
   const current = resolveWorld(directory, setup.world)
-  const onView = useCallback((next: View) => updateView(() => next), [updateView])
+  const onView = (next: View) => updateView(() => next)
 
   if (current === null) {
     return (
-      <div className="app">
-        <TopBar view={view} onView={onView} />
-        <main className="page" id="main">
-          {worlds.status === 'failed' ? (
-            <Notice
-              title="The world list did not load"
-              detail={worlds.message}
-              action={<Button onClick={retry}><Glyph name="refresh" />Try again</Button>}
-            >
-              The app reads the world list through the local dev server, so it has to be running.
-            </Notice>
-          ) : (
-            <p className="meta" role="status">Loading the world list from aion2.exchange.</p>
-          )}
-        </main>
-        <Footer />
-      </div>
+      <Shell bar={<TopBar view={view} onView={onView} />}>
+        {worlds.status === 'failed' ? (
+          <WorldsFailed message={worlds.message} onRetry={retry}>
+            The app reads the world list through the local dev server, so it has to be running.
+          </WorldsFailed>
+        ) : (
+          <p className="meta" role="status">Loading the world list from aion2.exchange.</p>
+        )}
+      </Shell>
     )
   }
 
@@ -72,15 +62,22 @@ export function App() {
   )
 }
 
+function Shell({ side, bar, children }: { side?: string; bar: ReactNode; children: ReactNode }) {
+  return (
+    <div className="app" data-side={side}>
+      <a className="skip-link" href="#main">Skip to content</a>
+      {bar}
+      <main className="page" id="main">{children}</main>
+      <Footer />
+    </div>
+  )
+}
+
 function FeedNotice({ feed, worldName }: { feed: PriceFeed; worldName: string }) {
   const now = useNow()
   const captured = feed.snapshot?.capturedAt
   return (
-    <Notice
-      title="Can't reach aion2.exchange"
-      detail={feed.message}
-      action={<Button onClick={() => void feed.refresh()}><Glyph name="refresh" />Try again</Button>}
-    >
+    <Notice title="Can't reach aion2.exchange" detail={feed.message} onRetry={() => void feed.refresh()}>
       {captured
         ? `The plan uses the copy saved on this computer, captured ${age(captured, now)} ago.`
         : `There is no saved copy for ${worldName} yet, so only NPC prices and yours count.`}{' '}
@@ -134,18 +131,14 @@ function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onV
     updateSetup((previous) => setWorld(previous, next))
   }
 
-  const openItem = useCallback(
-    (itemId: ItemId) => {
-      updateTarget((previous) => ({ ...previous, itemId }))
-      onView('calculator')
-      window.scrollTo({ top: 0 })
-    },
-    [updateTarget, onView],
-  )
+  const openItem = (itemId: ItemId) => {
+    updateTarget((previous) => ({ ...previous, itemId }))
+    onView('calculator')
+    window.scrollTo({ top: 0 })
+  }
 
-  return (
-    <div className="app" data-side={world.race}>
-      <a className="skip-link" href="#main">Skip to content</a>
+  const bar = (
+    <>
       <TopBar
         view={view}
         onView={onView}
@@ -162,23 +155,21 @@ function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onV
         planning={planning}
         overrides={overrides}
       />
-      <main className="page" id="main">
-        {worlds.status === 'failed' && (
-          <Notice
-            title="The world list did not load"
-            detail={worlds.message}
-            action={<Button onClick={retryWorlds}><Glyph name="refresh" />Try again</Button>}
-          >
-            You can keep working on {world.name}, the world you used last. The world chip lists the others once the list loads.
-          </Notice>
-        )}
-        {feed.status === 'failed' && <FeedNotice feed={feed} worldName={world.name} />}
-        {view === 'calculator' && (
-          <Calculator planning={planning} feed={feed} target={target} overrides={overrides} onTarget={patchTarget} />
-        )}
-        {view === 'scanner' && <Scanner planning={planning} feed={feed} onOpen={openItem} />}
-      </main>
-      <Footer />
-    </div>
+    </>
+  )
+
+  return (
+    <Shell side={world.race} bar={bar}>
+      {worlds.status === 'failed' && (
+        <WorldsFailed message={worlds.message} onRetry={retryWorlds}>
+          You can keep working on {world.name}, the world you used last. The world chip lists the others once the list loads.
+        </WorldsFailed>
+      )}
+      {feed.status === 'failed' && <FeedNotice feed={feed} worldName={world.name} />}
+      {view === 'calculator' && (
+        <Calculator planning={planning} feed={feed} target={target} overrides={overrides} onTarget={patchTarget} />
+      )}
+      {view === 'scanner' && <Scanner planning={planning} feed={feed} onOpen={openItem} />}
+    </Shell>
   )
 }
