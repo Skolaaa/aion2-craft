@@ -1,6 +1,6 @@
 import type { Mastery } from '../domain/types.ts'
 import { MAX_MASTERY, PROFESSIONS, type SetupPatch } from '../state/setup.ts'
-import { NumberInput } from './Field.tsx'
+import { NumberInput } from './NumberInput.tsx'
 
 export function MasteryForm({ mastery, patch }: { mastery: Mastery; patch(change: SetupPatch): void }) {
   const set = (id: keyof Mastery, value: number) => patch({ mastery: { ...mastery, [id]: Math.round(value) } })

@@ -150,5 +150,13 @@ export function buyList(plan: PlanResult): { lines: BuyLine[]; credit: number } 
   return { lines: [...unpriced, ...bought], credit }
 }
 
+// Every craft and morph in the tree, the target's own craft included.
+export function stepCount(step: StepPlan): number {
+  return 1 + step.materials.reduce((count, line) => {
+    const child = childStep(line.acquisition)
+    return child ? count + stepCount(child) : count
+  }, 0)
+}
+
 export const estimateGap = (plan: PlanResult, theirs: number): number | null =>
   Number.isFinite(plan.unitCost) ? plan.unitCost - theirs : null

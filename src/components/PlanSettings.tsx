@@ -65,7 +65,7 @@ export function PlanSettings({ setup, patch, planning, overrides }: Props) {
   return (
     <>
       <fieldset className="settings-group">
-        <legend className="section-title">Plan</legend>
+        <legend className="section-title"><span>Plan</span></legend>
         {PLAN_FLAGS.map((flag) => (
           <label className="check" key={flag}>
             <input type="checkbox" checked={setup[flag]} onChange={(event) => patch({ [flag]: event.target.checked })} />
@@ -79,7 +79,7 @@ export function PlanSettings({ setup, patch, planning, overrides }: Props) {
 
       <section className="settings-group" aria-labelledby="your-prices">
         <div className="group-head">
-          <h3 className="section-title" id="your-prices">Your prices on {world.name}</h3>
+          <h3 className="section-title" id="your-prices"><span>Your prices on {world.name}</span></h3>
           {entries.length > 1 && <Button className="button-small" onClick={overrides.resetAll}>Reset all</Button>}
         </div>
         <Table

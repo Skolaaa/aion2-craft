@@ -1,6 +1,6 @@
 import { taxPercent } from '../state/format.ts'
 import type { SetupPatch } from '../state/setup.ts'
-import { NumberInput } from './Field.tsx'
+import { NumberInput } from './NumberInput.tsx'
 
 export function TaxForm({ taxRate, patch }: { taxRate: number; patch(change: SetupPatch): void }) {
   return (

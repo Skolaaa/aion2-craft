@@ -8,7 +8,7 @@ import type { Planning } from '../state/planning.ts'
 import { MAX_QUANTITY, type Target } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { PriceFeed } from '../state/usePrices.ts'
-import { Field, NumberInput } from './Field.tsx'
+import { NumberInput } from './NumberInput.tsx'
 import { HeatChip } from './HeatChip.tsx'
 import { ItemIcon } from './ItemIcon.tsx'
 import { PriceCell } from './PriceCell.tsx'
@@ -32,6 +32,11 @@ interface FigureProps {
   children: ReactNode
 }
 
+// Digits read in the mono face, like every other number on the page.
+function MonoDigits({ text }: { text: string }) {
+  return text.split(/([+−]?\d[\d,.]*%?)/).map((part, index) => (index % 2 === 1 ? <span className="mono" key={index}>{part}</span> : part))
+}
+
 function Figure({ label, value, empty, tone, children }: FigureProps) {
   return (
     <div className="figure">
@@ -53,7 +58,7 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
 
   return (
     <section className="answer" aria-labelledby="answer-name">
-      <header className="answer-head">
+      <header className="answer-head" data-grade={item.grade}>
         <ItemIcon item={item} size={48} />
         <div className="answer-title">
           <h2 className="item-name" id="answer-name">{item.name}</h2>
@@ -61,26 +66,20 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
         </div>
         <div className="answer-controls">
           {pair && (
-            <fieldset className="field">
-              <legend className="label">Result</legend>
-              <div className="segmented-options">
-                {(['normal', 'splendent'] as const).map((kind) => (
-                  <label className="chip" key={kind}>
-                    <input
-                      type="radio"
-                      name="result"
-                      checked={item.id === pair[kind]}
-                      onChange={() => onTarget({ itemId: pair[kind] })}
-                    />
-                    {kind === 'normal' ? 'Normal' : 'Splendent'}
-                  </label>
-                ))}
-              </div>
+            <fieldset className="segments">
+              <legend className="sr-only">Result</legend>
+              {(['normal', 'splendent'] as const).map((kind) => (
+                <label className="segment" key={kind}>
+                  <input type="radio" name="result" checked={item.id === pair[kind]} onChange={() => onTarget({ itemId: pair[kind] })} />
+                  {kind === 'normal' ? 'Normal' : 'Splendent'}
+                </label>
+              ))}
             </fieldset>
           )}
-          <Field id="quantity" label="Quantity" className="quantity">
+          <div className="qty">
+            <label className="lookup-key" htmlFor="quantity">qty</label>
             <NumberInput id="quantity" value={quantity} min={1} max={MAX_QUANTITY} onChange={(next) => onTarget({ quantity: next })} />
-          </Field>
+          </div>
         </div>
       </header>
 
@@ -158,11 +157,11 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
 
   return (
     <>
-      <p className="verdict" aria-live="polite">{sentenceOf(verdict, { itemName: nameOf, worldName: world.name, taxRate })}</p>
+      <p className="verdict" aria-live="polite"><MonoDigits text={sentenceOf(verdict, { itemName: nameOf, worldName: world.name, taxRate })} /></p>
       <dl className="figures">
-        <Figure label="Craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
-        <Figure label="Buy" value={buy === null ? null : kina(buy)} empty="No listing">{buyNote}</Figure>
-        <Figure label="Margin" value={margin === null ? null : signedKina(margin)} empty="No margin" tone={toneOf(margin, 'kina')}>{marginNote}</Figure>
+        <Figure label="craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
+        <Figure label="buy" value={buy === null ? null : kina(buy)} empty="No listing">{buyNote}</Figure>
+        <Figure label="margin" value={margin === null ? null : signedKina(margin)} empty="No margin" tone={toneOf(margin, 'kina')}>{marginNote}</Figure>
       </dl>
     </>
   )

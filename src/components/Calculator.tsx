@@ -65,7 +65,7 @@ function BestMargins({ planning, loading, onOpen }: BestProps) {
   return (
     <section className="stack" aria-labelledby="best-title">
       <div className="stack-tight">
-        <h2 className="section-title" id="best-title">Best margins on {world.name}</h2>
+        <h2 className="section-title" id="best-title"><span>Best margins on {world.name}</span></h2>
         <p className="meta">After {taxLabel(options.taxRate)} tax at your mastery. Open one, or search for any craftable item.</p>
       </div>
       <ScanTable

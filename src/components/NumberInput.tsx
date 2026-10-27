@@ -1,23 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { clamp } from '../state/number.ts'
-
-interface FieldProps {
-  id: string
-  label: string
-  hint?: ReactNode
-  className?: string
-  children: ReactNode
-}
-
-export function Field({ id, label, hint, className, children }: FieldProps) {
-  return (
-    <div className={`field ${className ?? ''}`}>
-      <label className="label" htmlFor={id}>{label}</label>
-      {children}
-      {hint && <p className="meta" id={`${id}-hint`}>{hint}</p>}
-    </div>
-  )
-}
 
 interface NumberInputProps {
   id: string

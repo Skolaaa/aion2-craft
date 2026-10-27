@@ -1,8 +1,7 @@
-import { useEffect, useId, useMemo, useState, type KeyboardEvent } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { ItemId } from '../domain/types.ts'
 import type { Craftable } from '../state/craftables.ts'
 import { searchCraftables } from '../state/search.ts'
-import { Glyph } from './Glyph.tsx'
 import { ItemIcon } from './ItemIcon.tsx'
 
 const LIMIT = 50
@@ -20,6 +19,7 @@ export function Search({ craftables, autoFocus, onPick }: Props) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
+  const input = useRef<HTMLInputElement>(null)
   const matches = useMemo(() => searchCraftables(craftables, query), [craftables, query])
   const shown = matches.slice(0, LIMIT)
   const expanded = open && query.trim() !== ''
@@ -29,6 +29,18 @@ export function Search({ craftables, autoFocus, onPick }: Props) {
   useEffect(() => {
     if (expanded && current) document.getElementById(optionId(current.item.id))?.scrollIntoView({ block: 'nearest' })
   }, [expanded, current])
+
+  useEffect(() => {
+    const onSlash = (event: globalThis.KeyboardEvent) => {
+      const target = event.target
+      const typing = target instanceof HTMLElement && (target.isContentEditable || target.matches('input, textarea, select'))
+      if (event.key !== '/' || typing || event.metaKey || event.ctrlKey || event.altKey) return
+      event.preventDefault()
+      input.current?.focus()
+    }
+    document.addEventListener('keydown', onSlash)
+    return () => document.removeEventListener('keydown', onSlash)
+  }, [])
 
   const pick = (itemId: ItemId) => {
     onPick(itemId)
@@ -53,12 +65,12 @@ export function Search({ craftables, autoFocus, onPick }: Props) {
 
   return (
     <div className="search">
-      <label className="label" htmlFor={inputId}>Find an item to craft</label>
-      <div className="search-box">
-        <Glyph name="search" className="search-glyph" />
+      <div className="search-box lookup">
+        <label className="lookup-key" htmlFor={inputId}>item</label>
         <input
+          ref={input}
           id={inputId}
-          className="input search-input"
+          className="lookup-input"
           type="search"
           role="combobox"
           aria-expanded={expanded}
@@ -79,6 +91,7 @@ export function Search({ craftables, autoFocus, onPick }: Props) {
           onBlur={() => setOpen(false)}
           onKeyDown={onKeyDown}
         />
+        <kbd className="kbd" title="Press / to search">/</kbd>
         <div className="search-pop" hidden={!expanded} onMouseDown={(event) => event.preventDefault()}>
           <ul className="search-list" id={listId} role="listbox" aria-label="Craftable items">
             {shown.map((craftable, index) => (

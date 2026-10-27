@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { Acquisition, ItemId, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
-import { buyList, childStep, estimateGap, stepSummary, successNote, type BuyLine } from '../state/answer.ts'
+import { buyList, childStep, estimateGap, stepCount, stepSummary, successNote, type BuyLine } from '../state/answer.ts'
 import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
@@ -14,9 +14,9 @@ import { PriceCell } from './PriceCell.tsx'
 import { Table, type Column } from './Table.tsx'
 
 const TABS = [
-  { id: 'buy', label: 'What to buy' },
-  { id: 'made', label: 'How it is made' },
-  { id: 'rates', label: 'Rates' },
+  { id: 'buy', label: 'buy', title: 'What to buy' },
+  { id: 'steps', label: 'steps', title: 'How it is made' },
+  { id: 'rates', label: 'rates', title: 'Rates' },
 ] as const
 
 export type DetailTab = (typeof TABS)[number]['id']
@@ -32,6 +32,7 @@ interface Props {
 export function Details({ plan, planning, overrides, tab, onTab }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const counts: Record<DetailTab, number | null> = { buy: buyList(plan).lines.length, steps: stepCount(plan.root), rates: null }
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0
@@ -45,7 +46,7 @@ export function Details({ plan, planning, overrides, tab, onTab }: Props) {
   return (
     <section className="details" aria-label="Details">
       <div className="tabs" role="tablist" aria-label="Details">
-        {TABS.map(({ id, label }, index) => (
+        {TABS.map(({ id, label, title }, index) => (
           <button
             key={id}
             ref={(element) => {
@@ -58,16 +59,18 @@ export function Details({ plan, planning, overrides, tab, onTab }: Props) {
             aria-selected={tab === id}
             aria-controls={`${base}-panel`}
             tabIndex={tab === id ? 0 : -1}
+            title={title}
             onClick={() => onTab(id)}
             onKeyDown={(event) => onKeyDown(event, index)}
           >
             {label}
+            {counts[id] !== null && <span className="tab-count">{counts[id]}</span>}
           </button>
         ))}
       </div>
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
         {tab === 'buy' && <WhatToBuy plan={plan} planning={planning} overrides={overrides} />}
-        {tab === 'made' && <HowItIsMade key={plan.target.itemId} plan={plan} planning={planning} overrides={overrides} />}
+        {tab === 'steps' && <HowItIsMade key={plan.target.itemId} plan={plan} planning={planning} overrides={overrides} />}
         {tab === 'rates' && <Rates plan={plan} planning={planning} />}
       </div>
     </section>
@@ -127,6 +130,20 @@ function WhatToBuy({ plan, planning, overrides }: WhatToBuyProps) {
       ),
     },
     { key: 'subtotal', header: 'Subtotal', numeric: true, render: (row) => (row.kind === 'buy' ? kina(row.subtotal) : null) },
+    {
+      key: 'share',
+      header: 'Share',
+      hideNarrow: true,
+      render: (row) => {
+        if (row.kind !== 'buy' || !Number.isFinite(plan.cost) || plan.cost <= 0) return null
+        const share = row.subtotal / plan.cost
+        return (
+          <span className="share" title={`${percent(share, 1)} of the total`}>
+            <span className="share-fill" style={{ width: `${Math.min(100, share * 100)}%` }} />
+          </span>
+        )
+      },
+    },
   ]
 
   const total = {
