@@ -3,13 +3,16 @@ import type { World, WorldId } from '../market/worlds.ts'
 import { clamp } from './number.ts'
 import { isFiniteNumber, isRecord } from './usePersistentState.ts'
 
-export const PROFESSIONS: readonly { id: Profession; label: string; inGame: string | null }[] = [
-  { id: 'Blacksmithing', label: 'Blacksmithing', inGame: null },
-  { id: 'Tailoring', label: 'Tailoring', inGame: 'Armorsmithing' },
-  { id: 'Jewelcrafting', label: 'Jewelcrafting', inGame: 'Handicrafting' },
-  { id: 'Alchemy', label: 'Alchemy', inGame: null },
-  { id: 'Cooking', label: 'Cooking', inGame: null },
+export const PROFESSIONS: readonly { id: Profession; label: string; inGame: string | null; abbr: string }[] = [
+  { id: 'Blacksmithing', label: 'Blacksmithing', inGame: null, abbr: 'BS' },
+  { id: 'Tailoring', label: 'Tailoring', inGame: 'Armorsmithing', abbr: 'TL' },
+  { id: 'Jewelcrafting', label: 'Jewelcrafting', inGame: 'Handicrafting', abbr: 'JC' },
+  { id: 'Alchemy', label: 'Alchemy', inGame: null, abbr: 'AL' },
+  { id: 'Cooking', label: 'Cooking', inGame: null, abbr: 'CK' },
 ]
+
+export const PLAN_FLAGS = ['allowCraft', 'allowMorph', 'byproductCredit'] as const
+export type PlanFlag = (typeof PLAN_FLAGS)[number]
 
 export const MAX_MASTERY = 100
 export const DEFAULT_TAX = 0.05

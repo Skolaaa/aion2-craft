@@ -56,3 +56,7 @@ export function parseKina(text: string): number | null {
 export const taxPercent = (taxRate: number) => Math.round(taxRate * 1000) / 10
 
 export const taxLabel = (taxRate: number) => `${taxPercent(taxRate)}%`
+
+const SHORT_DATE = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+
+export const shortDate = (isoDate: string) => SHORT_DATE.format(Date.parse(isoDate))
