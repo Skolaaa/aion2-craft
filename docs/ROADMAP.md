@@ -15,18 +15,12 @@ either closes a gap those tools have already filled, or widens that edge.
 - Public copy on Vercel with the two proxy rewrites.
 - Owned materials: a Have column per world, the plan spends stock first, Copy list as text.
 - Share links: the address bar holds the plan's world, item, quantity, mastery and options, and Copy link copies it.
+- Depth-aware prices: a bulk buy follows the exchange's listing ladder for the units the player does not hold, and the row says how many listings it spans.
 
 ## Now: make a plan shareable
 
 These are table stakes. Every competitor has them, and they are what turns one player's
 calculator into something a Legion passes around.
-
-### 2. Depth-aware prices (M)
-
-Buying 30 units costs more than 30 times the lowest listing. The `depth-aware-prices` branch
-already prices bulk buys along the listing ladder and shows the span; it is two commits
-and well behind main. Finish: rebase onto main, review, merge. Depends on aion2.exchange
-serving the ladder, which the branch already reads.
 
 ### 3. Where to get it (S)
 

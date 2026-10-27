@@ -1,10 +1,13 @@
-import type { ItemId, MarketQuote, Race } from '../domain/types.ts'
+import type { DepthLadder, ItemId, MarketQuote, Race } from '../domain/types.ts'
 import { directoryOf, SIDE, type KeyedWorld, type WorldDirectory } from './worlds.ts'
 
 const API = '/ex/api'
 const BATCH = 100
 const MIN_REFRESH_MS = 60_000
 const STORAGE_KEY = (serverId: number) => `aion2-craft:quotes:${serverId}`
+const LADDER_KEY = (serverId: number) => `aion2-craft:ladders:${serverId}`
+const LADDER_REFRESH_MS = 60 * 60_000
+const LADDER_PAUSE_MS = 150
 const FACTION_RACE = new Map(Object.entries(SIDE).map(([race, side]) => [side.name as string, race as Race]))
 
 export interface QuoteSnapshot {
@@ -134,29 +137,104 @@ export async function fetchExchangeCraft(targetId: ItemId, serverId: number): Pr
   }
 }
 
-const newest = (quotes: Map<ItemId, MarketQuote>) =>
-  [...quotes.values()].reduce<string | null>((latest, q) => (latest === null || q.capturedAt > latest ? q.capturedAt : latest), null)
+// The ladder is one poll's listings grouped by unit price, cheapest first. 404 means no listing was ever polled.
+export async function fetchLadder(itemId: ItemId, serverId: number): Promise<DepthLadder | null> {
+  const body = await findJson(`/items/${itemId}/depth/ladder?server=${serverId}`)
+  if (body === null || body.captured_at == null) return null
+  const levels = list(body.levels, 'levels').map((raw) => {
+    const level = record(raw, 'level')
+    return { unitPrice: num(level.unit_price, 'unit_price'), listings: num(level.listings, 'listings'), units: num(level.units, 'units') }
+  })
+  return {
+    capturedAt: str(body.captured_at, 'captured_at'),
+    complete: body.complete !== false,
+    units: num(body.units_total, 'units_total'),
+    levels,
+  }
+}
 
-export function loadSnapshot(serverId: number): QuoteSnapshot | null {
+interface LadderEntry {
+  fetchedAt: string
+  ladder: DepthLadder | null
+}
+
+type LadderStore = Map<ItemId, LadderEntry>
+
+function readStored<T>(key: string, parse: (raw: unknown) => T): T | null {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY(serverId))
-    if (!stored) return null
-    const { fetchedAt, quotes } = JSON.parse(stored) as { fetchedAt: string; quotes: [ItemId, MarketQuote][] }
-    const map = new Map(quotes)
-    return { serverId, fetchedAt, capturedAt: newest(map), quotes: map }
+    const stored = localStorage.getItem(key)
+    return stored ? parse(JSON.parse(stored)) : null
   } catch {
     return null
   }
 }
 
-function storeSnapshot(snapshot: QuoteSnapshot) {
+function writeStored(key: string, value: unknown) {
   try {
-    const { fetchedAt, quotes } = snapshot
-    localStorage.setItem(STORAGE_KEY(snapshot.serverId), JSON.stringify({ fetchedAt, quotes: [...quotes] }))
+    localStorage.setItem(key, JSON.stringify(value))
   } catch {
     // A full or blocked storage only costs the offline copy.
   }
 }
+
+const ladderStores = new Map<number, LadderStore>()
+
+// Read from storage once per world and written back once per batch, so a batch touches storage at most once.
+function ladderStore(serverId: number): LadderStore {
+  let store = ladderStores.get(serverId)
+  if (!store) {
+    store = readStored(LADDER_KEY(serverId), (raw) => new Map(raw as [ItemId, LadderEntry][])) ?? new Map()
+    ladderStores.set(serverId, store)
+  }
+  return store
+}
+
+const laddersOf = (store: LadderStore): Map<ItemId, DepthLadder> =>
+  new Map([...store].flatMap(([itemId, { ladder }]) => (ladder ? [[itemId, ladder]] : [])))
+
+export const loadLadders = (serverId: number) => laddersOf(ladderStore(serverId))
+
+const fresh = (entry: LadderEntry | undefined) => entry !== undefined && Date.now() - Date.parse(entry.fetchedAt) < LADDER_REFRESH_MS
+
+const ladderQueues = new Map<number, Promise<unknown>>()
+
+// One request per item, one at a time per world with a pause between, and an item is asked for once an hour at
+// most, the exchange's own polling interval. Resolves with every ladder cached for the world, or null when nothing
+// new was fetched, so a caller can leave its state alone.
+export function refreshLadders(serverId: number, itemIds: readonly ItemId[]): Promise<Map<ItemId, DepthLadder> | null> {
+  const store = ladderStore(serverId)
+  if (itemIds.every((itemId) => fresh(store.get(itemId)))) return Promise.resolve(null)
+  const previous = ladderQueues.get(serverId) ?? Promise.resolve()
+  const batch = previous.then(async () => {
+    let fetched = false
+    try {
+      for (const itemId of itemIds) {
+        if (fresh(store.get(itemId))) continue
+        const ladder = await fetchLadder(itemId, serverId)
+        store.set(itemId, { fetchedAt: new Date().toISOString(), ladder })
+        fetched = true
+        await new Promise((resolve) => setTimeout(resolve, LADDER_PAUSE_MS))
+      }
+    } finally {
+      if (fetched) writeStored(LADDER_KEY(serverId), [...store])
+    }
+    return fetched ? laddersOf(store) : null
+  })
+  ladderQueues.set(serverId, batch.catch(() => undefined))
+  return batch
+}
+
+const newest = (quotes: Map<ItemId, MarketQuote>) =>
+  [...quotes.values()].reduce<string | null>((latest, q) => (latest === null || q.capturedAt > latest ? q.capturedAt : latest), null)
+
+export const loadSnapshot = (serverId: number): QuoteSnapshot | null =>
+  readStored(STORAGE_KEY(serverId), (raw) => {
+    const { fetchedAt, quotes } = raw as { fetchedAt: string; quotes: [ItemId, MarketQuote][] }
+    const map = new Map(quotes)
+    return { serverId, fetchedAt, capturedAt: newest(map), quotes: map }
+  })
+
+const storeSnapshot = ({ serverId, fetchedAt, quotes }: QuoteSnapshot) => writeStored(STORAGE_KEY(serverId), { fetchedAt, quotes: [...quotes] })
 
 const inFlight = new Map<number, Promise<QuoteSnapshot>>()
 

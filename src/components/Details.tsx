@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { Acquisition, ItemId, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
-import { buyList, childStep, estimateGap, stepCount, stepSummary, successNote, type BuyLine, type BuyList } from '../state/answer.ts'
+import { buyList, childStep, depthNote, estimateGap, stepCount, stepSummary, successNote, type BuyLine, type BuyList } from '../state/answer.ts'
 import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
@@ -116,7 +116,10 @@ function WhatToBuy({ plan, list, planning, overrides, owned, link }: WhatToBuyPr
   const source = (row: BuyLine) => {
     if (row.kind === 'owned') return 'your stock'
     const quote = prices.quote(row.itemId)
-    if (quote.kind === 'market') return `Market, ${quote.listings} ${plural(quote.listings, 'listing', 'listings')}`
+    if (quote.kind === 'market') {
+      const depth = row.kind === 'buy' ? row.depth : null
+      return depth ? `Market, ${depthNote(depth, quote.listings)}` : `Market, ${quote.listings} ${plural(quote.listings, 'listing', 'listings')}`
+    }
     if (quote.kind === 'npc') return 'NPC shop'
     if (quote.kind === 'none') return MISSING
     const lowest = market.get(row.itemId)?.lowest
@@ -260,7 +263,10 @@ function flatten(plan: PlanResult, open: ReadonlySet<string>): LadderRow[] {
 const BUY_FROM = { market: 'Buy on the Market', manual: 'Buy at your price', npc: 'Buy from an NPC shop' } as const
 
 function howText({ acquisition }: LadderRow, recipeOf: (step: StepPlan) => Recipe | undefined, planning: Planning) {
-  if (acquisition.method === 'buy') return BUY_FROM[acquisition.quote.kind]
+  if (acquisition.method === 'buy') {
+    const depth = acquisition.quote.kind === 'market' ? acquisition.quote.depth : null
+    return depth ? `${BUY_FROM.market} ${depthNote(depth)}` : BUY_FROM[acquisition.quote.kind]
+  }
   if (acquisition.method === 'owned') return 'From your stock'
   if (acquisition.method === 'none') return <span className="is-warn">No price yet</span>
   const verb = acquisition.method === 'morph' ? 'Morph from Odyle' : 'Craft'

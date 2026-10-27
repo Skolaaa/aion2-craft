@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ItemId } from '../domain/types.ts'
+import { bulkBuys } from '../state/answer.ts'
 import { taxLabel } from '../state/format.ts'
 import { planOne, type Planning } from '../state/planning.ts'
 import { bestMargins } from '../state/scan.ts'
@@ -16,6 +17,7 @@ import { Search } from './Search.tsx'
 interface Props {
   planning: Planning
   freshness: Freshness
+  requestLadders(itemIds: readonly ItemId[]): void
   target: Target
   overrides: PriceOverrides
   owned: OwnedStock
@@ -23,7 +25,7 @@ interface Props {
   onTarget(change: Partial<Target>): void
 }
 
-export function Calculator({ planning, freshness, target, overrides, owned, link, onTarget }: Props) {
+export function Calculator({ planning, freshness, requestLadders, target, overrides, owned, link, onTarget }: Props) {
   const { index } = planning
   const [tab, setTab] = useState<DetailTab>('buy')
   const craftable = target.itemId === null ? null : (index.byId.get(target.itemId) ?? null)
@@ -31,6 +33,11 @@ export function Calculator({ planning, freshness, target, overrides, owned, link
     () => (craftable ? planOne(planning, craftable.item.id, target.quantity, owned.counts) : null),
     [planning, craftable, target.quantity, owned.counts],
   )
+
+  // Items the plan buys in bulk get their depth ladder; the plan then re-runs with it and may ask for more.
+  useEffect(() => {
+    if (plan && !freshness.refreshing) requestLadders(bulkBuys(plan, planning.prices))
+  }, [plan, planning.prices, freshness.refreshing, requestLadders])
 
   return (
     <>

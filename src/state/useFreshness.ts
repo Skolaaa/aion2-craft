@@ -7,6 +7,7 @@ const NEWEST = 'These are the newest. aion2.exchange updates each world once an 
 
 export interface Freshness {
   pending: boolean
+  capturedAt: string | null
   age: string | null
   stale: boolean
   refreshing: boolean
@@ -20,6 +21,7 @@ export function useFreshness(feed: PriceFeed): Freshness {
   const captured = feed.snapshot?.capturedAt ?? null
   return {
     pending: feed.pending,
+    capturedAt: captured,
     age: captured === null ? null : age(captured, now),
     stale: captured !== null && isStale(captured, now),
     refreshing: feed.status === 'loading',

@@ -116,6 +116,12 @@ Cinzel name in the grade colour) and its diamond-ruled figure strip. The margin 
 heat chip, the same visual word the scanner uses. Detail tabs are mono with counts: `buy 9`,
 `steps 5`, `rates`. The buy table gets a cost-share bar column on desktop.
 
+Bulk buys: when the plan buys more than one unit of a material beyond what the player holds,
+its unit price is the average along the listing ladder and the Source cell says how many
+listings it spans ("Market, across 3 listings of 15"), with "only 4 listed" when the ladder
+runs out. The buy figure does the same for the target at a quantity above one. The price
+status line adds one sentence when the ladder poll is stale against the prices.
+
 Scanner: Ledger's left rail (All plus five professions with counts; a horizontal chip strip
 under 900 px), the name filter, the hidden-rows line with "Show them", and one table: Item
 (icon, grade-coloured name, profession and level in mono), Craft cost, Market lowest, Margin,

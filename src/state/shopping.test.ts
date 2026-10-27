@@ -12,7 +12,7 @@ describe('shoppingText', () => {
     const list: BuyList = {
       lines: [
         { kind: 'missing', itemId: 11, expected: 2.5, owned: 0 },
-        { kind: 'buy', itemId: 10, expected: 4.1306, owned: 1, unit: 1200, subtotal: 3756.7 },
+        { kind: 'buy', itemId: 10, expected: 4.1306, owned: 1, unit: 1200, subtotal: 3756.7, depth: null },
         { kind: 'owned', itemId: 2, expected: 1, owned: 1 },
       ],
       credit: 0,

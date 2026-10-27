@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { buildCatalog, type RatesFile, type RecipesFile } from './catalog.ts'
+import { ladderOf } from './depth.fixture.ts'
 import { planCraft } from './planCraft.ts'
 import { makePriceBook } from './priceBook.ts'
-import type { ItemId, Mastery, PlanInput, PlanOptions, Recipe } from './types.ts'
+import type { DepthLadder, ItemId, Mastery, PlanInput, PlanOptions, Recipe } from './types.ts'
 
 const OPTIONS: PlanOptions = { allowCraft: true, allowMorph: true, byproductCredit: false, taxRate: 0.1 }
 const MASTERY: Mastery = { Blacksmithing: 10, Tailoring: 0, Jewelcrafting: 0, Alchemy: 0, Cooking: 0 }
@@ -31,7 +32,13 @@ interface World {
   substitutes?: Record<string, ItemId>
 }
 
-function plan(world: World, market: Record<number, number>, extra: Partial<Omit<PlanInput, 'target'>> & { target: ItemId }) {
+interface Extra extends Partial<Omit<PlanInput, 'target'>> {
+  target: ItemId
+  quantity?: number
+  ladders?: Record<number, DepthLadder>
+}
+
+function plan(world: World, market: Record<number, number>, extra: Extra) {
   const recipesFile: RecipesFile = { items: {}, recipes: world.recipes, substitutes: world.substitutes ?? {}, npcPrices: {} }
   const ratesFile: RatesFile = {
     curves: { one: [1], ...world.curves },
@@ -42,14 +49,16 @@ function plan(world: World, market: Record<number, number>, extra: Partial<Omit<
     manual: new Map(),
     market: new Map(Object.entries(market).map(([id, lowest]) => [Number(id), { lowest, listings: 1, soldAvg: null, capturedAt: '' }])),
     npc: new Map(),
+    ladders: new Map(Object.entries(extra.ladders ?? {}).map(([id, ladder]) => [Number(id), ladder])),
   })
+  const { target, quantity = 1, ladders: _ladders, ...rest } = extra
   const result = planCraft({
     mastery: MASTERY,
     options: OPTIONS,
     prices,
     world: buildCatalog('Light', recipesFile, ratesFile),
-    ...extra,
-    target: { itemId: extra.target, quantity: 1 },
+    ...rest,
+    target: { itemId: target, quantity },
   })
   if (!result) throw new Error('no plan')
   return result
@@ -179,8 +188,8 @@ describe('planCraft', () => {
     expect(inner && [inner.expected, inner.owned, inner.acquisition.method, inner.subtotal]).toEqual([1, 0.5, 'buy', 5])
     expect(partial.cost).toBeCloseTo(10)
     expect(partial.shopping).toEqual([
-      { itemId: 10, expected: 1, owned: 0.5, unit: 10, subtotal: 5 },
-      { itemId: 11, expected: 1, owned: 0, unit: 5, subtotal: 5 },
+      { itemId: 10, expected: 1, owned: 0.5, unit: 10, subtotal: 5, depth: null },
+      { itemId: 11, expected: 1, owned: 0, unit: 5, subtotal: 5, depth: null },
     ])
     expect(plan(world, market, { target: 100 }).cost).toBeCloseTo(35)
   })
@@ -199,5 +208,65 @@ describe('planCraft', () => {
     const result = plan(world, { 10: 5 }, { target: 100 })
     expect(result.missing).toEqual([11])
     expect(result.cost).toBe(Infinity)
+  })
+
+  describe('with depth ladders', () => {
+    // One cheap unit, then the price doubles, then it runs out after four.
+    const thin = ladderOf([[10, 1, 1], [20, 1, 3]])
+    const world = { recipes: [craft(1, 100, [[10, 1]])] }
+
+    it('prices a single unit at the lowest listing, the same as without a ladder', () => {
+      const result = plan(world, { 10: 10 }, { target: 100, ladders: { 10: thin } })
+      expect(result.cost).toBe(10)
+      expect(result.shopping[0]).toMatchObject({ unit: 10, depth: null })
+    })
+
+    it('climbs the ladder when the plan buys more units than the cheapest listing holds', () => {
+      const result = plan(world, { 10: 10 }, { target: 100, quantity: 3, ladders: { 10: thin } })
+      expect(result.cost).toBe(50)
+      expect(result.unitCost).toBeCloseTo(50 / 3)
+      expect(result.shopping[0]).toMatchObject({ expected: 3, unit: 50 / 3, subtotal: 50 })
+      expect(result.shopping[0].depth).toMatchObject({ units: 3, cost: 50, listings: 2, levels: 2, available: 4 })
+      expect(result.root.materials[0].acquisition).toMatchObject({ method: 'buy', unit: 50 / 3 })
+    })
+
+    it('prices the units past the last listing at the top rung and keeps the shortfall visible', () => {
+      const result = plan(world, { 10: 10 }, { target: 100, quantity: 6, ladders: { 10: thin } })
+      expect(result.cost).toBe(10 + 5 * 20)
+      expect(result.shopping[0].depth).toMatchObject({ units: 6, available: 4 })
+    })
+
+    it('sums the demand of one material across steps before quoting it', () => {
+      const twoSteps = { recipes: [craft(1, 100, [[10, 1], [200, 1]]), craft(2, 200, [[10, 1]])] }
+      const result = plan(twoSteps, { 10: 10, 200: 1000 }, { target: 100, quantity: 2, ladders: { 10: thin } })
+      expect(result.shopping).toEqual([expect.objectContaining({ itemId: 10, expected: 4, subtotal: 70 })])
+      expect(result.cost).toBe(70)
+    })
+
+    it('crafts a material once its depth-aware price passes the crafting cost', () => {
+      const world = { recipes: [craft(1, 100, [[10, 1]]), craft(2, 10, [[11, 1]])] }
+      const flat = plan(world, { 10: 10, 11: 15 }, { target: 100, quantity: 3 })
+      expect(flat.root.materials[0].acquisition.method).toBe('buy')
+      const deep = plan(world, { 10: 10, 11: 15 }, { target: 100, quantity: 3, ladders: { 10: thin } })
+      expect(deep.root.materials[0].acquisition.method).toBe('craft')
+      expect(deep.cost).toBe(45)
+    })
+
+    it('quotes only the bought part of a line along the ladder, never what the player holds', () => {
+      const mostlyHeld = plan(world, { 10: 10 }, { target: 100, quantity: 3, ladders: { 10: thin }, owned: new Map([[10, 2]]) })
+      expect(mostlyHeld.cost).toBe(10)
+      expect(mostlyHeld.shopping[0]).toMatchObject({ expected: 3, owned: 2, unit: 10, subtotal: 10, depth: null })
+      const partlyHeld = plan(world, { 10: 10 }, { target: 100, quantity: 3, ladders: { 10: thin }, owned: new Map([[10, 1]]) })
+      expect(partlyHeld.cost).toBe(30)
+      expect(partlyHeld.shopping[0]).toMatchObject({ expected: 3, owned: 1, unit: 15, subtotal: 30 })
+      expect(partlyHeld.shopping[0].depth).toMatchObject({ units: 2, cost: 30 })
+    })
+
+    it('buys the target at the depth-aware cost and sells it at the lowest listing', () => {
+      const result = plan(world, { 10: 10, 100: 100 }, { target: 100, quantity: 3, ladders: { 100: ladderOf([[100, 1, 1], [200, 1, 5]]) } })
+      expect(result.market).toMatchObject({ lowest: 100, cost: 500, listings: 1 })
+      expect(result.market?.depth).toMatchObject({ units: 3, listings: 2 })
+      expect(result.margin).toBeCloseTo(100 * 0.9 * 3 - 30)
+    })
   })
 })
