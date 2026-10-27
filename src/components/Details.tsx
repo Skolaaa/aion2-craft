@@ -14,6 +14,7 @@ import type { OwnedStock } from '../state/useOwned.ts'
 import type { Sources } from '../state/useSources.ts'
 import { useExchangeEstimate } from '../state/useExchangeEstimate.ts'
 import { useClipboard } from '../state/useClipboard.ts'
+import { useNarrow } from '../state/useNarrow.ts'
 import { useNow } from '../state/useNow.ts'
 import { Button } from './Button.tsx'
 import { CountCell } from './CountCell.tsx'
@@ -47,6 +48,7 @@ interface Props {
 export function Details({ plan, planning, overrides, owned, sources, link, tab, onTab, rates }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const narrow = useNarrow()
   const list = buyList(plan)
   const tabs = rates ? TABS : TABS.filter(({ id }) => id !== 'rates')
   const counts: Record<DetailTab, number | null> = { buy: list.lines.length, steps: stepCount(plan), rates: null }
@@ -88,7 +90,15 @@ export function Details({ plan, planning, overrides, owned, sources, link, tab, 
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
         {tab === 'buy' && <WhatToBuy plan={plan} list={list} planning={planning} overrides={overrides} owned={owned} link={link} />}
         {tab === 'steps' && (
-          <HowItIsMade key={targetsKey(plan)} plan={plan} credit={list.credit} planning={planning} overrides={overrides} sources={sources} />
+          <HowItIsMade
+            key={targetsKey(plan)}
+            plan={plan}
+            credit={list.credit}
+            planning={planning}
+            overrides={overrides}
+            sources={sources}
+            narrow={narrow}
+          />
         )}
         {tab === 'rates' && rates && <Rates target={rates} planning={planning} />}
       </div>
@@ -300,9 +310,10 @@ interface HowProps {
   planning: Planning
   overrides: PriceOverrides
   sources: Sources
+  narrow: boolean
 }
 
-function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
+function HowItIsMade({ plan, credit, planning, overrides, sources, narrow }: HowProps) {
   const { catalog } = planning
   // One target opens on its own; a list starts folded so its rows read as the list.
   const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(plan.targets.length === 1 ? [rootKey(plan.targets[0])] : []))
@@ -318,6 +329,25 @@ function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
     const pinned = sources.choices.get(itemId) === method
     return { options, method, pinned, extra: pinned ? extraCost(options, method, expected - owned) : null }
   }
+  type Choice = NonNullable<ReturnType<typeof choiceOf>>
+
+  const how = (row: LadderRow, choice: Choice | null) => (
+    <>
+      {howText(row, recipeOf, planning)}
+      {choice?.pinned && <>, <span className="yours">yours</span></>}
+      {choice?.extra && <>, {kina(choice.extra.kina)} Kina more than {OVER[choice.extra.over]}</>}
+    </>
+  )
+  const needed = (row: LadderRow) => `${decimal(row.expected)} needed${row.owned > 0 && row.acquisition.method !== 'owned' ? `, ${decimal(row.owned)} yours` : ''}`
+  const picker = (row: LadderRow, choice: Choice) => (
+    <SourceCell
+      itemName={itemName(catalog, row.itemId)}
+      options={choice.options}
+      value={choice.method}
+      planning={planning}
+      onChange={(method) => sources.save(row.itemId, method)}
+    />
+  )
 
   const toggle = (key: string) =>
     setOpen((previous) => {
@@ -330,35 +360,19 @@ function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
     {
       key: 'item',
       header: 'Item',
+      width: narrow ? undefined : 400,
       render: (row) => {
         const name = itemName(catalog, row.itemId)
         const step = childStep(row.acquisition)
         const expandable = step !== null && step.materials.length > 0
-        const choice = choiceOf(row)
+        const choice = narrow ? choiceOf(row) : null
         return (
           <ItemCell
             item={catalog.items.get(row.itemId)}
             href={itemPageUrl(row.itemId)}
             depth={row.depth}
-            meta={
-              <>
-                {howText(row, recipeOf, planning)}
-                {choice?.pinned && <>, <span className="yours">yours</span></>}
-                {choice?.extra && <>, {kina(choice.extra.kina)} Kina more than {OVER[choice.extra.over]}</>}
-              </>
-            }
-            narrowMeta={`${decimal(row.expected)} needed${row.owned > 0 && row.acquisition.method !== 'owned' ? `, ${decimal(row.owned)} yours` : ''}`}
-            controls={
-              choice && (
-                <SourceCell
-                  itemName={name}
-                  options={choice.options}
-                  value={choice.method}
-                  planning={planning}
-                  onChange={(method) => sources.save(row.itemId, method)}
-                />
-              )
-            }
+            meta={narrow && <>{how(row, choice)}, {needed(row)}</>}
+            controls={choice && picker(row, choice)}
             toggle={
               expandable ? (
                 <button
@@ -373,6 +387,20 @@ function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
               ) : undefined
             }
           />
+        )
+      },
+    },
+    {
+      key: 'how',
+      header: 'How',
+      hideNarrow: true,
+      render: (row) => {
+        const choice = choiceOf(row)
+        return (
+          <span className="how">
+            {choice && picker(row, choice)}
+            <span className="meta">{how(row, choice)}</span>
+          </span>
         )
       },
     },
@@ -401,13 +429,16 @@ function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
   ]
 
   return (
-    <Table
-      label="How it is made"
-      columns={columns}
-      rows={rows}
-      rowKey={(row) => row.key}
-      footer={credit > 0 ? [creditFooter(credit, 'credited at the lowest listing after tax, already in the costs above')] : undefined}
-    />
+    <>
+      <Table
+        label="How it is made"
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.key}
+        footer={credit > 0 ? [creditFooter(credit, 'credited at the lowest listing after tax, already in the costs above')] : undefined}
+      />
+      <p className="meta tab-note">Dotted prices are editable. Pick buy, craft or morph per line; the cost column follows.</p>
+    </>
   )
 }
 

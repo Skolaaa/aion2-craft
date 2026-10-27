@@ -1438,6 +1438,16 @@ input[type='range'] {
   overflow-x: auto;
 }
 
+.tab-note {
+  margin: var(--space-3) 0 0;
+}
+
+.how {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .tab {
   height: var(--row);
   padding: 0 14px;

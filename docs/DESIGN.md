@@ -119,6 +119,12 @@ Cinzel name in the grade colour) and its diamond-ruled figure strip. The margin 
 heat chip, the same visual word the scanner uses. Detail tabs are mono with counts: `buy 9`,
 `steps 5`, `rates`. The buy table gets a cost-share bar column on desktop.
 
+Steps: one row per part at the 36 px row height. A How column between Item and Expected
+holds the `buy | craft | morph` control for a part the plan could get more than one way, then
+the way in words; a part with one way shows the words alone. Under the table: "Dotted prices
+are editable. Pick buy, craft or morph per line; the cost column follows." On a phone the How
+column is hidden and the control sits under the name again.
+
 Bulk buys: when the plan buys more than one unit of a material beyond what the player holds,
 its unit price is the average along the listing ladder and the Source cell says how many
 listings it spans ("Market, across 3 listings of 15"), with "only 4 listed" when the ladder
@@ -142,7 +148,7 @@ now being the last bucket's close. Dates and times are the player's local ones. 
 the surface says "No price history on aion2.exchange for this item yet."
 
 Source choice: under steps, a row whose item the plan could get more than one way carries a
-small segmented control under its note, `buy | craft`, plus `morph` when a Substance Morph
+small segmented control in the How column, `buy | craft`, plus `morph` when a Substance Morph
 exists, with the plan's pick selected. Choosing another way forces it for that item everywhere
 in the plan, every figure updates, and the note gains `yours` in gold and what the choice
 costs over the cheapest way: "Craft, 4.1 attempts at 96.8%, yours, 1,230 Kina more than
