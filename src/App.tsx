@@ -10,7 +10,7 @@ import { makePriceBook } from './domain/priceBook.ts'
 import type { ItemId, MarketQuote, PlanOptions } from './domain/types.ts'
 import { resolveWorld, type Listed, type World } from './market/worlds.ts'
 import { statusChips } from './state/chips.ts'
-import { craftIndexFor, remapItem } from './state/craftables.ts'
+import { craftIndexFor, itemFor } from './state/craftables.ts'
 import { age } from './state/format.ts'
 import { useOpenSetting } from './state/openSetting.ts'
 import type { Planning } from './state/planning.ts'
@@ -128,10 +128,7 @@ function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onV
   const patchTarget = (change: Partial<Target>) => updateTarget((previous) => ({ ...previous, ...change }))
 
   const chooseWorld = (next: World) => {
-    if (next.race !== world.race) {
-      const nextCatalog = catalogFor(next.race)
-      updateTarget((previous) => ({ ...previous, itemId: previous.itemId === null ? null : remapItem(catalog, nextCatalog, previous.itemId) }))
-    }
+    updateTarget((previous) => ({ ...previous, itemId: previous.itemId === null ? null : itemFor(next.race, previous.itemId) }))
     updateSetup((previous) => setWorld(previous, next))
   }
 

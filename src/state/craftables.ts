@@ -1,4 +1,5 @@
-import type { Catalog, Item, ItemId, Profession, Recipe } from '../domain/types.ts'
+import { catalogFor } from '../data/catalog.ts'
+import type { Catalog, Item, ItemId, Profession, Race, Recipe } from '../domain/types.ts'
 
 export interface Craftable {
   item: Item
@@ -60,10 +61,18 @@ export function craftIndexFor(catalog: Catalog): CraftIndex {
 }
 
 // Light and Dark recipes use different item ids for the same name, so a faction switch matches by name.
-export function remapItem(from: Catalog, to: Catalog, itemId: ItemId): ItemId | null {
+function remapItem(from: Catalog, to: Catalog, itemId: ItemId): ItemId | null {
   const name = from.items.get(itemId)?.name
   if (name === undefined) return null
   const position = (craftIndexFor(from).byName.get(name) ?? []).findIndex((c) => c.item.id === itemId)
   const candidates = craftIndexFor(to).byName.get(name) ?? []
   return (candidates[Math.max(0, position)] ?? candidates[0])?.item.id ?? null
+}
+
+/** The same item as `race` crafts it: the id itself, its same-name counterpart from the other side, or null. */
+export function itemFor(race: Race, itemId: ItemId): ItemId | null {
+  const here = catalogFor(race)
+  if (craftIndexFor(here).byId.has(itemId)) return itemId
+  const there = catalogFor(race === 'Light' ? 'Dark' : 'Light')
+  return craftIndexFor(there).byId.has(itemId) ? remapItem(there, here, itemId) : null
 }

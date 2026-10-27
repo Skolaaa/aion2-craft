@@ -29,7 +29,10 @@ export interface Setup {
 }
 
 // world and recent change together through setWorld.
-export type SetupPatch = Partial<Omit<Setup, 'world' | 'recent'>>
+export type PlanSettings = Omit<Setup, 'world' | 'recent'>
+export type SetupPatch = Partial<PlanSettings>
+
+export const SETUP_KEY = 'setup'
 
 const DEFAULT_MASTERY: Mastery = {
   Blacksmithing: MAX_MASTERY, Tailoring: MAX_MASTERY, Jewelcrafting: MAX_MASTERY, Alchemy: MAX_MASTERY, Cooking: MAX_MASTERY,
@@ -81,6 +84,8 @@ export function parseSetup(raw: unknown): Setup | null {
     byproductCredit: flag(raw.byproductCredit, DEFAULT_SETUP.byproductCredit),
   }
 }
+
+export const settingsOf = ({ world, recent, ...settings }: Setup): PlanSettings => settings
 
 export const setWorld = (setup: Setup, world: World): Setup => ({
   ...setup,
