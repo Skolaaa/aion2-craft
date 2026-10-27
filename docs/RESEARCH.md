@@ -44,7 +44,7 @@ Endpoints we use:
 | `GET /api/items?keys=a,b,c&server=` | up to 100 items per call: lowest listing `price`, `listings`, `units_sold`, `sold_avg_price`, `sold_min_price`, `sold_max_price`, `captured_at` |
 | `GET /api/items/{key}/prices?range=7d&bucket=6h` | price history |
 | `GET /api/items/{key}/depth?units=N` | cost of buying N units from the cheapest listings |
-| `GET /api/items/{key}/depth/ladder` | the listing ladder at one poll |
+| `GET /api/items/{key}/depth/ladder` | the listing ladder at one poll: `levels[]` of `unit_price`, `listings`, `units`, cheapest first, with `captured_at`, `complete`, `listings_total`, `units_total`; 404 when the item was never polled. Polled far less often than prices (27 Oct 2026: ladders from 6 Oct, prices from the same hour), so the app scales the ladder to today's lowest listing |
 | `GET /api/crafts/model` | their crafting model: success rates at mastery 100 from the game files, morph and craft routes |
 | `GET /api/quna` | Kina chests priced in Quna, gives a Kina-per-Quna rate |
 

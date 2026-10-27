@@ -8,17 +8,17 @@ generated JSON checked into `src/data/`.
 
 ```ts
 const world = catalogFor('Light')                // src/data/catalog.ts: recipes + rate curves for one race
-const prices = makePriceBook({ manual, market: snapshot.quotes, npc: world.npcPrices })
+const prices = makePriceBook({ manual, market: snapshot.quotes, npc: world.npcPrices, ladders })
 const plan = planCraft({
   target: { itemId: 110150014, quantity: 1 },     // Splendent Orichalcum Greatsword
   mastery: { Blacksmithing: 42, Tailoring: 0, Jewelcrafting: 0, Alchemy: 0, Cooking: 0 },
   options: { allowCraft: true, allowMorph: true, byproductCredit: true, taxRate: 0.05 },
   world,
-  prices,                  // PriceBook: manual > market > npc > none
+  prices,                  // PriceBook: manual > market > npc > none; quote(itemId, units) walks the depth ladder for units > 1
 })                         // null when no recipe of this race makes the target
 plan.cost            // expected Kina to get 1 Splendent at mastery 42, Infinity while a price is missing
 
-plan.market          // { lowest, soldAvg, listings } for the target, or null
+plan.market          // { lowest, soldAvg, listings, cost, depth } for the target, or null; cost buys `quantity` units along the ladder
 plan.margin          // lowest * (1 - tax) * quantity - cost
 plan.root            // step tree: each step's attempts, rates, materials, acquisition
 plan.missing         // items with no price and no recipe
@@ -35,20 +35,21 @@ plan.blocked         // recipes in the tree above the player's mastery
 | `src/domain/types.ts` | the typed model below |
 | `src/domain/catalog.ts` | `buildCatalog(race, recipesFile, ratesFile)`: indexes by recipe id and by product, resolves each craft recipe's curve by recipe id, parses each item's grade with `parseGrade` (unknown grades become `Common`); `tradeableItems(catalog)` |
 | `src/domain/rates.ts` | `stepRates(recipe, mastery, catalog)`: success, combo success and level difference, curve lookup with family fallback |
-| `src/domain/planCraft.ts` | the expected-value engine, pure, memoised cheapest acquisition per item; spends the player's `Owned` stock in tree order before any buy or craft |
-| `src/domain/priceBook.ts` | merges manual overrides, market quotes and NPC prices into `PriceBook` |
+| `src/domain/planCraft.ts` | the expected-value engine, pure, memoised cheapest acquisition per item; spends the player's `Owned` stock in tree order before any buy or craft, and re-runs with the units it buys of each item while a ladder prices that demand |
+| `src/domain/priceBook.ts` | merges manual overrides, market quotes, depth ladders and NPC prices into `PriceBook`; `ladderCost(ladder, units)` |
 | `src/data/catalog.ts` | `catalogFor(race)`: the bundled JSON as a `Catalog`, built once per race |
-| `src/market/exchangeClient.ts` | fetch wrappers over `/ex/api/*` (proxied), batch by 100 keys, localStorage cache with `capturedAt`; `directoryFromServers(body)` parses `/servers` (faction names from `SIDE`, `game_server_key`) into a `WorldDirectory`, and `fetchWorlds()` calls it |
+| `src/market/exchangeClient.ts` | fetch wrappers over `/ex/api/*` (proxied), batch by 100 keys, localStorage cache with `capturedAt`; depth ladders one item at a time per world, one store per world in memory and in localStorage for an hour; `directoryFromServers(body)` parses `/servers` (faction names from `SIDE`, `game_server_key`) into a `WorldDirectory`, and `fetchWorlds()` calls it |
 | `src/market/worlds.ts` | `World`, `Listed { world, match }`, `WorldDirectory`, `SIDE`, `PAIRING`, `directoryOf`, `resolveWorld`; pure |
 | `src/state/setup.ts` | `Setup` (world, recent worlds, mastery, tax, plan flags), `parseSetup` at the storage boundary, `PlanSettings` and `settingsOf` (the part a link carries), `peekSetup`, `setWorld`, `PROFESSIONS`, `PLAN_FLAGS` |
 | `src/state/chips.ts` | `statusChips(setup, current)`: every string the status line shows |
 | `src/state/openSetting.ts` | the `Setting` union, the `SETTINGS` each chip opens, `settingKey`, and `useOpenSetting()`, the one owner of which setting is open and of focus return |
 | `src/state/picker.ts` | `pickerView`, `withText`, `initialActive`, `groupNote`, `pairingNote`, `currentNote` for the world list; pure |
 | `src/state/combobox.ts` | `moveActive(ids, active, step)` and `useCombobox(ids, onPick, initial)`: the active option, arrow keys, Enter and scrolling into view, shared by `WorldPicker` and `Search` |
-| `src/state/answer.ts` | `answerOf`, `sentenceOf` (the verdict as `Segment`s), `buyList` (unpriced, bought, then lines stock covers in full, each with its `owned` part), `stepCount` and the step notes; one `stepsOf` walker over the plan tree; pure |
+| `src/state/answer.ts` | `answerOf`, `sentenceOf` (the verdict as `Segment`s), `buyList` (unpriced, bought, then lines stock covers in full, each with its `owned` part), `stepCount` and the step notes; `bulkBuys` (the items worth a ladder), `depthNote` and `depthCapturedAt`; one `stepsOf` walker over the plan tree; pure |
 | `src/state/shopping.ts` | `shoppingText(plan, list, names)`: the buy table as plain text with whole-unit counts, ending with the plan link, for the Copy list button; pure |
 | `src/state/grade.ts` | `GRADE: Record<Grade, { name, colour }>`, the game's own grade table (Global display name and colour per NC internal id), `gradeName()` and `gradeRules()`, the `[data-grade]` CSS that `main.tsx` injects once |
-| `src/state/useFreshness.ts` | `useFreshness(feed)`: age, stale, refreshing, the "these are the newest" note and `refresh`, called once per workspace |
+| `src/state/useFreshness.ts` | `useFreshness(feed)`: the capture time, age, stale, refreshing, the "these are the newest" note and `refresh`, called once per workspace |
+| `src/state/useLadders.ts` | `useLadders(worldId)`: the cached ladders of one world and `request(itemIds)`, which fetches the ones older than an hour and changes state only when one was new |
 | `src/state/heat.ts` | `heatOf(marginPct)`: the margin heat colour and its ink; pure |
 | `src/state/format.ts` | number and date text; `shownTenths`, the one rule for when a fraction shows as 0.0%, used by `toneOf` and `heatOf` |
 | `src/state/useItemMap.ts` | `useItemMap(key, accept)`: a number per item in localStorage, the one hook behind `useOverrides` (prices) and `useOwned` (counts held, per world) |
@@ -61,7 +62,7 @@ plan.blocked         // recipes in the tree above the player's mastery
 | `src/components/SettingHost.tsx` | renders zero or one `Surface` for the open `Setting`, framed from a `Record<Setting['kind'], …>` of title, placement and width: `WorldPicker`, `MasteryForm`, `TaxForm` or `PlanSettings` |
 | `src/components/Surface.tsx` | the one native `<dialog>` for every in-place setting; `SHEET_BELOW = 640` |
 | `src/components/Segmented.tsx` | the one segmented control (a radio group): Normal and Splendent, the picker's regions and sides |
-| `src/components/PriceStatus.tsx` | `PriceStatus`, the capture time or the stale or missing warning as text, and `FreshnessPill` |
+| `src/components/PriceStatus.tsx` | `PriceStatus`, the capture time or the stale or missing warning as text, plus one sentence when the plan's oldest ladder is stale against the prices, and `FreshnessPill` |
 | `src/components/Notice.tsx` | `Notice` with its Try again button, `WorldsFailed` for the world list, and `LinkNotice` with Dismiss for a link that did not fully apply |
 | `src/components/CountCell.tsx` | the Have count, a number edited in place like `PriceCell`; zero or empty clears it |
 | `src/components/` (rest) | calculator, scanner, tables, cells |
@@ -110,6 +111,11 @@ surface.close(false)                        // the user clicked or tabbed elsewh
 `Workspace` calls `useFreshness(feed)` once and hands the result to the header pill, the answer
 panel and the scanner. The pill is the only Refresh button and owns the "these are the newest"
 note. `PriceStatus` under the answer and the scanner title is text only.
+
+`Calculator` asks `useLadders` for the ladders of the items its plan buys in bulk (`bulkBuys`).
+`Workspace` rebuilds the price book when one arrives, and the plan re-runs with it. `request`
+changes state only when a ladder was new, so a plan that already has its ladders settles in
+one pass.
 
 ### Verdict sentence
 
@@ -167,7 +173,7 @@ export type Race = 'Light' | 'Dark'
 export type Profession = 'Blacksmithing' | 'Tailoring' | 'Jewelcrafting' | 'Alchemy' | 'Cooking'
 export type Section = 'craft' | 'succession' | 'conversion'
 export type Mastery = Record<Profession, number>
-export type Grade = 'Common' | 'Rare' | 'Legend' | 'Unique' | 'Epic' | 'Special'
+export type Grade = 'Common' | 'Rare' | 'Legend' | 'Unique' | 'Epic' | 'Mythic' | 'Special'
 
 export interface Item {
   id: ItemId
@@ -220,8 +226,31 @@ export interface MarketQuote {
   capturedAt: string
 }
 
+export interface LadderLevel {
+  unitPrice: number
+  listings: number
+  units: number
+}
+
+export interface DepthLadder {
+  capturedAt: string
+  complete: boolean
+  units: number
+  levels: LadderLevel[]
+}
+
+export interface Depth {
+  units: number
+  cost: number
+  listings: number
+  levels: number
+  available: number
+  complete: boolean
+  capturedAt: string
+}
+
 export type PriceQuote =
-  | { kind: 'market'; unit: number; listings: number; soldAvg: number | null; capturedAt: string }
+  | { kind: 'market'; unit: number; lowest: number; listings: number; soldAvg: number | null; capturedAt: string; depth: Depth | null }
   | { kind: 'manual'; unit: number }
   | { kind: 'npc'; unit: number }
   | { kind: 'none' }
@@ -229,7 +258,7 @@ export type PriceQuote =
 export type Price = Exclude<PriceQuote, { kind: 'none' }>
 
 export interface PriceBook {
-  quote(itemId: ItemId): PriceQuote
+  quote(itemId: ItemId, units?: number): PriceQuote
 }
 
 export interface PlanOptions {
@@ -243,12 +272,20 @@ export type Acquisition =
   | { method: 'buy'; unit: number; quote: Price }
   | { method: 'craft'; unit: number; step: StepPlan }
   | { method: 'morph'; unit: number; step: StepPlan }
+  | { method: 'owned' }
   | { method: 'none' }
+
+/** Units the player already holds, per item. The planner uses them before it buys or crafts. */
+export type Owned = ReadonlyMap<ItemId, number>
 
 export interface MaterialLine {
   itemId: ItemId
   perAttempt: number
+  /** Units the step consumes, counting failed attempts. */
   expected: number
+  /** The part of `expected` that comes from what the player holds. */
+  owned: number
+  /** How the rest is obtained. `owned` when stock covers the whole line. */
   acquisition: Acquisition
   subtotal: number
 }
@@ -274,6 +311,7 @@ export interface PlanInput {
   options: PlanOptions
   world: Catalog
   prices: PriceBook
+  owned?: Owned
 }
 
 export interface PlanResult {
@@ -281,10 +319,11 @@ export interface PlanResult {
   root: StepPlan
   cost: number
   unitCost: number
-  market: { lowest: number; soldAvg: number | null; listings: number } | null
+  market: { lowest: number; soldAvg: number | null; listings: number; cost: number; depth: Depth | null } | null
   margin: number | null
   marginPct: number | null
-  shopping: { itemId: ItemId; expected: number; unit: number; subtotal: number }[]
+  /** Every bought leaf, summed over the steps that use it. `expected` includes the `owned` part; `subtotal` and `depth` are for the rest. */
+  shopping: { itemId: ItemId; expected: number; owned: number; unit: number; subtotal: number; depth: Depth | null }[]
   missing: ItemId[]
   blocked: RecipeId[]
 }
@@ -319,6 +358,23 @@ export interface PlanResult {
   in `plan.missing`.
 - Byproduct credit values the other results of a step (normal items left by combo crafts) at
   `lowest * (1 - taxRate)`, only when the item has a market or manual quote.
+- Depth. `prices.quote(itemId, units)` with `units > 1` and a cached ladder walks the levels
+  from the cheapest. A partial level costs its unit price times the fraction taken, units past
+  the last listing cost the top rung, and the quote's `depth` carries the units, cost, listings
+  and levels spanned and the units available. aion2.exchange polls depth far less often than
+  prices, so the ladder's shape is anchored to the quote's lowest listing, every level scaled by
+  `lowest / levels[0].unitPrice`. The UI says so when the poll is stale against the prices. A
+  single unit, a manual price, an NPC price, or an item with no ladder quotes flat, which keeps
+  `verify-model.mjs` equal to aion2.exchange at quantity 1.
+- The units bought of a material depend on the plan, and its unit price depends on those units.
+  So `planCraft` runs the planner with no demand first, where every quote is for one unit, then
+  re-runs it with the previous pass's bought units per item (`expected - owned`, summed over
+  every step). It stops when the demand stops changing, when no ladder prices the old or the
+  new demand, or after four passes. Stock the player holds is spent before the ladder is read,
+  so a ladder only ever prices the bought part of a line. A material whose depth-aware price
+  passes its crafting cost switches to crafting on the next pass. `plan.market.cost` buys
+  `quantity` units of the target along its ladder, and `plan.margin` still sells at the lowest
+  listing.
 
 ## Alternatives considered
 

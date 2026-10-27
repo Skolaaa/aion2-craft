@@ -77,7 +77,7 @@ Turning off crafting or morphing only removes that option for items that have a 
 
 [aion2.exchange](https://aion2.exchange) (Aion2Market) collects the Market of every Global world once an hour and serves it read-only. The app asks for 100 items per request, asks again at most once a minute, and keeps the last quotes of each world in your browser's `localStorage`.
 
-- The price of an item is its cheapest unit listing. Buying 30 units usually costs more than 30 times that price.
+- The price of an item is its cheapest unit listing. For an item the plan buys in bulk, the price follows the exchange's listing ladder when the exchange has polled depth for that item. Otherwise it stays flat, so 30 units can cost more than the plan says.
 - Prices are hourly snapshots, so a listing can be gone when you look in game.
 - The app reads one world at a time. Prices differ a lot between worlds.
 - Bound items are not on the Market. Only four NPC reagents have a known price (Orichalcum Solvent, Sandpaper, Abrasive, Catalyst, 400 Kina each). Other NPC reagents, such as Glass Bottle or Salt, have no price until you enter one.
