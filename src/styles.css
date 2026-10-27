@@ -16,10 +16,6 @@
   --elyos-l: #7EB3FF;
   --asmo: #7B4FD6;
   --asmo-l: #B89CFF;
-  --grade-common: #D9D9D9;
-  --grade-rare: #5FB4FF;
-  --grade-legend: #D08BFF;
-  --grade-unique: #FFB347;
 
   --display: 'Cinzel', 'Times New Roman', serif;
   --sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -665,22 +661,6 @@ input[type='range'] {
   background: var(--raised);
   box-shadow: inset 0 0 8px color-mix(in srgb, var(--grade, transparent) 25%, transparent);
   object-fit: cover;
-}
-
-[data-grade='Common'] {
-  --grade: var(--grade-common);
-}
-
-[data-grade='Rare'] {
-  --grade: var(--grade-rare);
-}
-
-[data-grade='Legend'] {
-  --grade: var(--grade-legend);
-}
-
-[data-grade='Unique'] {
-  --grade: var(--grade-unique);
 }
 
 .toggle,
