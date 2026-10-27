@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { noticeDirectory as directory } from '../market/worlds.fixture.ts'
+import { serverDirectory as directory } from '../market/worlds.fixture.ts'
 import { currentNote, groupNote, initialActive, moveActive, pickerView, type PickerQuery } from './picker.ts'
 
 const ALL: PickerQuery = { text: '', region: null, race: null }

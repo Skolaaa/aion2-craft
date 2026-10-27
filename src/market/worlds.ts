@@ -37,7 +37,6 @@ export interface WorldDirectory {
   byId: ReadonlyMap<WorldId, Listed>
 }
 
-// Built by exchangeClient and the tests only. The server key stays inside src/market.
 export interface KeyedWorld {
   world: World
   key: number
@@ -49,8 +48,7 @@ export const SIDE = {
 } as const satisfies Record<Race, { name: string; badge: string }>
 
 // game_server_key is side * 1000 + region * 100 + n, so EU Kaisinel 1304 meets EU Lumiel 2304.
-// NC publishes pairs by name and rotates them. The rule reproduces every pair in the notice of
-// 2026-10-04, which worlds.test.ts holds; when that test fails, add an override table here.
+// NC publishes pairs by name and rotates them.
 export const PAIRING: { since: IsoDate; partnerKey(key: number): number } = {
   since: '2026-10-04',
   partnerKey: (key) => (key < 2000 ? key + 1000 : key - 1000),
@@ -86,8 +84,7 @@ export function directoryOf(defaultId: WorldId, rows: readonly KeyedWorld[]): Wo
   return { defaultId, count: rows.length, regions, byId }
 }
 
-// The saved world stands in while the list loads or after it failed; once it loads, the
-// directory's copy wins so hasData and the match are current.
+// The directory's copy wins so hasData and the match are current.
 export function resolveWorld(directory: WorldDirectory | null, saved: World | null): Listed | null {
   if (directory === null) return saved && { world: saved, match: null }
   const { byId, defaultId, regions } = directory
