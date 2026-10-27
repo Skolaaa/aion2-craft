@@ -1,7 +1,7 @@
 import type { Mastery, Profession } from '../domain/types.ts'
 import type { World, WorldId } from '../market/worlds.ts'
 import { clamp } from './number.ts'
-import { isFiniteNumber, isRecord } from './usePersistentState.ts'
+import { isFiniteNumber, isRecord, peekPersisted } from './usePersistentState.ts'
 
 export const PROFESSIONS: readonly { id: Profession; label: string; inGame: string | null; abbr: string }[] = [
   { id: 'Blacksmithing', label: 'Blacksmithing', inGame: null, abbr: 'BS' },
@@ -84,6 +84,8 @@ export function parseSetup(raw: unknown): Setup | null {
     byproductCredit: flag(raw.byproductCredit, DEFAULT_SETUP.byproductCredit),
   }
 }
+
+export const peekSetup = (): Setup => peekPersisted(SETUP_KEY, DEFAULT_SETUP, parseSetup)
 
 export const settingsOf = ({ world, recent, ...settings }: Setup): PlanSettings => settings
 
