@@ -28,7 +28,7 @@ chose from are dark, and one theme halves the CSS to keep right.
 | `--gain` / `--loss` | `#5FD38D` / `#F0716B` | signed margin, change chips |
 | `--elyos` / `--elyos-l` | `#2E6FD1` / `#7EB3FF` | Elyos: side badge, the world chip, the answer panel's 2 px top border |
 | `--asmo` / `--asmo-l` | `#7B4FD6` / `#B89CFF` | Asmodian: the same places, and matched-world names |
-| grades | Common `#D9D9D9`, Rare `#5FB4FF`, Legend `#D08BFF`, Unique `#FFB347` | item names in tables and the item header, 1 px icon frame with a 25% inner glow |
+| grades | Common `#D9D9D9`, Rare `#5FB4FF`, Legend `#D08BFF`, Unique `#FFB347`, Epic `#FF6B6B`, Special `#7FE0D6` | item names in tables and the item header, 1 px icon frame with a 25% inner glow. Epic and Special are our own tokens; each keeps 4.5:1 on `--page`, and an unknown grade shows as Common |
 
 Blue and violet mean a side and nothing else. Gold means money. Bronze means ornament.
 
@@ -39,7 +39,9 @@ Type. Three families, each with one job.
   13 px tables and notes, 12 px labels.
 - `IBM Plex Mono` 400/600: every digit, chip, tab, column header and any label that sits next
   to a number. 11 px uppercase column headers with 0.04em tracking, 12 px chips, 28 px the three
-  answer figures (22 px on phones). `font-variant-numeric: tabular-nums` everywhere.
+  answer figures (22 px on phones). `font-variant-numeric: tabular-nums` everywhere. In the
+  verdict sentence only the Kina amounts and the tax percent are set in mono; counts and levels
+  stay in the sentence's face.
 
 Space 4 / 8 / 12 / 16 / 24 / 32. Radius 2 px (sheet top corners 8 px on phones). Borders 1 px.
 No shadows. No gradients except the heat ramp on margin cells. Rows 36 px. Status line 44 px.
@@ -64,7 +66,7 @@ cells are split by the same rules and finials. Nothing else is ornamented.
 | | 9,857,173                |  | 18,000,000                |  | +7,242,827                |   |
 | | 4.1 attempts at 96.8% .. |  | lowest of 4 listings      |  | [+73.5%] after 5% tax     |   |
 | +--------------------------+  +---------------------------+  +---------------------------+   |
-| Prices from aion2.exchange, captured 21 min ago. Refresh                                     |
+| Prices from aion2.exchange, captured 21 min ago.                                             |
 |                                                                                              |
 | buy 9   steps 5   rates                                                                      |
 | ITEM                   SOURCE              EXPECTED    UNIT PRICE    SUBTOTAL   SHARE        |
@@ -84,22 +86,25 @@ setting in place (Arena's idea on Ledger's line):
   `mastery 5×100` or `mastery 100/60/…`.
 - `plan 3/3` opens the settings drawer (plan options and your prices), from the right, 400 px.
 - The freshness pill at the right shows age and a dot (gold when fresh, loss colour when stale);
-  it is the refresh button.
+  it is the only refresh button. The line under the answer and under the scanner title states the
+  capture time, or the stale or missing warning, as text.
 - The settings button goes away. Everything it held is reachable from a chip.
 
 World picker, one component used from the region and world chips, desktop popover 440 px under
 the chip, bottom sheet under 640 px with a sticky search field:
 - Search field "search all 106 worlds" on top, then two segment rows: regions
   (`all NAE NAW EU LA AS`) and sides (`both Elyos Asmodian`).
-- Results grouped by region. The group header reads `EU Europe, 46 worlds, matched since 4 Oct
-  2026`. Each row: world name, `vs Lumiel` in the matched side's colour, the side badge, and a
+- Results grouped by region. The group header reads `EU Europe, 46 worlds`, so no header wraps
+  at 440 px. Each row: world name, `vs Lumiel` in the matched side's colour, the side badge, and a
   `no prices yet` tag when the exchange has no data. The selected row shows `current` and an
   expanded note: "Matched with Lumiel, Asmodian, since 4 Oct 2026. Server 11304. The market
   stays per world."
 - Recently used worlds (up to three, persisted) pinned above the groups.
 - Footer line: "Each world is one side with its own market. NCSoft pairs it with an enemy world
-  for the Abyss and changes the pair from time to time."
-- Arrow keys and Enter choose, Escape closes, focus returns to the chip.
+  for the Abyss and changes the pair from time to time. Pairs from NCSoft's notice of 4 Oct
+  2026." One notice dates every region, so the date sits here once.
+- Arrow keys and Enter choose, Escape closes, focus returns to the chip. The region and side rows
+  are radio groups, like the Normal and Splendent toggle.
 
 Calculator answer: as the Ledger prototype, with Atlas's item hero (grade-framed 48 px icon,
 Cinzel name in the grade colour) and its diamond-ruled figure strip. The margin percentage is a
@@ -112,6 +117,7 @@ under 900 px), the name filter, the hidden-rows line with "Show them", and one t
 Margin % as the heat column. The sorted header is gold with an arrow. Hidden rows, when shown,
 are dimmed with a `needs a price` or `needs mastery 55` pill in the Market lowest cell. On
 phones the table keeps Item, Margin and Margin %, and a `sort by` chip row replaces the headers.
+It offers every sortable column, including Craft cost and Market lowest, which phones hide.
 No sparkline: it would cost one history request per row.
 
 Settings drawer: plan options with their one-line notes, then "Your prices on Kaisinel" with
@@ -120,7 +126,8 @@ reset, as today.
 States: as the second pass (loading line, stale pill, proxy-down notice, world list failed with
 retry, missing price input in the row, mastery too low in the sentence, no listing).
 
-Mobile (under 640 px): the status line wraps to two rows (chips, then the mastery strip), the
+Mobile (under 640 px): the status line wraps to two rows (chips, then the mastery strip) with the
+freshness pill on a short third row at the right, the
 figures stack, the buy table collapses to item plus subtotal with the math as a sub-line, the
 picker and popovers become bottom sheets, the drawer takes the full width.
 
