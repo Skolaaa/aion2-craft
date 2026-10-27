@@ -269,4 +269,74 @@ describe('planCraft', () => {
       expect(result.margin).toBeCloseTo(100 * 0.9 * 3 - 30)
     })
   })
+
+  describe('with a forced source', () => {
+    // Crafting the part costs 20 against a listing of 100.
+    const world = { recipes: [craft(1, 100, [[200, 1]]), craft(2, 200, [[300, 2]])] }
+    const market = { 200: 100, 300: 10 }
+    const methodOf = (result: ReturnType<typeof plan>) => result.root.materials[0].acquisition.method
+
+    it('buys a part on request although crafting it is cheaper, and the cost rises by the gap', () => {
+      const result = plan(world, market, { target: 100, forced: new Map([[200, 'buy']]) })
+      expect(methodOf(result)).toBe('buy')
+      expect(result.cost).toBeCloseTo(100)
+      expect(result.alternatives.get(200)).toEqual([{ method: 'buy', unit: 100 }, { method: 'craft', unit: 20, recipeId: 2 }])
+    })
+
+    it('crafts a part on request with crafting switched off, and still lists crafting as a way', () => {
+      const off = { ...OPTIONS, allowCraft: false }
+      expect(methodOf(plan(world, market, { target: 100, options: off }))).toBe('buy')
+      const result = plan(world, market, { target: 100, options: off, forced: new Map([[200, 'craft']]) })
+      expect(methodOf(result)).toBe('craft')
+      expect(result.cost).toBeCloseTo(20)
+      expect(result.alternatives.get(200)).toEqual([{ method: 'buy', unit: 100 }, { method: 'craft', unit: 20, recipeId: 2 }])
+    })
+
+    it('falls back to the cheapest way when the requested one does not exist', () => {
+      const result = plan(world, market, { target: 100, forced: new Map([[300, 'craft']]) })
+      expect(result.cost).toBeCloseTo(20)
+      expect(result.alternatives.get(300)).toEqual([{ method: 'buy', unit: 10 }])
+    })
+
+    it('morphs on request although the listing is cheaper', () => {
+      const morph: Recipe = { ...craft(3, 301, [[400, 1]]), section: 'conversion', profession: null, rate: { kind: 'fixed', success: 0.5 } }
+      const morphs = { recipes: [craft(1, 100, [[300, 1]]), morph], substitutes: { 300: 301 } }
+      expect(plan(morphs, { 300: 30, 400: 20 }, { target: 100 }).cost).toBeCloseTo(30)
+      const result = plan(morphs, { 300: 30, 400: 20 }, { target: 100, forced: new Map([[300, 'morph']]) })
+      expect(methodOf(result)).toBe('morph')
+      expect(result.cost).toBeCloseTo(40)
+      expect(result.alternatives.get(300)).toEqual([{ method: 'buy', unit: 30 }, { method: 'morph', unit: 40, recipeId: 3 }])
+    })
+
+    it('lists a route the player cannot use at Infinity and does not honour a request for it', () => {
+      const tooHigh = { recipes: [craft(1, 100, [[200, 1]]), craft(2, 200, [[300, 2]], { masteryLevel: 50 })] }
+      const result = plan(tooHigh, market, { target: 100, forced: new Map([[200, 'craft']]) })
+      expect(methodOf(result)).toBe('buy')
+      expect(result.cost).toBeCloseTo(100)
+      expect(result.alternatives.get(200)).toEqual([{ method: 'buy', unit: 100 }, { method: 'craft', unit: Infinity, recipeId: 2 }])
+      const unpriced = plan(world, { 200: 100 }, { target: 100, forced: new Map([[200, 'craft']]) })
+      expect(unpriced.cost).toBeCloseTo(100)
+      expect(unpriced.alternatives.get(200)).toEqual([{ method: 'buy', unit: 100 }, { method: 'craft', unit: Infinity, recipeId: 2 }])
+    })
+
+    it('lists one way per method and takes the cheapest recipe of a requested one', () => {
+      const two = { recipes: [craft(1, 100, [[200, 1]]), craft(2, 200, [[300, 2]]), craft(3, 200, [[300, 3]])] }
+      const result = plan(two, market, { target: 100, forced: new Map([[200, 'craft']]) })
+      expect(result.alternatives.get(200)).toEqual([{ method: 'buy', unit: 100 }, { method: 'craft', unit: 20, recipeId: 2 }])
+      const part = result.root.materials[0].acquisition
+      expect(part.method === 'craft' && part.step.recipeId).toBe(2)
+    })
+
+    it('applies the request to every step that uses the item', () => {
+      const twice = { recipes: [craft(1, 100, [[200, 1], [250, 1]]), craft(2, 200, [[300, 2]]), craft(3, 250, [[200, 1]])] }
+      const prices = { ...market, 250: 500 }
+      expect(plan(twice, prices, { target: 100 }).cost).toBeCloseTo(40)
+      const result = plan(twice, prices, { target: 100, forced: new Map([[200, 'buy']]) })
+      const [part, assembly] = result.root.materials
+      expect(part.acquisition.method).toBe('buy')
+      expect(assembly.acquisition.method === 'craft' && assembly.acquisition.step.materials[0].acquisition.method).toBe('buy')
+      expect(result.cost).toBeCloseTo(200)
+      expect(result.shopping).toEqual([expect.objectContaining({ itemId: 200, expected: 2, subtotal: 200 })])
+    })
+  })
 })

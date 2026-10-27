@@ -15,6 +15,7 @@ const plan = planCraft({
   options: { allowCraft: true, allowMorph: true, byproductCredit: true, taxRate: 0.05 },
   world,
   prices,                  // PriceBook: manual > market > npc > none; quote(itemId, units) walks the depth ladder for units > 1
+  forced,                  // optional ReadonlyMap<ItemId, Method>: buy, craft or morph the player insists on, wherever the item appears
 })                         // null when no recipe of this race makes the target
 plan.cost            // expected Kina to get 1 Splendent at mastery 42, Infinity while a price is missing
 
@@ -23,6 +24,7 @@ plan.margin          // lowest * (1 - tax) * quantity - cost
 plan.root            // step tree: each step's attempts, rates, materials, acquisition
 plan.missing         // items with no price and no recipe
 plan.blocked         // recipes in the tree above the player's mastery
+plan.alternatives    // per item met: one entry per method with its unit cost, Infinity when blocked, and the route's recipe id
 ```
 
 ## Modules
@@ -35,7 +37,7 @@ plan.blocked         // recipes in the tree above the player's mastery
 | `src/domain/types.ts` | the typed model below |
 | `src/domain/catalog.ts` | `buildCatalog(race, recipesFile, ratesFile)`: indexes by recipe id and by product, resolves each craft recipe's curve by recipe id, parses each item's grade with `parseGrade` (unknown grades become `Common`); `tradeableItems(catalog)` |
 | `src/domain/rates.ts` | `stepRates(recipe, mastery, catalog)`: success, combo success and level difference, curve lookup with family fallback |
-| `src/domain/planCraft.ts` | the expected-value engine, pure, memoised cheapest acquisition per item; spends the player's `Owned` stock in tree order before any buy or craft, and re-runs with the units it buys of each item while a ladder prices that demand |
+| `src/domain/planCraft.ts` | the expected-value engine, pure, memoised cheapest acquisition per item, or the `Forced` method the player insists on; spends the player's `Owned` stock in tree order before any buy or craft, re-runs with the units it buys of each item while a ladder prices that demand, and reports the `alternatives` it weighed per item |
 | `src/domain/priceBook.ts` | merges manual overrides, market quotes, depth ladders and NPC prices into `PriceBook`; `ladderCost(ladder, units)` |
 | `src/data/catalog.ts` | `catalogFor(race)`: the bundled JSON as a `Catalog`, built once per race |
 | `src/market/exchangeClient.ts` | fetch wrappers over `/ex/api/*` (proxied), batch by 100 keys, localStorage cache with `capturedAt`; depth ladders one item at a time per world, one store per world in memory and in localStorage for an hour; `directoryFromServers(body)` parses `/servers` (faction names from `SIDE`, `game_server_key`) into a `WorldDirectory`, and `fetchWorlds()` calls it |
@@ -45,14 +47,15 @@ plan.blocked         // recipes in the tree above the player's mastery
 | `src/state/openSetting.ts` | the `Setting` union, the `SETTINGS` each chip opens, `settingKey`, and `useOpenSetting()`, the one owner of which setting is open and of focus return |
 | `src/state/picker.ts` | `pickerView`, `withText`, `initialActive`, `groupNote`, `pairingNote`, `currentNote` for the world list; pure |
 | `src/state/combobox.ts` | `moveActive(ids, active, step)` and `useCombobox(ids, onPick, initial)`: the active option, arrow keys, Enter and scrolling into view, shared by `WorldPicker` and `Search` |
-| `src/state/answer.ts` | `answerOf`, `sentenceOf` (the verdict as `Segment`s), `buyList` (unpriced, bought, then lines stock covers in full, each with its `owned` part), `stepCount` and the step notes; `bulkBuys` (the items worth a ladder), `depthNote` and `depthCapturedAt`; one `stepsOf` walker over the plan tree; pure |
+| `src/state/answer.ts` | `answerOf`, `sentenceOf` (the verdict as `Segment`s), `buyList` (unpriced, bought, then lines stock covers in full, each with its `owned` part), `stepCount` and the step notes; `blockedNote` (why a listed way cannot be used) and `extraCost` (what a chosen way costs over the cheapest); `bulkBuys` (the items worth a ladder), `depthNote` and `depthCapturedAt`; one `stepsOf` walker over the plan tree; pure |
 | `src/state/shopping.ts` | `shoppingText(plan, list, names)`: the buy table as plain text with whole-unit counts, ending with the plan link, for the Copy list button; pure |
 | `src/state/grade.ts` | `GRADE: Record<Grade, { name, colour }>`, the game's own grade table (Global display name and colour per NC internal id), `gradeName()` and `gradeRules()`, the `[data-grade]` CSS that `main.tsx` injects once |
 | `src/state/useFreshness.ts` | `useFreshness(feed)`: the capture time, age, stale, refreshing, the "these are the newest" note and `refresh`, called once per workspace |
 | `src/state/useLadders.ts` | `useLadders(worldId)`: the cached ladders of one world and `request(itemIds)`, which fetches the ones older than an hour and changes state only when one was new |
 | `src/state/heat.ts` | `heatOf(marginPct)`: the margin heat colour and its ink; pure |
 | `src/state/format.ts` | number and date text; `shownTenths`, the one rule for when a fraction shows as 0.0%, used by `toneOf` and `heatOf` |
-| `src/state/useItemMap.ts` | `useItemMap(key, accept)`: a number per item in localStorage, the one hook behind `useOverrides` (prices) and `useOwned` (counts held, per world) |
+| `src/state/useItemMap.ts` | `useItemMap(key, parse)`: a value per item in localStorage, parsed at the storage boundary and again on save, the one hook behind `useOverrides` (prices), `useOwned` (counts held) and `useSources` (the chosen method), each per world; `parseEntries` |
+| `src/state/useSources.ts` | `useSources(worldId)`: the method the player insists on per item, as the planner's `Forced` map; `parseMethod` accepts only `buy`, `craft` and `morph` |
 | `src/state/usePersistentState.ts` | `usePersistentState(key, fallback, parse, seed?)`: one slot in localStorage. A `seed` shows in place of the stored value and reaches storage only through the top-level fields a change touches (`step`); `peekPersisted` reads a slot outside React |
 | `src/state/shareLink.ts` | the share link query: `encodeLink(plan)` writes a key only where the plan differs from a frozen `BASELINE`; `openLink(search, stored, directory)` turns a query into a `Seed` for the three slots, `'waiting'` while only the world list can name its world, and a `LinkNote` for an unknown world or item; `noteText`; pure |
 | `src/state/useShareLink.ts` | `useLinkOpening(worlds)`, the boot gate, which keeps its first answer; `useAddressBar(query)`, the only `history.replaceState` caller, half a second behind the plan and flushed on `pagehide` |
@@ -61,7 +64,8 @@ plan.blocked         // recipes in the tree above the player's mastery
 | `src/components/TopBar.tsx` | wordmark, views, the context chips, `FreshnessPill` (the only refresh button) and Copy link |
 | `src/components/SettingHost.tsx` | renders zero or one `Surface` for the open `Setting`, framed from a `Record<Setting['kind'], …>` of title, placement and width: `WorldPicker`, `MasteryForm`, `TaxForm` or `PlanSettings` |
 | `src/components/Surface.tsx` | the one native `<dialog>` for every in-place setting; `SHEET_BELOW = 640` |
-| `src/components/Segmented.tsx` | the one segmented control (a radio group): Normal and Splendent, the picker's regions and sides |
+| `src/components/Segmented.tsx` | the one segmented control (a radio group, an option may be disabled with its reason as `title`): Normal and Splendent, the picker's regions and sides, the source choice under steps |
+| `src/components/SourceCell.tsx` | buy, craft or morph for one row under steps, built from `plan.alternatives`; a way at Infinity is disabled with `blockedNote` |
 | `src/components/PriceStatus.tsx` | `PriceStatus`, the capture time or the stale or missing warning as text, plus one sentence when the plan's oldest ladder is stale against the prices, and `FreshnessPill` |
 | `src/components/Notice.tsx` | `Notice` with its Try again button, `WorldsFailed` for the world list, and `LinkNotice` with Dismiss for a link that did not fully apply |
 | `src/components/CountCell.tsx` | the Have count, a number edited in place like `PriceCell`; zero or empty clears it |
@@ -275,8 +279,19 @@ export type Acquisition =
   | { method: 'owned' }
   | { method: 'none' }
 
+/** A way to obtain an item that the player can insist on. */
+export type Method = Exclude<Acquisition['method'], 'owned' | 'none'>
+
 /** Units the player already holds, per item. The planner uses them before it buys or crafts. */
 export type Owned = ReadonlyMap<ItemId, number>
+
+/** The method the player insists on, per item. It wins over the cheapest wherever that item appears. */
+export type Forced = ReadonlyMap<ItemId, Method>
+
+/** One way the planner weighed for an item. `unit` is Infinity when the route cannot be used. */
+export type Alternative =
+  | { method: 'buy'; unit: number }
+  | { method: Exclude<Method, 'buy'>; unit: number; recipeId: RecipeId }
 
 export interface MaterialLine {
   itemId: ItemId
@@ -312,6 +327,7 @@ export interface PlanInput {
   world: Catalog
   prices: PriceBook
   owned?: Owned
+  forced?: Forced
 }
 
 export interface PlanResult {
@@ -326,6 +342,8 @@ export interface PlanResult {
   shopping: { itemId: ItemId; expected: number; owned: number; unit: number; subtotal: number; depth: Depth | null }[]
   missing: ItemId[]
   blocked: RecipeId[]
+  /** Every way the planner weighed for each item it met, so the UI can offer the others without re-planning. */
+  alternatives: ReadonlyMap<ItemId, Alternative[]>
 }
 ```
 
@@ -356,6 +374,13 @@ export interface PlanResult {
   ladder's intermediate Splendent items still get made with both turned off.
 - An item with no price and no recipe is `{ method: 'none' }`, costs `Infinity`, and is listed
   in `plan.missing`.
+- A forced method (`PlanInput.forced`, per item) wins over the cheapest wherever the item
+  appears, which is what "I craft ingots" means. A forced craft or morph competes with its
+  global switch off, since the explicit choice is narrower. A forced way at `Infinity`
+  (mastery too low, a material with no price) is not honoured and the cheapest is used, so a
+  choice never shows an `Infinity` cost. `plan.alternatives` lists, per item the planner met,
+  the cheapest candidate of each method with its unit cost and the route's recipe id, so the
+  UI offers the other ways and says why one is blocked without re-planning.
 - Byproduct credit values the other results of a step (normal items left by combo crafts) at
   `lowest * (1 - taxRate)`, only when the item has a market or manual quote.
 - Depth. `prices.quote(itemId, units)` with `units > 1` and a cached ladder walks the levels

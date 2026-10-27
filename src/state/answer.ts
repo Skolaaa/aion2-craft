@@ -1,5 +1,6 @@
+import { stepRates } from '../domain/rates.ts'
 import type {
-  Acquisition, Catalog, Depth, ItemId, Mastery, PlanResult, PriceBook, Profession, RateFamily, Recipe, RecipeId, StepPlan,
+  Acquisition, Alternative, Catalog, Depth, ItemId, Mastery, Method, PlanResult, PriceBook, Profession, RateFamily, Recipe, RecipeId, StepPlan,
 } from '../domain/types.ts'
 import { decimal, kina, plural, rate, taxLabel } from './format.ts'
 
@@ -126,15 +127,31 @@ export function sentenceOf(verdict: Verdict, { itemName, worldName, taxRate }: N
   }
 }
 
+const masteryNote = (recipe: Recipe | undefined, mastery: Mastery) =>
+  recipe?.profession ? `needs ${recipe.profession} ${recipe.masteryLevel}, yours is ${mastery[recipe.profession]}` : 'needs more mastery'
+
 export function stepSummary(step: StepPlan, recipe: Recipe | undefined, mastery: Mastery, digits = 2): string {
-  if (step.successRate === 0) {
-    if (!recipe?.profession) return 'needs more mastery'
-    return `needs ${recipe.profession} ${recipe.masteryLevel}, yours is ${mastery[recipe.profession]}`
-  }
+  if (step.successRate === 0) return masteryNote(recipe, mastery)
   const combo = recipe?.combo
   const note =
     !combo || combo.itemId === recipe.product.itemId ? '' : step.wantCombo ? ` with a ${rate(combo.chance)} combo` : `, ${rate(combo.chance)} combo instead`
   return `${decimal(step.attempts, digits)} ${plural(step.attempts, 'attempt', 'attempts')} at ${rate(step.successRate)}${note}`
+}
+
+/** Why a craft or morph the planner listed at Infinity cannot be used. */
+export function blockedNote(route: Exclude<Alternative, { method: 'buy' }>, { catalog, mastery }: AnswerContext): string {
+  const recipe = catalog.recipes.get(route.recipeId)
+  return recipe && stepRates(recipe, mastery, catalog).success === 0 ? masteryNote(recipe, mastery) : 'a material of it has no price yet'
+}
+
+/** What the chosen way costs over the cheapest usable one for `units` of the line, or null when it is the cheapest. */
+export function extraCost(options: readonly Alternative[], method: Method, units: number): { over: Method; kina: number } | null {
+  const chosen = options.find((option) => option.method === method)
+  const usable = options.filter((option) => Number.isFinite(option.unit))
+  if (!chosen || usable.length === 0) return null
+  const best = usable.reduce((held, next) => (next.unit < held.unit ? next : held))
+  const kina = (chosen.unit - best.unit) * units
+  return best.method === method || Math.round(kina) === 0 ? null : { over: best.method, kina }
 }
 
 const FAMILY_NOTE: Record<RateFamily, string> = {

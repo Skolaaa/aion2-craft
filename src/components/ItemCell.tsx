@@ -6,12 +6,13 @@ interface Props {
   item: Item | undefined
   meta?: ReactNode
   narrowMeta?: ReactNode
+  controls?: ReactNode
   depth?: number
   toggle?: ReactNode
   onOpen?(): void
 }
 
-export function ItemCell({ item, meta, narrowMeta, depth, toggle, onOpen }: Props) {
+export function ItemCell({ item, meta, narrowMeta, controls, depth, toggle, onOpen }: Props) {
   const name = item?.name ?? 'Unknown item'
   const style = depth === undefined ? undefined : ({ '--depth': depth } as CSSProperties)
   return (
@@ -30,6 +31,7 @@ export function ItemCell({ item, meta, narrowMeta, depth, toggle, onOpen }: Prop
             {narrowMeta && <span className="show-narrow">{meta ? ', ' : ''}{narrowMeta}</span>}
           </span>
         )}
+        {controls}
       </div>
     </div>
   )

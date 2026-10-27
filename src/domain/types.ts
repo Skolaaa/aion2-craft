@@ -106,8 +106,19 @@ export type Acquisition =
   | { method: 'owned' }
   | { method: 'none' }
 
+/** A way to obtain an item that the player can insist on. */
+export type Method = Exclude<Acquisition['method'], 'owned' | 'none'>
+
 /** Units the player already holds, per item. The planner uses them before it buys or crafts. */
 export type Owned = ReadonlyMap<ItemId, number>
+
+/** The method the player insists on, per item. It wins over the cheapest wherever that item appears. */
+export type Forced = ReadonlyMap<ItemId, Method>
+
+/** One way the planner weighed for an item. `unit` is Infinity when the route cannot be used. */
+export type Alternative =
+  | { method: 'buy'; unit: number }
+  | { method: Exclude<Method, 'buy'>; unit: number; recipeId: RecipeId }
 
 export interface MaterialLine {
   itemId: ItemId
@@ -143,6 +154,7 @@ export interface PlanInput {
   world: Catalog
   prices: PriceBook
   owned?: Owned
+  forced?: Forced
 }
 
 export interface PlanResult {
@@ -157,4 +169,6 @@ export interface PlanResult {
   shopping: { itemId: ItemId; expected: number; owned: number; unit: number; subtotal: number; depth: Depth | null }[]
   missing: ItemId[]
   blocked: RecipeId[]
+  /** Every way the planner weighed for each item it met, so the UI can offer the others without re-planning. */
+  alternatives: ReadonlyMap<ItemId, Alternative[]>
 }

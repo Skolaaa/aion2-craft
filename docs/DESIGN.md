@@ -122,6 +122,14 @@ listings it spans ("Market, across 3 listings of 15"), with "only 4 listed" when
 runs out. The buy figure does the same for the target at a quantity above one. The price
 status line adds one sentence when the ladder poll is stale against the prices.
 
+Source choice: under steps, a row whose item the plan could get more than one way carries a
+small segmented control under its note, `buy | craft`, plus `morph` when a Substance Morph
+exists, with the plan's pick selected. Choosing another way forces it for that item everywhere
+in the plan, every figure updates, and the note gains `yours` in gold and what the choice
+costs over the cheapest way: "Craft, 4.1 attempts at 96.8%, yours, 1,230 Kina more than
+buying". A way the plan cannot use is disabled, with the reason on hover. The buy table stays
+a shopping list.
+
 Scanner: Ledger's left rail (All plus five professions with counts; a horizontal chip strip
 under 900 px), the name filter, the hidden-rows line with "Show them", and one table: Item
 (icon, grade-coloured name, profession and level in mono), Craft cost, Market lowest, Margin,
@@ -135,7 +143,8 @@ Settings drawer: plan options with their one-line notes, then "Your prices on Ka
 reset, as today, then "What you have on Kaisinel": the counts entered under Have in the buy
 table, each with Clear. The buy table's Have column edits in place like a unit price; a
 "To buy" column appears only once a count is set, and a line that stock covers in full
-drops to the bottom with "your stock" as its source.
+drops to the bottom with "your stock" as its source. Then "Your sources on Kaisinel": the
+ways chosen under steps, each with Clear, and Clear all once there are two.
 
 States: as the second pass (loading line, stale pill, proxy-down notice, world list failed with
 retry, missing price input in the row, mastery too low in the sentence, no listing).

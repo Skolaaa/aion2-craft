@@ -1,5 +1,6 @@
 import type { ItemId } from '../domain/types.ts'
 import { useItemMap } from './useItemMap.ts'
+import { isFiniteNumber } from './usePersistentState.ts'
 
 export interface PriceOverrides {
   prices: ReadonlyMap<ItemId, number>
@@ -7,9 +8,10 @@ export interface PriceOverrides {
   resetAll(): void
 }
 
-const positive = (price: number) => price > 0
+/** A price the player typed: Kina above zero. */
+export const parsePrice = (value: unknown): number | null => (isFiniteNumber(value) && value > 0 ? value : null)
 
 export function useOverrides(worldId: number): PriceOverrides {
-  const { values, save, resetAll } = useItemMap(`overrides:${worldId}`, positive)
+  const { values, save, resetAll } = useItemMap(`overrides:${worldId}`, parsePrice)
   return { prices: values, save, resetAll }
 }

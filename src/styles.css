@@ -955,6 +955,20 @@ input[type='range'] {
   pointer-events: none;
 }
 
+.segment:has(input:disabled) {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.segment:has(input:disabled):hover {
+  color: var(--muted);
+}
+
+.item-text > .segments {
+  justify-self: start;
+  margin-top: var(--space-1);
+}
+
 .picker-group-head {
   position: sticky;
   top: 49px;

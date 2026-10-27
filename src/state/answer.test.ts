@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { buildCatalog, type RatesFile, type RecipesFile } from '../domain/catalog.ts'
 import { planCraft } from '../domain/planCraft.ts'
 import { makePriceBook } from '../domain/priceBook.ts'
-import type { Catalog, ItemId, Mastery, Owned, PlanResult, PriceBook, Recipe } from '../domain/types.ts'
-import { answerOf, bulkBuys, buyList, depthCapturedAt, depthNote, sentenceOf, stepSummary, successNote, type Answer } from './answer.ts'
+import type { Alternative, Catalog, ItemId, Mastery, Owned, PlanResult, PriceBook, Recipe } from '../domain/types.ts'
+import {
+  answerOf, blockedNote, bulkBuys, buyList, depthCapturedAt, depthNote, extraCost, sentenceOf, stepSummary, successNote, type Answer,
+} from './answer.ts'
 
 const SWORD = 1
 const BLADE = 2
@@ -171,6 +173,30 @@ describe('stepSummary', () => {
 
     const locked = answer([recipe(100, SWORD, [[IRON, 2]], { masteryLevel: 30 })], {})
     expect(stepSummary(locked.plan.root, locked.catalog.recipes.get(100), MASTERY)).toBe('needs Blacksmithing 30, yours is 10')
+  })
+})
+
+describe('source choices', () => {
+  const craftWay = (result: ReturnType<typeof answer>, itemId: ItemId) => {
+    const way = result.plan.alternatives.get(itemId)?.find((option) => option.method === 'craft')
+    if (!way || way.method === 'buy') throw new Error('no craft way')
+    return way
+  }
+
+  it('says why a listed way cannot be used', () => {
+    const locked = answer([recipe(100, SWORD, [[BLADE, 1]]), recipe(101, BLADE, [[IRON, 1]], { masteryLevel: 30 })], { [BLADE]: 50, [IRON]: 1 })
+    expect(craftWay(locked, BLADE).unit).toBe(Infinity)
+    expect(blockedNote(craftWay(locked, BLADE), { catalog: locked.catalog, mastery: MASTERY })).toBe('needs Blacksmithing 30, yours is 10')
+    const unpriced = answer([recipe(100, SWORD, [[BLADE, 1]]), recipe(101, BLADE, [[IRON, 1]])], { [BLADE]: 50 })
+    expect(blockedNote(craftWay(unpriced, BLADE), { catalog: unpriced.catalog, mastery: MASTERY })).toBe('a material of it has no price yet')
+  })
+
+  it('prices a chosen way against the cheapest usable one for the line', () => {
+    const ways: Alternative[] = [{ method: 'buy', unit: 100 }, { method: 'craft', unit: 20, recipeId: 2 }, { method: 'morph', unit: Infinity, recipeId: 3 }]
+    expect(extraCost(ways, 'buy', 2.5)).toEqual({ over: 'craft', kina: 200 })
+    expect(extraCost(ways, 'craft', 2.5)).toBeNull()
+    expect(extraCost(ways, 'buy', 0)).toBeNull()
+    expect(extraCost([{ method: 'buy', unit: 100 }, { method: 'craft', unit: 100.2, recipeId: 2 }], 'craft', 1)).toBeNull()
   })
 })
 
