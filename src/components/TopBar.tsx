@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { StatusChips } from '../state/chips.ts'
 import { SETTINGS, settingKey, type Setting } from '../state/openSetting.ts'
 import type { View } from '../state/target.ts'
-import type { PriceFeed } from '../state/usePrices.ts'
+import type { Freshness } from '../state/useFreshness.ts'
 import { FreshnessPill } from './PriceStatus.tsx'
 
 const VIEWS: readonly { id: View; label: string }[] = [
@@ -12,7 +12,7 @@ const VIEWS: readonly { id: View; label: string }[] = [
 
 interface Context {
   chips: StatusChips
-  feed: PriceFeed
+  freshness: Freshness
   opened: Setting | null
   open(setting: Setting, anchor: HTMLElement): void
 }
@@ -30,7 +30,7 @@ export function TopBar({ view, onView, context }: { view: View; onView(view: Vie
           ))}
         </nav>
         {context && <ContextChips {...context} />}
-        {context && <FreshnessPill feed={context.feed} />}
+        {context && <FreshnessPill freshness={context.freshness} />}
       </div>
     </header>
   )

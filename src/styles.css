@@ -1240,7 +1240,6 @@ input[type='range'] {
   color: var(--muted);
 }
 
-.price-status,
 .hidden-note {
   display: flex;
   flex-wrap: wrap;
@@ -1248,7 +1247,7 @@ input[type='range'] {
   gap: var(--space-2) var(--space-3);
 }
 
-.price-status.is-stale > span:first-child {
+.price-status.is-stale {
   color: var(--loss);
 }
 
@@ -1565,16 +1564,16 @@ input[type='range'] {
     padding: 0 var(--space-2);
   }
 
-  .fresh {
-    display: none;
-  }
-
   .context {
     flex-basis: 100%;
     flex-wrap: wrap;
     gap: 6px;
-    padding: var(--space-2) 0 var(--space-3);
+    padding: var(--space-2) 0;
     border-top: 1px solid var(--rule);
+  }
+
+  .fresh {
+    margin-bottom: var(--space-2);
   }
 
   .context .chip {

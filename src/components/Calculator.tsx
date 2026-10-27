@@ -5,7 +5,7 @@ import { planOne, type Planning } from '../state/planning.ts'
 import { bestMargins } from '../state/scan.ts'
 import type { Target } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
-import type { PriceFeed } from '../state/usePrices.ts'
+import type { Freshness } from '../state/useFreshness.ts'
 import { useScan } from '../state/useScan.ts'
 import { AnswerPanel } from './AnswerPanel.tsx'
 import { Details, type DetailTab } from './Details.tsx'
@@ -14,13 +14,13 @@ import { Search } from './Search.tsx'
 
 interface Props {
   planning: Planning
-  feed: PriceFeed
+  freshness: Freshness
   target: Target
   overrides: PriceOverrides
   onTarget(change: Partial<Target>): void
 }
 
-export function Calculator({ planning, feed, target, overrides, onTarget }: Props) {
+export function Calculator({ planning, freshness, target, overrides, onTarget }: Props) {
   const { index } = planning
   const [tab, setTab] = useState<DetailTab>('buy')
   const craftable = target.itemId === null ? null : (index.byId.get(target.itemId) ?? null)
@@ -33,19 +33,19 @@ export function Calculator({ planning, feed, target, overrides, onTarget }: Prop
     <>
       <h1 className="sr-only">Calculator</h1>
       <Search craftables={index.craftables} autoFocus={craftable === null} onPick={(itemId) => onTarget({ itemId })} />
-      {craftable === null && <BestMargins planning={planning} loading={feed.pending} onOpen={(itemId) => onTarget({ itemId })} />}
+      {craftable === null && <BestMargins planning={planning} loading={freshness.pending} onOpen={(itemId) => onTarget({ itemId })} />}
       {craftable && (
         <>
           <AnswerPanel
             craftable={craftable}
             plan={plan}
             planning={planning}
-            feed={feed}
+            freshness={freshness}
             quantity={target.quantity}
             overrides={overrides}
             onTarget={onTarget}
           />
-          {plan && !feed.pending && <Details plan={plan} planning={planning} overrides={overrides} tab={tab} onTab={setTab} />}
+          {plan && !freshness.pending && <Details plan={plan} planning={planning} overrides={overrides} tab={tab} onTab={setTab} />}
         </>
       )}
     </>

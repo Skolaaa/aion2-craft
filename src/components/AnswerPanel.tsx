@@ -7,7 +7,7 @@ import { SIDE } from '../market/worlds.ts'
 import type { Planning } from '../state/planning.ts'
 import { MAX_QUANTITY, type Target } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
-import type { PriceFeed } from '../state/usePrices.ts'
+import type { Freshness } from '../state/useFreshness.ts'
 import { NumberInput } from './NumberInput.tsx'
 import { HeatChip } from './HeatChip.tsx'
 import { ItemIcon } from './ItemIcon.tsx'
@@ -19,7 +19,7 @@ interface Props {
   craftable: Craftable
   plan: PlanResult | null
   planning: Planning
-  feed: PriceFeed
+  freshness: Freshness
   quantity: number
   overrides: PriceOverrides
   onTarget(change: Partial<Target>): void
@@ -46,7 +46,7 @@ function Figure({ label, value, empty, tone, children }: FigureProps) {
   )
 }
 
-export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrides, onTarget }: Props) {
+export function AnswerPanel({ craftable, plan, planning, freshness, quantity, overrides, onTarget }: Props) {
   const { catalog, world, index, mastery, prices } = planning
   const { item } = craftable
   const recipe = plan ? catalog.recipes.get(plan.root.recipeId) : undefined
@@ -83,7 +83,7 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
         <p className="verdict">
           No {SIDE[world.race].name} recipe makes {item.name}. Pick another item or a world of the other faction.
         </p>
-      ) : feed.pending ? null : (
+      ) : freshness.pending ? null : (
         <Figures
           answer={answerOf(plan, { catalog, mastery })}
           plan={plan}
@@ -94,7 +94,7 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
         />
       )}
 
-      <PriceStatus feed={feed} worldName={world.name} />
+      <PriceStatus freshness={freshness} worldName={world.name} />
     </section>
   )
 }

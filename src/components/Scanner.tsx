@@ -4,7 +4,7 @@ import { plural, taxLabel } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
 import { DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanSort } from '../state/scan.ts'
 import { PROFESSIONS } from '../state/setup.ts'
-import type { PriceFeed } from '../state/usePrices.ts'
+import type { Freshness } from '../state/useFreshness.ts'
 import { useScan } from '../state/useScan.ts'
 import { Button } from './Button.tsx'
 import { PriceStatus } from './PriceStatus.tsx'
@@ -14,11 +14,11 @@ const RAIL: readonly { id: Profession | null; label: string }[] = [{ id: null, l
 
 interface Props {
   planning: Planning
-  feed: PriceFeed
+  freshness: Freshness
   onOpen(itemId: ItemId): void
 }
 
-export function Scanner({ planning, feed, onOpen }: Props) {
+export function Scanner({ planning, freshness, onOpen }: Props) {
   const { world, options } = planning
   const rows = useScan(planning)
   const [profession, setProfession] = useState<Profession | null>(null)
@@ -33,7 +33,7 @@ export function Scanner({ planning, feed, onOpen }: Props) {
       <div className="stack-tight">
         <h1 className="section-title" id="scanner-title"><span>Every recipe on {world.name}</span></h1>
         <p className="meta">Margins after {taxLabel(options.taxRate)} tax at your mastery. Click a row to open it in the calculator.</p>
-        <PriceStatus feed={feed} worldName={world.name} />
+        <PriceStatus freshness={freshness} worldName={world.name} />
       </div>
 
       <div className="scan-layout">
@@ -80,7 +80,7 @@ export function Scanner({ planning, feed, onOpen }: Props) {
             onOpen={onOpen}
             sort={sort}
             onSort={(key) => setSort((previous) => nextSort(previous, key))}
-            empty={feed.pending ? 'Prices are loading.' : 'No recipe matches these filters.'}
+            empty={freshness.pending ? 'Prices are loading.' : 'No recipe matches these filters.'}
           />
         </div>
       </div>

@@ -17,6 +17,7 @@ import type { Planning } from './state/planning.ts'
 import { DEFAULT_SETUP, parseSetup, setWorld, type Setup, type SetupPatch } from './state/setup.ts'
 import { DEFAULT_TARGET, DEFAULT_VIEW, parseTarget, parseView, type Target, type View } from './state/target.ts'
 import { useNow } from './state/useNow.ts'
+import { useFreshness } from './state/useFreshness.ts'
 import { useOverrides } from './state/useOverrides.ts'
 import { usePersistentState } from './state/usePersistentState.ts'
 import { usePrices, type PriceFeed } from './state/usePrices.ts'
@@ -103,6 +104,7 @@ function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onV
   const catalog = catalogFor(world.race)
   const index = craftIndexFor(catalog)
   const feed = usePrices(world, catalog)
+  const freshness = useFreshness(feed)
   const overrides = useOverrides(world.id)
   const surface = useOpenSetting()
 
@@ -142,7 +144,7 @@ function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onV
       <TopBar
         view={view}
         onView={onView}
-        context={{ chips: statusChips(setup, current), feed, opened: surface.opened?.setting ?? null, open: surface.open }}
+        context={{ chips: statusChips(setup, current), freshness, opened: surface.opened?.setting ?? null, open: surface.open }}
       />
       <SettingHost
         surface={surface}
@@ -167,9 +169,9 @@ function Workspace({ current, worlds, retryWorlds, setup, updateSetup, view, onV
       )}
       {feed.status === 'failed' && <FeedNotice feed={feed} worldName={world.name} />}
       {view === 'calculator' && (
-        <Calculator planning={planning} feed={feed} target={target} overrides={overrides} onTarget={patchTarget} />
+        <Calculator planning={planning} freshness={freshness} target={target} overrides={overrides} onTarget={patchTarget} />
       )}
-      {view === 'scanner' && <Scanner planning={planning} feed={feed} onOpen={openItem} />}
+      {view === 'scanner' && <Scanner planning={planning} freshness={freshness} onOpen={openItem} />}
     </Shell>
   )
 }
