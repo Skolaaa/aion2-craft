@@ -564,11 +564,15 @@ input[type='range'] {
 
 .table thead th {
   height: 32px;
+  white-space: nowrap;
+}
+
+.table thead th,
+.buy-figs.buy-labels {
   font: 400 11px / 1 var(--mono);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
-  white-space: nowrap;
 }
 
 .table .num {
@@ -1438,6 +1442,66 @@ input[type='range'] {
   overflow-x: auto;
 }
 
+.tab-list {
+  display: flex;
+  flex: 1;
+}
+
+.tabs > .button {
+  align-self: center;
+  margin-left: auto;
+}
+
+.tab-note {
+  margin: var(--space-3) 0 0;
+}
+
+.how {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.buy-line {
+  display: grid;
+  gap: var(--space-1);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.buy-line .item-text > span {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.buy-figs {
+  display: grid;
+  grid-template-columns: 64px 100px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+  font: 400 13px / 1 var(--mono);
+  text-align: right;
+}
+
+.buy-labels {
+  padding: 10px 0 2px;
+}
+
+.buy-figs .input-count,
+.buy-figs .input-price {
+  width: 100%;
+  min-height: 30px;
+}
+
+.buy-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+}
+
 .tab {
   height: var(--row);
   padding: 0 14px;
@@ -1569,17 +1633,6 @@ input[type='range'] {
   color: var(--muted);
 }
 
-.sort-chips {
-  display: none;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.sort-chips .chip-key {
-  margin-right: var(--space-1);
-}
-
 .tag.pill {
   display: inline-block;
   padding: 3px 6px;
@@ -1675,17 +1728,15 @@ input[type='range'] {
   .rail {
     position: static;
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
-    overflow-x: auto;
-    margin: 0 calc(-1 * var(--space-4));
-    padding: 0 var(--space-4);
-    scrollbar-width: none;
   }
 
   .rail-item {
     flex: none;
     min-height: 30px;
     border: 1px solid var(--rule);
+    font-size: 13px;
   }
 
   .rail-item[aria-pressed='true'] {
@@ -1703,20 +1754,28 @@ input[type='range'] {
     width: 100%;
   }
 
-  .scan-tools .hidden-note {
-    margin-left: 0;
+  .scan-main > .hidden-note {
+    justify-content: space-between;
   }
 
-  .sort-chips {
-    display: flex;
+  .scan-table {
+    table-layout: fixed;
   }
 
-  .scanner .table thead {
-    display: none;
+  .scan-table td {
+    height: 52px;
   }
 
-  .hide-narrow {
-    display: none;
+  .scan-table .item-open,
+  .buy-line .item-name-cell {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .scan-table .tag.pill {
+    white-space: normal;
+    line-height: 1.3;
   }
 
   .top-bar-inner {

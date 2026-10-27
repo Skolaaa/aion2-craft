@@ -79,7 +79,8 @@ crafted and never feeds another wanted item.
 | `src/components/Sparkline.tsx` | the seven-day line of the lowest listing as a button that opens the `history` setting, with its "7 d: low, high" text, under the buy figure's note in the answer panel when something is listed; renders nothing without two known lows |
 | `src/components/PriceChart.tsx` | the body of the `history` surface: the `Segmented` range, the SVG from `chartModel` with the selected bucket in `useState` (the pointer and the arrow keys move it, the last bucket to start), the readout line and the range's summary line; the loading and empty lines |
 | `src/components/SettingHost.tsx` | renders zero or one `Surface` for the open `Setting`, framed from a `Record<Setting['kind'], …>` of placement and width with a title per kind, the item's name for `history`: `WorldPicker`, `MasteryForm`, `TaxForm`, `PlanSettings` or `PriceChart` |
-| `src/components/Surface.tsx` | the one native `<dialog>` for every in-place setting; `SHEET_BELOW = 640` |
+| `src/components/Surface.tsx` | the one native `<dialog>` for every in-place setting |
+| `src/state/useNarrow.ts` | `NARROW_BELOW = 640`, the one copy of the phone breakpoint in code, and `useNarrow()`, which `Details`, `Scanner` and `ScanTable` read when a phone needs a different tree (buy cards instead of the table, the source control under the name, the hidden-rows line under the list) rather than a stylesheet rule |
 | `src/components/Segmented.tsx` | the one segmented control (a radio group, an option may be disabled with its reason as `title`): Normal and Splendent, the picker's regions and sides, the source choice under steps, the chart's range |
 | `src/components/ItemCell.tsx` | icon, name and notes of one item. An optional `href` adds a link glyph after the name that opens in a new tab and stops the click from reaching the row; only the buy table and the steps rows set it, with `itemPageUrl` |
 | `src/components/SourceCell.tsx` | buy, craft or morph for one row under steps, built from `plan.alternatives`; a way at Infinity is disabled with `blockedNote` |
@@ -115,8 +116,8 @@ surface.close(false)                        // the user clicked or tabbed elsewh
   bottom sheet, and it closes if the viewport crosses 640 px while open. The drawer is modal at
   every width, 400 px from the right and full width on phones. A modal surface closes on Escape
   through the dialog's `cancel` event and a popover through a document keydown, never both.
-  `SHEET_BELOW` is the one copy of the breakpoint in code, and `Surface.test.ts` fails when the
-  `640px` and `639.98px` media queries in `styles.css` drift from it.
+  `NARROW_BELOW` in `useNarrow.ts` is the one copy of the breakpoint in code, and `Surface.test.ts`
+  fails when the `640px` and `639.98px` media queries in `styles.css` drift from it.
 - Each chip names itself with `aria-label` (`region EU`, `world Kaisinel, Elyos`, `mastery
   Blacksmithing 100; …`), so the visible key can be `display: none` at a breakpoint.
 - The world list is one component for the region and world chips. The region chip presets the

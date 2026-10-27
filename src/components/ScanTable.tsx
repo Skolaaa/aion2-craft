@@ -2,8 +2,8 @@ import type { ReactNode } from 'react'
 import type { ItemId } from '../domain/types.ts'
 import { kina, plural, signedKina, toneOf } from '../state/format.ts'
 import type { ScanKey, ScanRow, ScanSort } from '../state/scan.ts'
-import { Glyph } from './Glyph.tsx'
 import { HeatChip } from './HeatChip.tsx'
+import { useNarrow } from '../state/useNarrow.ts'
 import { ItemCell } from './ItemCell.tsx'
 import { Table, type Column } from './Table.tsx'
 
@@ -18,7 +18,7 @@ function rowTitle(row: ScanRow) {
   return `${row.listings} ${plural(row.listings, 'listing', 'listings')}, ${sold}`
 }
 
-function scanColumns(onOpen: (itemId: ItemId) => void): Column<ScanRow, ScanKey>[] {
+function scanColumns(onOpen: (itemId: ItemId) => void, narrow: boolean): Column<ScanRow, ScanKey>[] {
   return [
     {
       key: 'item',
@@ -46,13 +46,21 @@ function scanColumns(onOpen: (itemId: ItemId) => void): Column<ScanRow, ScanKey>
       header: 'Margin',
       numeric: true,
       sortable: true,
+      width: narrow ? 100 : undefined,
       render: (row) => {
         const reason = needs(row)
         if (reason) return <span className="tag pill">{reason}</span>
         return row.margin === null ? null : <span className={toneOf(row.margin, 'kina')}>{signedKina(row.margin)}</span>
       },
     },
-    { key: 'marginPct', header: 'Margin %', numeric: true, sortable: true, render: (row) => <HeatChip marginPct={row.marginPct} /> },
+    {
+      key: 'marginPct',
+      header: narrow ? '%' : 'Margin %',
+      numeric: true,
+      sortable: true,
+      width: narrow ? 72 : undefined,
+      render: (row) => <HeatChip marginPct={row.marginPct} />,
+    },
   ]
 }
 
@@ -66,34 +74,20 @@ interface Props {
 }
 
 export function ScanTable({ label, rows, empty, onOpen, sort, onSort }: Props) {
-  const columns = scanColumns(onOpen)
+  const narrow = useNarrow()
   return (
-    <>
-      {sort && onSort && (
-        <div className="sort-chips" role="group" aria-label="Sort by">
-          <span className="chip-key" aria-hidden="true">sort by</span>
-          {columns
-            .filter((column) => column.sortable)
-            .map(({ key, header }) => (
-              <button key={key} type="button" className="chip" aria-pressed={sort.key === key} onClick={() => onSort(key)}>
-                {header}
-                {sort.key === key && <Glyph name="arrow" className={sort.direction === 'asc' ? 'is-up' : undefined} />}
-              </button>
-            ))}
-        </div>
-      )}
-      <Table
-        label={label}
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => String(row.item.id)}
-        rowTitle={rowTitle}
-        rowClass={(row) => (row.status === 'ready' ? undefined : 'is-dim')}
-        onRowClick={(row) => onOpen(row.item.id)}
-        sort={sort}
-        onSort={onSort}
-        empty={empty}
-      />
-    </>
+    <Table
+      className="scan-table"
+      label={label}
+      columns={scanColumns(onOpen, narrow)}
+      rows={rows}
+      rowKey={(row) => String(row.item.id)}
+      rowTitle={rowTitle}
+      rowClass={(row) => (row.status === 'ready' ? undefined : 'is-dim')}
+      onRowClick={(row) => onOpen(row.item.id)}
+      sort={sort}
+      onSort={onSort}
+      empty={empty}
+    />
   )
 }

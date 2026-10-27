@@ -119,6 +119,12 @@ Cinzel name in the grade colour) and its diamond-ruled figure strip. The margin 
 heat chip, the same visual word the scanner uses. Detail tabs are mono with counts: `buy 9`,
 `steps 5`, `rates`. The buy table gets a cost-share bar column on desktop.
 
+Steps: one row per part at the 36 px row height. A How column between Item and Expected
+holds the `buy | craft | morph` control for a part the plan could get more than one way, then
+the way in words; a part with one way shows the words alone. Under the table: "Dotted prices
+are editable. Pick buy, craft or morph per line; the cost column follows." On a phone the How
+column is hidden and the control sits under the name again.
+
 Bulk buys: when the plan buys more than one unit of a material beyond what the player holds,
 its unit price is the average along the listing ladder and the Source cell says how many
 listings it spans ("Market, across 3 listings of 15"), with "only 4 listed" when the ladder
@@ -142,7 +148,7 @@ now being the last bucket's close. Dates and times are the player's local ones. 
 the surface says "No price history on aion2.exchange for this item yet."
 
 Source choice: under steps, a row whose item the plan could get more than one way carries a
-small segmented control under its note, `buy | craft`, plus `morph` when a Substance Morph
+small segmented control in the How column, `buy | craft`, plus `morph` when a Substance Morph
 exists, with the plan's pick selected. Choosing another way forces it for that item everywhere
 in the plan, every figure updates, and the note gains `yours` in gold and what the choice
 costs over the cheapest way: "Craft, 4.1 attempts at 96.8%, yours, 1,230 Kina more than
@@ -170,18 +176,19 @@ gathered, dropped, crafted or sold. The glyph turns gold on hover and focus, and
 reads "Where to get Orichalcum Ore, on AION2 Hub". The scanner and the drawer keep plain names.
 On a phone the glyph can drop to its own line when the name fills the last one.
 
-Scanner: Ledger's left rail (All plus five professions with counts; a horizontal chip strip
-under 900 px), the name filter, the hidden-rows line with "Show them", and one table: Item
+Scanner: Ledger's left rail (All plus five professions with counts; chips that wrap under
+900 px), the name filter, the hidden-rows line with "Show them", and one table: Item
 (icon, grade-coloured name, profession and level in mono), Craft cost, Market lowest, Margin,
 Margin % as the heat column. The sorted header is gold with an arrow. Hidden rows, when shown,
 are dimmed with a `needs a price` or `needs mastery 55` pill in the Market lowest cell. On
-phones the table keeps Item, Margin and Margin %, and a `sort by` chip row replaces the headers.
-It offers every sortable column, including Craft cost and Market lowest, which phones hide.
-No sparkline: it would cost one history request per row.
+phones the title is followed by the chips and the filter alone (the top bar already shows the
+tax and the price age), the table keeps Item, Margin and `%` with the same tappable sort
+headers, names end in an ellipsis instead of wrapping, rows are 52 px, and the hidden-rows
+line moves under the list. No sparkline: it would cost one history request per row.
 
 Settings drawer: plan options with their one-line notes, then "Your prices on Kaisinel" with
-reset, as today, then "What you have on Kaisinel": the counts entered under Have in the buy
-table, each with Clear. The buy table's Have column edits in place like a unit price; a
+reset, as today, then "What you have on Kaisinel": the counts entered under You have in the buy
+table, each with Clear. The buy table's You have column edits in place like a unit price; a
 "To buy" column appears only once a count is set, and a line that stock covers in full
 drops to the bottom with "your stock" as its source. Then "Your sources on Kaisinel": the
 ways chosen under steps, each with Clear, and Clear all once there are two.
@@ -196,8 +203,11 @@ opens no item. Each shows a notice with Dismiss, once, above the page.
 
 Mobile (under 640 px): the status line wraps to two rows (chips, then the mastery strip) with the
 freshness pill and Copy link on a short third row at the right, the
-figures stack, the buy table collapses to item plus subtotal with the math as a sub-line, the
-picker and popovers become bottom sheets, the drawer takes the full width. The nav's list count
+figures stack, the buy table becomes one card per line (name on one line, "Market, across 9
+listings of 224. 20.65 needed." under it, then You have, Unit price and Subtotal on a shared
+64 / 100 / rest grid under one label row) with Copy list at the right of the tab strip and the
+You have note under the total, the picker and popovers become bottom sheets, the drawer takes
+the full width. The nav's list count
 is hidden: at 390 px the wordmark (130 px) and the three views (212 px) fill the row, and a count
 would wrap the nav under it. The list's member table keeps the name, the quantity field and
 Remove, with the cost on the name's sub-line.

@@ -14,6 +14,7 @@ import type { OwnedStock } from '../state/useOwned.ts'
 import type { Sources } from '../state/useSources.ts'
 import { useExchangeEstimate } from '../state/useExchangeEstimate.ts'
 import { useClipboard } from '../state/useClipboard.ts'
+import { useNarrow } from '../state/useNarrow.ts'
 import { useNow } from '../state/useNow.ts'
 import { Button } from './Button.tsx'
 import { CountCell } from './CountCell.tsx'
@@ -47,7 +48,12 @@ interface Props {
 export function Details({ plan, planning, overrides, owned, sources, link, tab, onTab, rates }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const narrow = useNarrow()
+  const { catalog, world } = planning
   const list = buyList(plan)
+  const copy = list.lines.length > 0 && (
+    <CopyButton text={() => shoppingText(plan, list, { itemName: (itemId) => itemName(catalog, itemId), worldName: world.name, link })} />
+  )
   const tabs = rates ? TABS : TABS.filter(({ id }) => id !== 'rates')
   const counts: Record<DetailTab, number | null> = { buy: list.lines.length, steps: stepCount(plan), rates: null }
 
@@ -62,33 +68,46 @@ export function Details({ plan, planning, overrides, owned, sources, link, tab, 
 
   return (
     <section className="details" aria-label="Details">
-      <div className="tabs" role="tablist" aria-label="Details">
-        {tabs.map(({ id, label, title }, index) => (
-          <button
-            key={id}
-            ref={(element) => {
-              tabRefs.current[index] = element
-            }}
-            type="button"
-            role="tab"
-            id={`${base}-tab-${id}`}
-            className="tab"
-            aria-selected={tab === id}
-            aria-controls={`${base}-panel`}
-            tabIndex={tab === id ? 0 : -1}
-            title={title}
-            onClick={() => onTab(id)}
-            onKeyDown={(event) => onKeyDown(event, index)}
-          >
-            {label}
-            {counts[id] !== null && <span className="tab-count">{counts[id]}</span>}
-          </button>
-        ))}
+      <div className="tabs">
+        <div className="tab-list" role="tablist" aria-label="Details">
+          {tabs.map(({ id, label, title }, index) => (
+            <button
+              key={id}
+              ref={(element) => {
+                tabRefs.current[index] = element
+              }}
+              type="button"
+              role="tab"
+              id={`${base}-tab-${id}`}
+              className="tab"
+              aria-selected={tab === id}
+              aria-controls={`${base}-panel`}
+              tabIndex={tab === id ? 0 : -1}
+              title={title}
+              onClick={() => onTab(id)}
+              onKeyDown={(event) => onKeyDown(event, index)}
+            >
+              {label}
+              {counts[id] !== null && <span className="tab-count">{counts[id]}</span>}
+            </button>
+          ))}
+        </div>
+        {tab === 'buy' && copy}
       </div>
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
-        {tab === 'buy' && <WhatToBuy plan={plan} list={list} planning={planning} overrides={overrides} owned={owned} link={link} />}
+        {tab === 'buy' && (
+          <WhatToBuy plan={plan} list={list} planning={planning} overrides={overrides} owned={owned} narrow={narrow} />
+        )}
         {tab === 'steps' && (
-          <HowItIsMade key={targetsKey(plan)} plan={plan} credit={list.credit} planning={planning} overrides={overrides} sources={sources} />
+          <HowItIsMade
+            key={targetsKey(plan)}
+            plan={plan}
+            credit={list.credit}
+            planning={planning}
+            overrides={overrides}
+            sources={sources}
+            narrow={narrow}
+          />
         )}
         {tab === 'rates' && rates && <Rates target={rates} planning={planning} />}
       </div>
@@ -112,12 +131,13 @@ interface WhatToBuyProps {
   planning: Planning
   overrides: PriceOverrides
   owned: OwnedStock
-  link: string
+  narrow: boolean
 }
 
 const MISSING = <span className="is-warn">no price yet</span>
+const NOTHING_TO_BUY = 'Nothing to buy until the recipe is within your mastery.'
 
-function WhatToBuy({ plan, list, planning, overrides, owned, link }: WhatToBuyProps) {
+function WhatToBuy({ plan, list, planning, overrides, owned, narrow }: WhatToBuyProps) {
   const { catalog, prices, market, world } = planning
   const { lines, credit } = list
   // Shares are of the shopping total before the byproduct credit, so they add up to 100%.
@@ -137,50 +157,83 @@ function WhatToBuy({ plan, list, planning, overrides, owned, link }: WhatToBuyPr
     return lowest == null ? 'not on the Market' : `Market lowest ${kina(lowest)}`
   }
   const toBuy = (row: BuyLine) => (row.kind === 'owned' ? 0 : row.expected - row.owned)
+  const needed = (row: BuyLine) => (
+    <>
+      {decimal(row.expected)} needed{row.owned > 0 && row.kind !== 'owned' && <>, {decimal(toBuy(row))} to buy</>}
+    </>
+  )
+  const have = (row: BuyLine) => (
+    <CountCell itemName={itemName(catalog, row.itemId)} count={owned.counts.get(row.itemId) ?? null} onSave={(count) => owned.save(row.itemId, count)} />
+  )
+  const unit = (row: BuyLine) =>
+    row.kind === 'owned' ? null : (
+      <PriceCell
+        itemName={itemName(catalog, row.itemId)}
+        unit={row.kind === 'buy' ? row.unit : null}
+        own={overrides.prices.has(row.itemId)}
+        missing={row.kind === 'missing'}
+        onSave={(price) => overrides.save(row.itemId, price)}
+      />
+    )
+  const subtotal = (row: BuyLine) => (row.kind === 'buy' ? kina(row.subtotal) : null)
+  const total = Number.isFinite(plan.cost) ? kina(plan.cost) : <span className="meta">needs every price</span>
+  const footer =
+    lines.length === 0
+      ? undefined
+      : [
+          ...(credit > 0 ? [creditFooter(credit, 'credited at the lowest listing after tax')] : []),
+          { item: <strong>Total</strong>, subtotal: <strong>{total}</strong> },
+        ]
+  const note = `You have is what you hold on ${world.name}. The plan uses it before buying.`
+
+  if (narrow) {
+    return (
+      <div className="buy-cards">
+        <div className="buy-figs buy-labels" aria-hidden="true">
+          <span>You have</span>
+          <span>Unit price</span>
+          <span>Subtotal</span>
+        </div>
+        {lines.length === 0 && <p className="meta">{NOTHING_TO_BUY}</p>}
+        {lines.map((row) => (
+          <div className="buy-line" key={row.itemId}>
+            <ItemCell item={catalog.items.get(row.itemId)} href={itemPageUrl(row.itemId)} />
+            <span className="meta">{source(row)}. {needed(row)}.</span>
+            <div className="buy-figs">
+              {have(row)}
+              {unit(row)}
+              <span>{subtotal(row)}</span>
+            </div>
+          </div>
+        ))}
+        {footer?.map(({ item, subtotal }, index) => (
+          <div className="buy-total" key={index}>
+            {item}
+            <span className="mono">{subtotal}</span>
+          </div>
+        ))}
+        <p className="meta tab-note">{note}</p>
+      </div>
+    )
+  }
 
   const columns: Column<BuyLine>[] = [
     {
       key: 'item',
       header: 'Item',
       render: (row) => (
-        <ItemCell
-          item={catalog.items.get(row.itemId)}
-          href={itemPageUrl(row.itemId)}
-          narrowMeta={<>{source(row)}, {decimal(row.expected)} needed{row.owned > 0 && row.kind !== 'owned' && <>, {decimal(toBuy(row))} to buy</>}</>}
-        />
+        <ItemCell item={catalog.items.get(row.itemId)} href={itemPageUrl(row.itemId)} />
       ),
     },
-    { key: 'source', header: 'Source', hideNarrow: true, render: (row) => <span className="meta">{source(row)}</span> },
-    { key: 'expected', header: 'Expected', numeric: true, hideNarrow: true, render: (row) => decimal(row.expected) },
-    {
-      key: 'have',
-      header: 'Have',
-      numeric: true,
-      render: (row) => (
-        <CountCell itemName={itemName(catalog, row.itemId)} count={owned.counts.get(row.itemId) ?? null} onSave={(count) => owned.save(row.itemId, count)} />
-      ),
-    },
-    ...(usesStock ? [{ key: 'buy', header: 'To buy', numeric: true, hideNarrow: true, render: (row: BuyLine) => decimal(toBuy(row)) }] : []),
-    {
-      key: 'unit',
-      header: 'Unit price',
-      numeric: true,
-      render: (row) =>
-        row.kind === 'owned' ? null : (
-          <PriceCell
-            itemName={itemName(catalog, row.itemId)}
-            unit={row.kind === 'buy' ? row.unit : null}
-            own={overrides.prices.has(row.itemId)}
-            missing={row.kind === 'missing'}
-            onSave={(price) => overrides.save(row.itemId, price)}
-          />
-        ),
-    },
-    { key: 'subtotal', header: 'Subtotal', numeric: true, render: (row) => (row.kind === 'buy' ? kina(row.subtotal) : null) },
+    { key: 'source', header: 'Source', render: (row) => <span className="meta">{source(row)}</span> },
+    { key: 'expected', header: 'Expected', numeric: true, render: (row) => decimal(row.expected) },
+    { key: 'have', header: 'You have', numeric: true, render: have },
+    ...(usesStock ? [{ key: 'buy', header: 'To buy', numeric: true, render: (row: BuyLine) => decimal(toBuy(row)) }] : []),
+    { key: 'unit', header: 'Unit price', numeric: true, render: unit },
+    { key: 'subtotal', header: 'Subtotal', numeric: true, render: subtotal },
     {
       key: 'share',
       header: 'Share',
-      hideNarrow: true,
       render: (row) => {
         if (row.kind !== 'buy' || !Number.isFinite(gross) || gross <= 0) return null
         const share = row.subtotal / gross
@@ -193,27 +246,10 @@ function WhatToBuy({ plan, list, planning, overrides, owned, link }: WhatToBuyPr
     },
   ]
 
-  const total = {
-    item: <strong>Total</strong>,
-    subtotal: <strong>{Number.isFinite(plan.cost) ? kina(plan.cost) : <span className="meta">needs every price</span>}</strong>,
-  }
-
-  const text = () => shoppingText(plan, list, { itemName: (itemId) => itemName(catalog, itemId), worldName: world.name, link })
-
   return (
     <>
-      <div className="panel-tools">
-        <span className="meta">Have is what you hold on {world.name}. The plan uses it before buying.</span>
-        {lines.length > 0 && <CopyButton text={text} />}
-      </div>
-      <Table
-        label="What to buy"
-        columns={columns}
-        rows={lines}
-        rowKey={(row) => String(row.itemId)}
-        empty="Nothing to buy until the recipe is within your mastery."
-        footer={lines.length === 0 ? undefined : credit > 0 ? [creditFooter(credit, 'credited at the lowest listing after tax'), total] : [total]}
-      />
+      <p className="meta panel-tools">{note}</p>
+      <Table label="What to buy" columns={columns} rows={lines} rowKey={(row) => String(row.itemId)} empty={NOTHING_TO_BUY} footer={footer} />
     </>
   )
 }
@@ -300,9 +336,10 @@ interface HowProps {
   planning: Planning
   overrides: PriceOverrides
   sources: Sources
+  narrow: boolean
 }
 
-function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
+function HowItIsMade({ plan, credit, planning, overrides, sources, narrow }: HowProps) {
   const { catalog } = planning
   // One target opens on its own; a list starts folded so its rows read as the list.
   const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(plan.targets.length === 1 ? [rootKey(plan.targets[0])] : []))
@@ -318,6 +355,25 @@ function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
     const pinned = sources.choices.get(itemId) === method
     return { options, method, pinned, extra: pinned ? extraCost(options, method, expected - owned) : null }
   }
+  type Choice = NonNullable<ReturnType<typeof choiceOf>>
+
+  const how = (row: LadderRow, choice: Choice | null) => (
+    <>
+      {howText(row, recipeOf, planning)}
+      {choice?.pinned && <>, <span className="yours">yours</span></>}
+      {choice?.extra && <>, {kina(choice.extra.kina)} Kina more than {OVER[choice.extra.over]}</>}
+    </>
+  )
+  const needed = (row: LadderRow) => `${decimal(row.expected)} needed${row.owned > 0 && row.acquisition.method !== 'owned' ? `, ${decimal(row.owned)} yours` : ''}`
+  const picker = (row: LadderRow, choice: Choice) => (
+    <SourceCell
+      itemName={itemName(catalog, row.itemId)}
+      options={choice.options}
+      value={choice.method}
+      planning={planning}
+      onChange={(method) => sources.save(row.itemId, method)}
+    />
+  )
 
   const toggle = (key: string) =>
     setOpen((previous) => {
@@ -330,35 +386,19 @@ function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
     {
       key: 'item',
       header: 'Item',
+      width: narrow ? undefined : 400,
       render: (row) => {
         const name = itemName(catalog, row.itemId)
         const step = childStep(row.acquisition)
         const expandable = step !== null && step.materials.length > 0
-        const choice = choiceOf(row)
+        const choice = narrow ? choiceOf(row) : null
         return (
           <ItemCell
             item={catalog.items.get(row.itemId)}
             href={itemPageUrl(row.itemId)}
             depth={row.depth}
-            meta={
-              <>
-                {howText(row, recipeOf, planning)}
-                {choice?.pinned && <>, <span className="yours">yours</span></>}
-                {choice?.extra && <>, {kina(choice.extra.kina)} Kina more than {OVER[choice.extra.over]}</>}
-              </>
-            }
-            narrowMeta={`${decimal(row.expected)} needed${row.owned > 0 && row.acquisition.method !== 'owned' ? `, ${decimal(row.owned)} yours` : ''}`}
-            controls={
-              choice && (
-                <SourceCell
-                  itemName={name}
-                  options={choice.options}
-                  value={choice.method}
-                  planning={planning}
-                  onChange={(method) => sources.save(row.itemId, method)}
-                />
-              )
-            }
+            meta={narrow && <>{how(row, choice)}, {needed(row)}</>}
+            controls={choice && picker(row, choice)}
             toggle={
               expandable ? (
                 <button
@@ -373,6 +413,20 @@ function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
               ) : undefined
             }
           />
+        )
+      },
+    },
+    {
+      key: 'how',
+      header: 'How',
+      hideNarrow: true,
+      render: (row) => {
+        const choice = choiceOf(row)
+        return (
+          <span className="how">
+            {choice && picker(row, choice)}
+            <span className="meta">{how(row, choice)}</span>
+          </span>
         )
       },
     },
@@ -401,13 +455,16 @@ function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
   ]
 
   return (
-    <Table
-      label="How it is made"
-      columns={columns}
-      rows={rows}
-      rowKey={(row) => row.key}
-      footer={credit > 0 ? [creditFooter(credit, 'credited at the lowest listing after tax, already in the costs above')] : undefined}
-    />
+    <>
+      <Table
+        label="How it is made"
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.key}
+        footer={credit > 0 ? [creditFooter(credit, 'credited at the lowest listing after tax, already in the costs above')] : undefined}
+      />
+      <p className="meta tab-note">Dotted prices are editable. Pick buy, craft or morph per line; the cost column follows.</p>
+    </>
   )
 }
 
