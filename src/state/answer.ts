@@ -1,6 +1,6 @@
 import { stepRates } from '../domain/rates.ts'
 import type {
-  Acquisition, Alternative, Catalog, Depth, ItemId, Mastery, Method, PlanResult, PriceBook, Profession, RateFamily, Recipe, RecipeId, StepPlan,
+  Acquisition, Alternative, Catalog, Depth, ItemId, Mastery, Method, PlanResult, PriceBook, Profession, RateFamily, Recipe, RecipeId, StepPlan, TargetPlan,
 } from '../domain/types.ts'
 import { decimal, kina, plural, rate, taxLabel } from './format.ts'
 
@@ -36,19 +36,24 @@ function* stepsOf(step: StepPlan): Generator<StepPlan> {
   }
 }
 
-function findStep(root: StepPlan, recipeId: RecipeId): StepPlan | null {
-  for (const step of stepsOf(root)) if (step.recipeId === recipeId) return step
+/** Every step of every target, the one walk behind the buy table, the step count and the stock note. */
+function* stepsOfPlan(plan: PlanResult): Generator<StepPlan> {
+  for (const { root } of plan.targets) yield* stepsOf(root)
+}
+
+function findStep(plan: PlanResult, recipeId: RecipeId): StepPlan | null {
+  for (const step of stepsOfPlan(plan)) if (step.recipeId === recipeId) return step
   return null
 }
 
-function verdictOf(plan: PlanResult, craft: number | null, buy: number | null, { catalog, mastery }: AnswerContext): Verdict {
+function verdictOf(plan: PlanResult, craft: number | null, buy: number | null, margin: number | null, { catalog, mastery }: AnswerContext): Verdict {
   const blocked = plan.blocked[0]
   if (blocked !== undefined) {
     const recipe = catalog.recipes.get(blocked)
     const profession = recipe?.profession ?? null
     return {
       kind: 'blocked',
-      itemId: findStep(plan.root, blocked)?.itemId ?? plan.target.itemId,
+      itemId: findStep(plan, blocked)?.itemId ?? plan.targets[0].itemId,
       profession,
       level: recipe?.masteryLevel ?? 0,
       mastery: profession ? mastery[profession] : null,
@@ -58,15 +63,37 @@ function verdictOf(plan: PlanResult, craft: number | null, buy: number | null, {
   if (buy === null) return { kind: 'no-listing', cost: craft }
   const gap = buy - craft
   if (Math.round(gap) === 0) return { kind: 'even' }
-  const margin = plan.margin ?? 0
-  return gap > 0 ? { kind: 'craft', gap, margin } : { kind: 'buy', gap: -gap, margin }
+  return gap > 0 ? { kind: 'craft', gap, margin: margin ?? 0 } : { kind: 'buy', gap: -gap, margin: margin ?? 0 }
 }
 
+/** The sum when every target has a value, else null. One target without a listing leaves the whole total unknown. */
+function totalOf(targets: readonly TargetPlan[], value: (target: TargetPlan) => number | null): number | null {
+  let total = 0
+  for (const target of targets) {
+    const part = value(target)
+    if (part === null) return null
+    total += part
+  }
+  return total
+}
+
+/** Craft is the plan's cost, buy is every target bought outright, margin is every target sold at its lowest listing. */
 export function answerOf(plan: PlanResult, context: AnswerContext): Answer {
   const craft = Number.isFinite(plan.cost) ? plan.cost : null
-  const buy = plan.market?.cost ?? null
-  return { verdict: verdictOf(plan, craft, buy, context), craft, buy, margin: plan.margin, marginPct: plan.marginPct }
+  const buy = totalOf(plan.targets, (target) => target.market?.cost ?? null)
+  const margin = totalOf(plan.targets, (target) => target.margin)
+  const marginPct = margin !== null && craft !== null && craft > 0 ? margin / craft : null
+  return { verdict: verdictOf(plan, craft, buy, margin, context), craft, buy, margin, marginPct }
 }
+
+export type TargetStatus = 'ready' | 'unpriced' | 'locked'
+
+/** The first step in a target's tree that the player's mastery cannot attempt, or null. */
+export const lockedStep = (root: StepPlan): StepPlan | null => [...stepsOf(root)].find((step) => step.successRate === 0) ?? null
+
+/** What a row says about one target: locked while any step of its tree is above the player's mastery, unpriced while a material has no price. */
+export const targetStatus = (target: TargetPlan): TargetStatus =>
+  lockedStep(target.root) ? 'locked' : Number.isFinite(target.cost) ? 'ready' : 'unpriced'
 
 interface Names {
   itemName(itemId: ItemId): string
@@ -198,7 +225,7 @@ export function buyList(plan: PlanResult): BuyList {
   const missing = new Map<ItemId, Tally>()
   const covered = new Map<ItemId, Tally>()
   let credit = 0
-  for (const step of stepsOf(plan.root)) {
+  for (const step of stepsOfPlan(plan)) {
     for (const byproduct of step.byproducts) credit += byproduct.credit
     for (const line of step.materials) {
       if (line.acquisition.method === 'none') tally(missing, line.itemId, line.expected, line.owned)
@@ -220,10 +247,10 @@ export function buyList(plan: PlanResult): BuyList {
   return { lines: [...unpriced, ...bought, ...held], credit }
 }
 
-export const stepCount = (root: StepPlan): number => [...stepsOf(root)].length
+export const stepCount = (plan: PlanResult): number => [...stepsOfPlan(plan)].length
 
 /** Whether any line of the plan draws on what the player holds. */
-export const usesStock = (root: StepPlan): boolean => [...stepsOf(root)].some((step) => step.materials.some((line) => line.owned > 0))
+export const usesStock = (plan: PlanResult): boolean => [...stepsOfPlan(plan)].some((step) => step.materials.some((line) => line.owned > 0))
 
 /** The listings the depth-aware price spans, out of `listed` when given, or the gap when the ladder holds fewer units than the plan buys. */
 export function depthNote(depth: Depth, listed?: number): string {
@@ -232,18 +259,18 @@ export function depthNote(depth: Depth, listed?: number): string {
   return depth.complete ? `across all ${span}, only ${decimal(depth.available, 0)} listed` : `across the ${span} captured`
 }
 
-/** Market-priced items the plan buys more than one of beyond the player's stock, and the target when it buys several: the ones worth a ladder. */
+/** Market-priced items the plan buys more than one of beyond the player's stock, and each target it buys several of: the ones worth a ladder. */
 export function bulkBuys(plan: PlanResult, prices: PriceBook): ItemId[] {
+  const several = plan.targets.filter((target) => target.quantity > 1).map((target) => target.itemId)
   const bought = plan.shopping.filter((entry) => entry.expected - entry.owned > 1).map((entry) => entry.itemId)
-  const ids = plan.target.quantity > 1 ? [plan.target.itemId, ...bought] : bought
-  return ids.filter((itemId) => prices.quote(itemId).kind === 'market')
+  return [...several, ...bought].filter((itemId) => prices.quote(itemId).kind === 'market')
 }
 
 /** The oldest depth poll the plan relies on, or null when it prices every unit flat. */
 export function depthCapturedAt(plan: PlanResult): string | null {
-  const depths = [plan.market?.depth ?? null, ...plan.shopping.map((entry) => entry.depth)]
+  const depths = [...plan.targets.map((target) => target.market?.depth ?? null), ...plan.shopping.map((entry) => entry.depth)]
   return depths.reduce<string | null>((oldest, depth) => (depth && (oldest === null || depth.capturedAt < oldest) ? depth.capturedAt : oldest), null)
 }
 
-export const estimateGap = (plan: PlanResult, theirs: number): number | null =>
-  Number.isFinite(plan.unitCost) ? plan.unitCost - theirs : null
+export const estimateGap = (target: TargetPlan, theirs: number): number | null =>
+  Number.isFinite(target.unitCost) ? target.unitCost - theirs : null

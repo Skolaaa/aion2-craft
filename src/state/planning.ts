@@ -16,7 +16,7 @@ export interface Planning {
 /** Stock and source choices are for the item the player is looking at. The scanner ranks every recipe at Market prices. */
 export const planOne = (planning: Planning, itemId: ItemId, quantity: number, owned?: Owned, forced?: Forced): PlanResult | null =>
   planCraft({
-    target: { itemId, quantity },
+    wanted: new Map([[itemId, quantity]]),
     mastery: planning.mastery,
     options: planning.options,
     world: planning.catalog,

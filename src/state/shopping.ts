@@ -1,4 +1,4 @@
-import type { ItemId, PlanResult } from '../domain/types.ts'
+import type { ItemId, PlanResult, TargetPlan } from '../domain/types.ts'
 import type { BuyList } from './answer.ts'
 import { kina } from './format.ts'
 
@@ -10,12 +10,19 @@ export interface ShoppingNames {
 
 const units = (count: number) => Math.ceil(count - 1e-9)
 
+/** One target heads the text as "What to buy for 3 × Sword on Siel". A list names each line under "To craft on Siel" first. */
+function heading(targets: readonly TargetPlan[], itemName: (itemId: ItemId) => string, worldName: string): string[] {
+  const wanted = targets.map((target) => `${target.quantity} × ${itemName(target.itemId)}`)
+  if (wanted.length === 1) return [`What to buy for ${wanted[0]} on ${worldName}`]
+  return [`To craft on ${worldName}`, ...wanted.map((line) => `  ${line}`), 'What to buy']
+}
+
 /**
  * The buy table as plain text for a chat message. Counts are whole units, rounded up,
  * so the Kina on each line is what buying that many costs, not the expected value.
  */
 export function shoppingText(plan: PlanResult, { lines, credit }: BuyList, { itemName, worldName, link }: ShoppingNames): string {
-  const out: string[] = [`What to buy for ${plan.target.quantity} × ${itemName(plan.target.itemId)} on ${worldName}`]
+  const out = heading(plan.targets, itemName, worldName)
   let total = 0
   const held = lines.filter((line) => line.kind === 'owned')
   for (const line of lines) {

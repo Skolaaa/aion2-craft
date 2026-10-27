@@ -50,7 +50,7 @@ function Figure({ label, value, empty, tone, children }: FigureProps) {
 export function AnswerPanel({ craftable, plan, planning, freshness, quantity, overrides, onTarget }: Props) {
   const { catalog, world, index, mastery, prices } = planning
   const { item } = craftable
-  const recipe = plan ? catalog.recipes.get(plan.root.recipeId) : undefined
+  const recipe = plan ? catalog.recipes.get(plan.targets[0].root.recipeId) : undefined
   const pair = index.pairOf.get(item.id)
   const profession = recipe?.profession ?? craftable.profession
   const level = recipe?.masteryLevel ?? craftable.level
@@ -89,7 +89,7 @@ export function AnswerPanel({ craftable, plan, planning, freshness, quantity, ov
           answer={answerOf(plan, { catalog, mastery })}
           plan={plan}
           planning={planning}
-          stepNote={stepSummary(plan.root, recipe, mastery, 1)}
+          stepNote={stepSummary(plan.targets[0].root, recipe, mastery, 1)}
           onPrice={(price) => overrides.save(item.id, price)}
           ownPrice={prices.quote(item.id).kind === 'manual'}
         />
@@ -113,20 +113,20 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
   const { catalog, world } = planning
   const { taxRate } = planning.options
   const { verdict, craft, buy, margin, marginPct } = answer
-  const { market, target } = plan
+  const [{ itemId, quantity, unitCost, market }] = plan.targets
   const nameOf = (itemId: ItemId) => itemName(catalog, itemId)
-  const each = target.quantity > 1
+  const each = quantity > 1
 
   const craftNote =
     verdict.kind === 'blocked'
       ? `needs ${verdict.profession ?? 'mastery'} ${verdict.level}`
       : craft === null
         ? <span className="is-warn">{plan.missing.length} {plural(plan.missing.length, 'price', 'prices')} missing</span>
-        : `${each ? `${kina(plan.unitCost)} each, ` : ''}${stepNote}${usesStock(plan.root) ? ', what you hold counted as free' : ''}`
+        : `${each ? `${kina(unitCost)} each, ` : ''}${stepNote}${usesStock(plan) ? ', what you hold counted as free' : ''}`
 
   // One keyed editor across the three notes, so focus returns to it after a save.
   const priceEditor = (trigger: string) => (
-    <PriceCell key="price" itemName={nameOf(target.itemId)} unit={market?.lowest ?? null} own={ownPrice} onSave={onPrice} trigger={trigger} />
+    <PriceCell key="price" itemName={nameOf(itemId)} unit={market?.lowest ?? null} own={ownPrice} onSave={onPrice} trigger={trigger} />
   )
 
   const buyNote =
@@ -135,7 +135,7 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
     ) : ownPrice ? (
       <>{each ? `${kina(market.lowest)} each, ` : ''}your price, {priceEditor('change it')}</>
     ) : market.depth ? (
-      <>{kina(market.cost / target.quantity)} each {depthNote(market.depth)}</>
+      <>{kina(market.cost / quantity)} each {depthNote(market.depth)}</>
     ) : (
       <>
         {each ? `${kina(market.lowest)} each, ` : ''}

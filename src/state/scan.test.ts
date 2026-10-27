@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import type { PlanResult, Profession } from '../domain/types.ts'
-import type { Verdict } from './answer.ts'
-import { bestMargins, DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanQuery, type ScanRow, type ScanStatus } from './scan.ts'
+import type { TargetStatus, Verdict } from './answer.ts'
+import { bestMargins, DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanQuery, type ScanRow } from './scan.ts'
 
-const VERDICT: Record<ScanStatus, Verdict> = {
+const VERDICT: Record<TargetStatus, Verdict> = {
   ready: { kind: 'even' },
   unpriced: { kind: 'missing', items: [] },
   locked: { kind: 'blocked', itemId: 0, profession: 'Blacksmithing', level: 50, mastery: 10 },
 }
 
 let nextId = 1
-function row(name: string, profession: Profession, margin: number | null, status: ScanStatus = 'ready', cost: number | null = 1000): ScanRow {
+function row(name: string, profession: Profession, margin: number | null, status: TargetStatus = 'ready', cost: number | null = 1000): ScanRow {
   return {
     item: { id: nextId++, name, grade: 'Rare', icon: null },
     profession,

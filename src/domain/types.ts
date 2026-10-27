@@ -147,8 +147,19 @@ export interface StepPlan {
   cost: number
 }
 
+export type NonEmpty<T> = readonly [T, ...T[]]
+
+export const isNonEmpty = <T>(items: readonly T[]): items is NonEmpty<T> => items.length > 0
+
+/**
+ * What the player wants made: units per item, in the order the planner spends stock on them.
+ * A wanted item is always crafted. It is never bought, never taken from stock, and never a material
+ * for another wanted item.
+ */
+export type Wanted = ReadonlyMap<ItemId, number>
+
 export interface PlanInput {
-  target: { itemId: ItemId; quantity: number }
+  wanted: Wanted
   mastery: Mastery
   options: PlanOptions
   world: Catalog
@@ -157,15 +168,24 @@ export interface PlanInput {
   forced?: Forced
 }
 
-export interface PlanResult {
-  target: { itemId: ItemId; quantity: number }
+/** One wanted item as planned: its step tree, what it costs, and what buying it outright would. */
+export interface TargetPlan {
+  itemId: ItemId
+  quantity: number
   root: StepPlan
   cost: number
   unitCost: number
   market: { lowest: number; soldAvg: number | null; listings: number; cost: number; depth: Depth | null } | null
   margin: number | null
   marginPct: number | null
-  /** Every bought leaf, summed over the steps that use it. `expected` includes the `owned` part; `subtotal` and `depth` are for the rest. */
+}
+
+export interface PlanResult {
+  /** In `wanted` order. */
+  targets: NonEmpty<TargetPlan>
+  /** The sum over `targets`. Infinity while any price or mastery is missing. */
+  cost: number
+  /** Every bought leaf, summed over the steps of every target. `expected` includes the `owned` part; `subtotal` and `depth` are for the rest. */
   shopping: { itemId: ItemId; expected: number; owned: number; unit: number; subtotal: number; depth: Depth | null }[]
   missing: ItemId[]
   blocked: RecipeId[]

@@ -2,16 +2,17 @@ import { describe, expect, it } from 'vitest'
 import { buildCatalog, type RatesFile, type RecipesFile } from '../domain/catalog.ts'
 import { planCraft } from '../domain/planCraft.ts'
 import { makePriceBook } from '../domain/priceBook.ts'
-import type { Alternative, Catalog, ItemId, Mastery, Owned, PlanResult, PriceBook, Recipe } from '../domain/types.ts'
+import type { Alternative, Catalog, ItemId, Mastery, Owned, PlanResult, PriceBook, Recipe, Wanted } from '../domain/types.ts'
 import {
-  answerOf, blockedNote, bulkBuys, buyList, depthCapturedAt, depthNote, extraCost, sentenceOf, stepSummary, successNote, type Answer,
+  answerOf, blockedNote, bulkBuys, buyList, depthCapturedAt, depthNote, extraCost, sentenceOf, stepSummary, successNote, targetStatus, type Answer,
 } from './answer.ts'
 
 const SWORD = 1
 const BLADE = 2
+const SHIELD = 3
 const IRON = 10
 const WOOD = 11
-const NAMES: Record<number, string> = { [SWORD]: 'Sword', [BLADE]: 'Blade', [IRON]: 'Iron', [WOOD]: 'Wood' }
+const NAMES: Record<number, string> = { [SWORD]: 'Sword', [BLADE]: 'Blade', [SHIELD]: 'Shield', [IRON]: 'Iron', [WOOD]: 'Wood' }
 const MASTERY: Mastery = { Blacksmithing: 10, Tailoring: 0, Jewelcrafting: 0, Alchemy: 0, Cooking: 0 }
 const FLAT = { success: 'one', combo: 'one' }
 
@@ -45,7 +46,7 @@ function catalogOf(recipes: Recipe[]): Catalog {
 const ONE_STEP = [recipe(100, SWORD, [[IRON, 2]])]
 
 function answer(
-  recipes: Recipe[], market: Record<number, number>, quantity = 1, mastery = MASTERY, owned?: Owned,
+  recipes: Recipe[], market: Record<number, number>, quantity: number | Wanted = 1, mastery = MASTERY, owned?: Owned,
 ): { plan: PlanResult; answer: Answer; catalog: Catalog; prices: PriceBook } {
   const catalog = catalogOf(recipes)
   const prices = makePriceBook({
@@ -54,7 +55,7 @@ function answer(
     npc: new Map(),
   })
   const plan = planCraft({
-    target: { itemId: SWORD, quantity },
+    wanted: typeof quantity === 'number' ? new Map([[SWORD, quantity]]) : quantity,
     mastery,
     options: { allowCraft: true, allowMorph: true, byproductCredit: false, taxRate: 0.05 },
     world: catalog,
@@ -126,6 +127,42 @@ describe('answerOf', () => {
     expect(result.answer.verdict).toMatchObject({ kind: 'blocked', itemId: BLADE, level: 25 })
     expect(sentence(result)).toBe('Crafting Blade needs Blacksmithing 25, and your mastery is 10.')
   })
+
+  describe('over a list', () => {
+    const recipes = [recipe(100, SWORD, [[IRON, 2]]), recipe(101, SHIELD, [[IRON, 1], [WOOD, 1]])]
+    const both: Wanted = new Map([[SWORD, 2], [SHIELD, 1]])
+
+    it('sums craft, buy and margin over the targets', () => {
+      const result = answer(recipes, { [IRON]: 100, [WOOD]: 50, [SWORD]: 1000, [SHIELD]: 500 }, both)
+      expect(result.answer).toMatchObject({ craft: 550, buy: 2500, verdict: { kind: 'craft', gap: 1950 } })
+      expect(result.answer.margin).toBeCloseTo(2500 * 0.95 - 550)
+      expect(result.answer.marginPct).toBeCloseTo((2500 * 0.95 - 550) / 550)
+    })
+
+    it('has no buy total and no margin while any target lacks a listing', () => {
+      const result = answer(recipes, { [IRON]: 100, [WOOD]: 50, [SWORD]: 1000 }, both)
+      expect(result.answer).toMatchObject({ craft: 550, buy: null, margin: null, marginPct: null, verdict: { kind: 'no-listing', cost: 550 } })
+    })
+
+    it('names the blocked item of whichever target holds it', () => {
+      const locked = [recipe(100, SWORD, [[IRON, 2]]), recipe(101, SHIELD, [[BLADE, 1]]), recipe(102, BLADE, [[IRON, 3]], { masteryLevel: 25 })]
+      const result = answer(locked, { [IRON]: 10, [SWORD]: 1000, [SHIELD]: 1000 }, both)
+      expect(result.answer.verdict).toMatchObject({ kind: 'blocked', itemId: BLADE, level: 25 })
+    })
+  })
+})
+
+describe('targetStatus', () => {
+  it('reads a nested blocked recipe as locked, a missing price as unpriced, and the rest as ready', () => {
+    const recipes = [recipe(100, SWORD, [[IRON, 2]]), recipe(101, SHIELD, [[BLADE, 1]]), recipe(102, BLADE, [[WOOD, 3]], { masteryLevel: 25 })]
+    const both: Wanted = new Map([[SWORD, 1], [SHIELD, 1]])
+    const { plan } = answer(recipes, { [IRON]: 10, [WOOD]: 10, [BLADE]: 1000 }, both)
+    expect(plan.targets.map(targetStatus)).toEqual(['ready', 'ready'])
+    const locked = answer(recipes, { [IRON]: 10, [WOOD]: 10 }, both)
+    expect(locked.plan.targets.map(targetStatus)).toEqual(['ready', 'locked'])
+    const unpriced = answer(recipes, { [WOOD]: 10, [BLADE]: 1000 }, both)
+    expect(unpriced.plan.targets.map(targetStatus)).toEqual(['unpriced', 'ready'])
+  })
 })
 
 describe('successNote', () => {
@@ -161,18 +198,28 @@ describe('buyList', () => {
     ])
     expect(plan.cost).toBe(30)
   })
+
+  it('sums a material two targets need into one line, with the stock spent once', () => {
+    const recipes = [recipe(100, SWORD, [[IRON, 2]]), recipe(101, SHIELD, [[IRON, 3], [WOOD, 1]])]
+    const { plan } = answer(recipes, { [IRON]: 10 }, new Map([[SWORD, 1], [SHIELD, 1]]), MASTERY, new Map([[IRON, 4]]))
+    expect(buyList(plan).lines).toEqual([
+      { kind: 'missing', itemId: WOOD, expected: 1, owned: 0 },
+      { kind: 'buy', itemId: IRON, expected: 5, owned: 4, unit: 10, subtotal: 10, depth: null },
+    ])
+  })
 })
 
 describe('stepSummary', () => {
   it('describes the attempts and rate, or the mastery a step lacks', () => {
+    const rootOf = (result: ReturnType<typeof answer>) => result.plan.targets[0].root
     const ready = answer(ONE_STEP, { [IRON]: 1 })
-    expect(stepSummary(ready.plan.root, ready.catalog.recipes.get(100), MASTERY)).toBe('1 attempt at 100%')
+    expect(stepSummary(rootOf(ready), ready.catalog.recipes.get(100), MASTERY)).toBe('1 attempt at 100%')
 
     const withCombo = answer([recipe(100, SWORD, [[IRON, 1]], { combo: { itemId: BLADE, count: 1, chance: 0.25 } })], { [IRON]: 1 })
-    expect(stepSummary(withCombo.plan.root, withCombo.catalog.recipes.get(100), MASTERY)).toBe('1.33 attempts at 100%, 25% combo instead')
+    expect(stepSummary(rootOf(withCombo), withCombo.catalog.recipes.get(100), MASTERY)).toBe('1.33 attempts at 100%, 25% combo instead')
 
     const locked = answer([recipe(100, SWORD, [[IRON, 2]], { masteryLevel: 30 })], {})
-    expect(stepSummary(locked.plan.root, locked.catalog.recipes.get(100), MASTERY)).toBe('needs Blacksmithing 30, yours is 10')
+    expect(stepSummary(rootOf(locked), locked.catalog.recipes.get(100), MASTERY)).toBe('needs Blacksmithing 30, yours is 10')
   })
 })
 
@@ -221,8 +268,10 @@ describe('depth helpers', () => {
     const held = answer(recipes, { [SWORD]: 500, [BLADE]: 50, [IRON]: 50, [WOOD]: 5 }, 1, MASTERY, new Map([[WOOD, 1]]))
     expect(bulkBuys(held.plan, held.prices)).toEqual([])
     const several = answer(recipes, { [SWORD]: 500, [BLADE]: 50, [IRON]: 50, [WOOD]: 5 }, 2)
-    expect(several.plan.market?.cost).toBe(1000)
+    expect(several.plan.targets[0].market?.cost).toBe(1000)
     expect(bulkBuys(several.plan, several.prices)).toEqual([SWORD, BLADE, IRON, WOOD])
+    const both = answer([...recipes, recipe(101, SHIELD, [[IRON, 1]])], { [SWORD]: 500, [SHIELD]: 100, [BLADE]: 50, [IRON]: 50, [WOOD]: 5 }, new Map([[SWORD, 1], [SHIELD, 3]]))
+    expect(bulkBuys(both.plan, both.prices)).toEqual([SHIELD, IRON, WOOD])
   })
 
   it('reports the oldest depth poll a plan relies on', () => {
@@ -231,6 +280,6 @@ describe('depth helpers', () => {
     expect(depthCapturedAt(plan)).toBeNull()
     const shopping = [{ ...plan.shopping[0], depth: depth(2, 9, 2, true, '2026-10-20T00:00:00Z') }]
     const market = { lowest: 1, soldAvg: null, listings: 1, cost: 1, depth: depth(1, 1) }
-    expect(depthCapturedAt({ ...plan, shopping, market })).toBe('2026-10-06T11:53:19Z')
+    expect(depthCapturedAt({ ...plan, shopping, targets: [{ ...plan.targets[0], market }] })).toBe('2026-10-06T11:53:19Z')
   })
 })
