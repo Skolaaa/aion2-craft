@@ -110,6 +110,9 @@ the chip, bottom sheet under 640 px with a sticky search field:
   2026." One notice dates every region, so the date sits here once.
 - Arrow keys and Enter choose, Escape closes, focus returns to the chip. The region and side rows
   are radio groups, like the Normal and Splendent toggle.
+- On a first visit, with nothing saved and no plan in the link, it opens once under the world chip
+  titled "Which world do you play on?", with an intro line above the search and the list at its top.
+  Closing it keeps the default world and it does not open again.
 
 Calculator answer: as the Ledger prototype, with Atlas's item hero (grade-framed 48 px icon,
 Cinzel name in the grade colour) and its diamond-ruled figure strip. The margin percentage is a
