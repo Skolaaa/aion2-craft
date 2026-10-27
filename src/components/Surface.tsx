@@ -1,10 +1,9 @@
 import { useId, useLayoutEffect, useRef, type ReactNode } from 'react'
+import { NARROW } from '../state/useNarrow.ts'
 import { Button } from './Button.tsx'
 
 export type Placement = 'popover' | 'drawer'
 
-export const SHEET_BELOW = 640
-const SHEET = `(max-width: ${SHEET_BELOW - 0.02}px)`
 const GAP = 4
 const EDGE = 8
 
@@ -32,7 +31,7 @@ export function Surface({ anchor, placement, title, width = 320, flush = false, 
   useLayoutEffect(() => {
     const dialog = ref.current
     if (!dialog) return
-    const sheet = window.matchMedia(SHEET)
+    const sheet = window.matchMedia(NARROW)
     const modal = placement === 'drawer' || sheet.matches
 
     const place = () => {

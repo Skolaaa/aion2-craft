@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Sort } from '../state/scan.ts'
+import { useNarrow } from '../state/useNarrow.ts'
 import { Glyph } from './Glyph.tsx'
 
 export interface Column<Row, Key extends string = string> {
@@ -7,12 +8,15 @@ export interface Column<Row, Key extends string = string> {
   header: string
   render(row: Row): ReactNode
   numeric?: boolean
+  /** Left out on a phone. */
   hideNarrow?: boolean
   sortable?: boolean
+  width?: number
 }
 
 interface Props<Row, Key extends string> {
   label: string
+  className?: string
   columns: readonly Column<Row, Key>[]
   rows: readonly Row[]
   rowKey(row: Row): string
@@ -25,22 +29,29 @@ interface Props<Row, Key extends string> {
   empty?: ReactNode
 }
 
-const cellClass = (column: { numeric?: boolean; hideNarrow?: boolean }) =>
-  [column.numeric ? 'num' : '', column.hideNarrow ? 'hide-narrow' : ''].filter(Boolean).join(' ') || undefined
+const cellClass = (column: { numeric?: boolean }) => (column.numeric ? 'num' : undefined)
 
 const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const
 
 export function Table<Row, Key extends string>({
-  label, columns, rows, rowKey, rowTitle, rowClass, onRowClick, sort, onSort, footer, empty,
+  label, className, columns: allColumns, rows, rowKey, rowTitle, rowClass, onRowClick, sort, onSort, footer, empty,
 }: Props<Row, Key>) {
+  const narrow = useNarrow()
+  const columns = narrow ? allColumns.filter((column) => !column.hideNarrow) : allColumns
   return (
-    <table className="table" aria-label={label}>
+    <table className={['table', className].filter(Boolean).join(' ')} aria-label={label}>
       <thead>
         <tr>
           {columns.map((column) => {
             const active = sort?.key === column.key
             return (
-              <th key={column.key} scope="col" className={cellClass(column)} aria-sort={active && sort ? ARIA_SORT[sort.direction] : undefined}>
+              <th
+                key={column.key}
+                scope="col"
+                className={cellClass(column)}
+                style={column.width === undefined ? undefined : { width: column.width }}
+                aria-sort={active && sort ? ARIA_SORT[sort.direction] : undefined}
+              >
                 {column.sortable && onSort ? (
                   <button type="button" className={`sort ${active ? 'is-active' : ''}`} onClick={() => onSort(column.key)}>
                     {column.header}

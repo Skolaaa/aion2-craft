@@ -1715,10 +1715,6 @@ input[type='range'] {
     display: none;
   }
 
-  .hide-narrow {
-    display: none;
-  }
-
   .top-bar-inner {
     flex-wrap: wrap;
     gap: 0 var(--space-3);
