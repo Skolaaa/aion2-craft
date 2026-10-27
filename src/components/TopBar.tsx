@@ -83,6 +83,7 @@ function Chip({ setting, label, spoken, title, className = '', opened, open, chi
     <button
       type="button"
       className={`chip ${className}`}
+      data-chip={settingKey(setting)}
       title={title}
       aria-label={`${label} ${spoken}`}
       aria-haspopup="dialog"

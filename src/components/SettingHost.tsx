@@ -35,10 +35,13 @@ const FRAME: Record<Setting['kind'], { title: string; placement: Placement; widt
   plan: { title: 'Settings', placement: 'drawer' },
 }
 
+const FIRST_VISIT_TITLE = 'Which world do you play on?'
+
 export function SettingHost({ surface, worlds, retryWorlds, current, setup, patch, chooseWorld, planning, overrides, owned, sources }: Props) {
   const { opened, close } = surface
   if (opened === null) return null
   const { setting, anchor } = opened
+  const title = setting.kind === 'world' && setting.from === 'first' ? FIRST_VISIT_TITLE : FRAME[setting.kind].title
 
   const body = () => {
     switch (setting.kind) {
@@ -82,6 +85,7 @@ export function SettingHost({ surface, worlds, retryWorlds, current, setup, patc
       key={settingKey(setting)}
       anchor={anchor}
       {...FRAME[setting.kind]}
+      title={title}
       flush={setting.kind === 'world' && worlds.status === 'ready'}
       footer={setting.kind === 'plan' ? <Button variant="primary" onClick={() => close()}>Done</Button> : undefined}
       onClose={close}

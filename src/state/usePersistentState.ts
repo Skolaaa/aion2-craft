@@ -18,6 +18,14 @@ export function peekPersisted<T>(key: string, fallback: T, parse: Parse<T>): T {
   }
 }
 
+export function hasPersisted(key: string): boolean {
+  try {
+    return localStorage.getItem(PREFIX + key) !== null
+  } catch {
+    return false
+  }
+}
+
 function write(key: string, value: unknown) {
   try {
     localStorage.setItem(PREFIX + key, JSON.stringify(value))

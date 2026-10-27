@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Calculator } from './components/Calculator.tsx'
 import { Footer } from './components/Footer.tsx'
 import { ListView } from './components/ListView.tsx'
@@ -14,7 +14,7 @@ import { statusChips } from './state/chips.ts'
 import { craftIndexFor, itemFor } from './state/craftables.ts'
 import { age } from './state/format.ts'
 import { useList, type List } from './state/list.ts'
-import { useOpenSetting } from './state/openSetting.ts'
+import { SETTINGS, settingKey, useOpenSetting } from './state/openSetting.ts'
 import type { Planning } from './state/planning.ts'
 import { DEFAULT_SETUP, parseSetup, settingsOf, SETUP_KEY, setWorld, type Setup, type SetupPatch } from './state/setup.ts'
 import { encodeLink, type LinkNote, type Opened } from './state/shareLink.ts'
@@ -24,7 +24,7 @@ import { useFreshness } from './state/useFreshness.ts'
 import { useLadders } from './state/useLadders.ts'
 import { useOverrides } from './state/useOverrides.ts'
 import { useOwned } from './state/useOwned.ts'
-import { usePersistentState } from './state/usePersistentState.ts'
+import { hasPersisted, usePersistentState } from './state/usePersistentState.ts'
 import { usePrices, type PriceFeed } from './state/usePrices.ts'
 import { useAddressBar, useLinkOpening } from './state/useShareLink.ts'
 import { useSources } from './state/useSources.ts'
@@ -47,6 +47,8 @@ export function App() {
 
 function Session({ opened, worlds, retry }: { opened: Opened; worlds: WorldsState; retry(): void }) {
   const { seed } = opened
+  // A link's world is the sender's choice, so only a bare visit to an empty browser asks.
+  const [firstVisit] = useState(() => seed === null && !hasPersisted(SETUP_KEY))
   const [setup, updateSetup] = usePersistentState(SETUP_KEY, DEFAULT_SETUP, parseSetup, seed?.setup)
   const [view, updateView] = usePersistentState<View>('view', DEFAULT_VIEW, parseView, seed?.view)
   const [target, updateTarget] = usePersistentState('target', DEFAULT_TARGET, parseTarget, seed?.target)
@@ -74,6 +76,7 @@ function Session({ opened, worlds, retry }: { opened: Opened; worlds: WorldsStat
       target={target}
       updateTarget={updateTarget}
       seedList={seed?.list ?? null}
+      firstVisit={firstVisit}
     />
   )
 }
@@ -126,9 +129,10 @@ interface WorkspaceProps {
   target: Target
   updateTarget(change: (previous: Target) => Target): void
   seedList: List | null
+  firstVisit: boolean
 }
 
-function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, view, onView, target, updateTarget, seedList }: WorkspaceProps) {
+function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, view, onView, target, updateTarget, seedList, firstVisit }: WorkspaceProps) {
   const { world } = current
   const [linkNotes, setLinkNotes] = useState(notes)
   const catalog = catalogFor(world.race)
@@ -142,6 +146,15 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
   const owned = useOwned(world.id)
   const sources = useSources(world.id)
   const surface = useOpenSetting()
+
+  const offered = useRef(false)
+  useEffect(() => {
+    if (!firstVisit || offered.current || worlds.status !== 'ready' || surface.opened !== null) return
+    const chip = document.querySelector<HTMLElement>(`[data-chip="${settingKey(SETTINGS.world)}"]`)
+    if (chip === null) return
+    offered.current = true
+    surface.open(SETTINGS.first, chip)
+  })
 
   const options = useMemo<PlanOptions>(
     () => ({ allowCraft: setup.allowCraft, allowMorph: setup.allowMorph, byproductCredit: setup.byproductCredit, taxRate: setup.taxRate }),
