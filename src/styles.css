@@ -189,8 +189,6 @@ a {
   flex-direction: column;
 }
 
-/* Status line */
-
 .top-bar {
   background: var(--surface);
   border-bottom: 1px solid var(--rule);
@@ -381,8 +379,6 @@ a {
   gap: var(--space-1);
 }
 
-/* Controls */
-
 .button {
   display: inline-flex;
   align-items: center;
@@ -527,9 +523,6 @@ input[type='range'] {
   border-color: var(--rule-2);
   background: var(--raised);
 }
-
-
-/* Tables */
 
 .table {
   width: 100%;
@@ -760,8 +753,6 @@ input[type='range'] {
   gap: var(--space-2);
 }
 
-/* Margin heat */
-
 .heat {
   display: inline-block;
   font: 600 12px / 1 var(--mono);
@@ -777,8 +768,6 @@ input[type='range'] {
   min-width: 64px;
   text-align: right;
 }
-
-/* Notices */
 
 .notice {
   display: flex;
@@ -803,8 +792,6 @@ input[type='range'] {
 .notice-title {
   font-weight: 600;
 }
-
-/* Surfaces: popover, sheet and drawer */
 
 .surface {
   padding: 0;
@@ -889,8 +876,6 @@ input[type='range'] {
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--rule);
 }
-
-/* World picker */
 
 .picker-search {
   position: sticky;
@@ -1084,8 +1069,6 @@ input[type='range'] {
   height: 16px;
   margin: 3px 0 0;
 }
-
-/* Calculator */
 
 .search {
   display: grid;
@@ -1356,8 +1339,6 @@ input[type='range'] {
 .rate-text .meta {
   max-width: 72ch;
 }
-
-/* Scanner */
 
 .scan-layout {
   display: grid;

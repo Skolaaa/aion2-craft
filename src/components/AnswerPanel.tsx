@@ -32,7 +32,6 @@ interface FigureProps {
   children: ReactNode
 }
 
-// Digits read in the mono face, like every other number on the page.
 function MonoDigits({ text }: { text: string }) {
   return text.split(/([+−]?\d+(?:[.,]\d+)*%?)/).map((part, index) => (index % 2 === 1 ? <span className="mono" key={index}>{part}</span> : part))
 }

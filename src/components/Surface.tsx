@@ -42,9 +42,11 @@ export function Surface({ anchor, placement, title, width = 320, flush = false, 
       dialog.style.setProperty('--surface-left', `${left}px`)
     }
     dialog.style.setProperty('--surface-width', `${width}px`)
-    if (!modal) place()
     if (modal) dialog.showModal()
-    else dialog.show()
+    else {
+      place()
+      dialog.show()
+    }
     dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus()
 
     const onKey = (event: KeyboardEvent) => {
