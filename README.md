@@ -8,7 +8,7 @@ The status line at the top shows what the plan assumes: the region, the world an
 
 ![The calculator with the status line, the answer and what to buy](docs/screenshots/calculator-desktop.png)
 
-More screenshots in `docs/screenshots/`: the scanner, the world list, the mastery popover, a phone at 390 px with the world list as a bottom sheet, and a recipe with missing prices.
+More screenshots in `docs/screenshots/`: the scanner, the world list, the mastery popover, a phone at 390 px with the world list as a bottom sheet, and a recipe with missing prices. `docs/ROADMAP.md` lists what comes next, in order.
 
 ## Run it
 
