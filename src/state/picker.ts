@@ -47,13 +47,6 @@ export function pickerView(directory: WorldDirectory, query: PickerQuery, recent
   return { recent: recentOptions, groups, keyboardOrder: [...recentOptions, ...groups.flatMap((group) => group.options)] }
 }
 
-export function moveActive(view: PickerView, active: string | null, step: 1 | -1): string | null {
-  const options = view.keyboardOrder
-  const at = options.findIndex((candidate) => candidate.domId === active)
-  const next = at === -1 ? 0 : Math.min(options.length - 1, Math.max(0, at + step))
-  return options[next]?.domId ?? null
-}
-
 export const initialActive = (view: PickerView, currentId: WorldId): string | null =>
   (view.keyboardOrder.find(({ listed }) => listed.world.id === currentId) ?? view.keyboardOrder[0])?.domId ?? null
 

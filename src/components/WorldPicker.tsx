@@ -1,7 +1,8 @@
-import { useEffect, useId, useMemo, useState, type KeyboardEvent } from 'react'
+import { useId, useMemo, useState } from 'react'
 import type { Race } from '../domain/types.ts'
 import { SIDE, type Listed, type World, type WorldDirectory, type WorldId } from '../market/worlds.ts'
-import { currentNote, groupNote, initialActive, moveActive, pairingNote, pickerView, withText, type PickerOption, type PickerQuery } from '../state/picker.ts'
+import { useCombobox } from '../state/combobox.ts'
+import { currentNote, groupNote, initialActive, pairingNote, pickerView, withText, type PickerOption, type PickerQuery } from '../state/picker.ts'
 
 const SIDES: readonly { race: Race | null; label: string }[] = [
   { race: null, label: 'both' },
@@ -20,27 +21,19 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
   const listId = useId()
   const [query, setQuery] = useState<PickerQuery>({ text: '', region: from === 'region' ? current.world.region : null, race: null })
   const view = useMemo(() => pickerView(directory, query, recent), [directory, query, recent])
-  const [active, setActive] = useState(() => initialActive(view, current.world.id))
-  const activeId = view.keyboardOrder.some((option) => option.domId === active) ? active : (view.keyboardOrder[0]?.domId ?? null)
-
-  useEffect(() => {
-    if (activeId) document.getElementById(activeId)?.scrollIntoView({ block: 'nearest' })
-  }, [activeId])
+  const ids = view.keyboardOrder.map((option) => option.domId)
+  const { activeId, hover, reset, onKeyDown } = useCombobox(
+    ids,
+    (id) => {
+      const chosen = view.keyboardOrder.find((option) => option.domId === id)
+      if (chosen) onChoose(chosen.listed.world)
+    },
+    initialActive(view, current.world.id),
+  )
 
   const filter = (change: Partial<PickerQuery>) => {
     setQuery((previous) => ({ ...previous, ...change }))
-    setActive(null)
-  }
-
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-      event.preventDefault()
-      setActive(moveActive(view, activeId, event.key === 'ArrowDown' ? 1 : -1))
-    } else if (event.key === 'Enter') {
-      event.preventDefault()
-      const chosen = view.keyboardOrder.find((option) => option.domId === activeId)
-      if (chosen) onChoose(chosen.listed.world)
-    }
+    reset()
   }
 
   const row = (option: PickerOption, showRegion: boolean) => {
@@ -54,7 +47,7 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
         aria-selected={isCurrent}
         className={`picker-row ${option.domId === activeId ? 'is-active' : ''} ${world.hasData ? '' : 'is-empty'}`}
         data-side={world.race}
-        onMouseMove={() => setActive(option.domId)}
+        onMouseMove={() => hover(option.domId)}
         onClick={() => onChoose(world)}
       >
         <span className="picker-name">
@@ -95,7 +88,7 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
           value={query.text}
           onChange={(event) => {
             setQuery(withText(query, event.target.value))
-            setActive(null)
+            reset()
           }}
           onKeyDown={onKeyDown}
         />

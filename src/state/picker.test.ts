@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { serverDirectory as directory } from '../market/worlds.fixture.ts'
-import { currentNote, groupNote, initialActive, moveActive, pairingNote, pickerView, withText, type PickerQuery } from './picker.ts'
+import { moveActive } from './combobox.ts'
+import { currentNote, groupNote, initialActive, pairingNote, pickerView, withText, type PickerQuery } from './picker.ts'
 
 const ALL: PickerQuery = { text: '', region: null, race: null }
 const names = (options: readonly { listed: { world: { name: string; region: string } } }[]) =>
@@ -50,10 +51,11 @@ describe('keyboard order', () => {
   })
 
   it('moves one row at a time and stops at both ends', () => {
-    expect(moveActive(view, 'picker-recent-11204', 1)).toBe('picker-world-11201')
-    expect(moveActive(view, 'picker-recent-11204', -1)).toBe('picker-recent-11204')
-    expect(moveActive(view, 'picker-world-12205', 1)).toBe('picker-world-12205')
-    expect(moveActive(view, null, 1)).toBe('picker-recent-11204')
+    const ids = view.keyboardOrder.map((option) => option.domId)
+    expect(moveActive(ids, 'picker-recent-11204', 1)).toBe('picker-world-11201')
+    expect(moveActive(ids, 'picker-recent-11204', -1)).toBe('picker-recent-11204')
+    expect(moveActive(ids, 'picker-world-12205', 1)).toBe('picker-world-12205')
+    expect(moveActive(ids, null, 1)).toBe('picker-recent-11204')
   })
 })
 
