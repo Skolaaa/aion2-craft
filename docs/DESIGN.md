@@ -122,6 +122,9 @@ listings it spans ("Market, across 3 listings of 15"), with "only 4 listed" when
 runs out. The buy figure does the same for the target at a quantity above one. The price
 status line adds one sentence when the ladder poll is stale against the prices.
 
+Price history: under the buy figure's note, a 120 by 24 px gold line of the lowest listing over
+seven days with a dot on the last point and "7 d: low, high" beside it, shown only when a listing exists.
+
 Source choice: under steps, a row whose item the plan could get more than one way carries a
 small segmented control under its note, `buy | craft`, plus `morph` when a Substance Morph
 exists, with the plan's pick selected. Choosing another way forces it for that item everywhere
