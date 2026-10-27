@@ -6,7 +6,7 @@ Pick an item and the page answers in one sentence whether to craft it or buy it,
 
 ![The calculator in the dark theme](docs/screenshots/calculator-desktop-dark.png)
 
-More screenshots in `docs/screenshots/`: the light theme, the scanner, a phone at 390 px, the settings dialog, and a recipe with missing prices.
+More screenshots in `docs/screenshots/`: the scanner, a phone at 390 px, the settings dialog, and a recipe with missing prices.
 
 ## Run it
 
