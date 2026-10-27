@@ -2,11 +2,12 @@ import { useId, useMemo, useState } from 'react'
 import type { Race } from '../domain/types.ts'
 import { SIDE, type Listed, type World, type WorldDirectory, type WorldId } from '../market/worlds.ts'
 import { useCombobox } from '../state/combobox.ts'
+import { Segmented } from './Segmented.tsx'
 import { currentNote, groupNote, initialActive, pairingNote, pickerView, withText, type PickerOption, type PickerQuery } from '../state/picker.ts'
 
-const SIDES: readonly { race: Race | null; label: string }[] = [
-  { race: null, label: 'both' },
-  ...Object.entries(SIDE).map(([race, side]) => ({ race: race as Race, label: side.name })),
+const SIDES: readonly { value: Race | null; label: string }[] = [
+  { value: null, label: 'both' },
+  ...Object.entries(SIDE).map(([race, side]) => ({ value: race as Race, label: side.name })),
 ]
 
 interface Props {
@@ -67,7 +68,7 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
     )
   }
 
-  const regions = [{ code: null, label: 'all' }, ...directory.regions.map((region) => ({ code: region.code, label: region.code }))]
+  const regions = [{ value: null, label: 'all' }, ...directory.regions.map(({ code }) => ({ value: code, label: code }))]
 
   return (
     <div className="picker">
@@ -94,20 +95,8 @@ export function WorldPicker({ directory, current, recent, from, onChoose }: Prop
         />
       </div>
       <div className="picker-filters">
-        <div className="segments" role="group" aria-label="Region">
-          {regions.map(({ code, label }) => (
-            <button key={label} type="button" className="segment" aria-pressed={query.region === code} onClick={() => filter({ region: code })}>
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="segments" role="group" aria-label="Side">
-          {SIDES.map(({ race, label }) => (
-            <button key={label} type="button" className="segment" aria-pressed={query.race === race} onClick={() => filter({ race })}>
-              {label}
-            </button>
-          ))}
-        </div>
+        <Segmented<string | null> label="Region" options={regions} value={query.region} onChange={(region) => filter({ region })} />
+        <Segmented label="Side" options={SIDES} value={query.race} onChange={(race) => filter({ race })} />
       </div>
       <div className="picker-list" id={listId} role="listbox" aria-label="Worlds" onMouseDown={(event) => event.preventDefault()}>
         {view.recent.length > 0 && (

@@ -13,6 +13,7 @@ import { HeatChip } from './HeatChip.tsx'
 import { ItemIcon } from './ItemIcon.tsx'
 import { PriceCell } from './PriceCell.tsx'
 import { PriceStatus } from './PriceStatus.tsx'
+import { Segmented } from './Segmented.tsx'
 
 interface Props {
   craftable: Craftable
@@ -64,15 +65,12 @@ export function AnswerPanel({ craftable, plan, planning, feed, quantity, overrid
         </div>
         <div className="answer-controls">
           {pair && (
-            <fieldset className="segments">
-              <legend className="sr-only">Result</legend>
-              {(['normal', 'splendent'] as const).map((kind) => (
-                <label className="segment" key={kind}>
-                  <input type="radio" name="result" checked={item.id === pair[kind]} onChange={() => onTarget({ itemId: pair[kind] })} />
-                  {kind === 'normal' ? 'Normal' : 'Splendent'}
-                </label>
-              ))}
-            </fieldset>
+            <Segmented
+              label="Result"
+              options={[{ value: pair.normal, label: 'Normal' }, { value: pair.splendent, label: 'Splendent' }]}
+              value={item.id}
+              onChange={(itemId) => onTarget({ itemId })}
+            />
           )}
           <div className="qty">
             <label className="lookup-key" htmlFor="quantity">qty</label>
