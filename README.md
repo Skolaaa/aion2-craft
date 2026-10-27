@@ -46,6 +46,8 @@ npm test
 node scripts/verify-model.mjs
 ```
 
+GitHub Actions runs the type check, the tests and the build on every pull request and on main, and main only takes a pull request whose check passed.
+
 `npm test` runs the vitest suites for the planner in `src/domain/`, the world pairing in `src/market/`, and the verdict, search, scanner, heat, world list, status line and setup helpers in `src/state/`. `npm run check` type-checks without building.
 
 `node scripts/validate-recipes.mjs` cross-checks every cached recipe against metabot.gg, aion2.exchange's game-file model and gamewith.ai, and fails on the first disagreement. The result table is in `docs/RESEARCH.md`.
