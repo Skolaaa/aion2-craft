@@ -8,6 +8,7 @@ import { age, decimal, kina, percent, plural, signedKina } from '../state/format
 import type { Planning } from '../state/planning.ts'
 import { MAX_MASTERY } from '../state/setup.ts'
 import { shoppingText } from '../state/shopping.ts'
+import { sourceUrl } from '../state/sources.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { OwnedStock } from '../state/useOwned.ts'
 import type { Sources } from '../state/useSources.ts'
@@ -141,6 +142,7 @@ function WhatToBuy({ plan, list, planning, overrides, owned, link }: WhatToBuyPr
       render: (row) => (
         <ItemCell
           item={catalog.items.get(row.itemId)}
+          href={sourceUrl(row.itemId)}
           narrowMeta={<>{source(row)}, {decimal(row.expected)} needed{row.owned > 0 && row.kind !== 'owned' && <>, {decimal(toBuy(row))} to buy</>}</>}
         />
       ),
@@ -324,6 +326,7 @@ function HowItIsMade({ plan, credit, planning, overrides, sources }: HowProps) {
         return (
           <ItemCell
             item={catalog.items.get(row.itemId)}
+            href={sourceUrl(row.itemId)}
             depth={row.depth}
             meta={
               <>
