@@ -60,8 +60,9 @@ function answer(recipes: Recipe[], market: Record<number, number>, quantity = 1,
   return { plan, answer: answerOf(plan, { catalog, mastery }), catalog }
 }
 
-const sentence = (result: ReturnType<typeof answer>) =>
+const segments = (result: ReturnType<typeof answer>) =>
   sentenceOf(result.answer.verdict, { itemName: (id) => NAMES[id] ?? String(id), worldName: 'Siel', taxRate: 0.05 })
+const sentence = (result: ReturnType<typeof answer>) => segments(result).map((segment) => segment.text).join('')
 
 describe('answerOf', () => {
   it('says craft when the expected cost is under the lowest listing, with the spec sentence', () => {
@@ -70,6 +71,11 @@ describe('answerOf', () => {
     expect(result.answer.verdict).toMatchObject({ margin: expect.closeTo(467_378, 6) })
     expect(result.answer.margin).toBeCloseTo(467_378, 6)
     expect(sentence(result)).toBe('Craft it if you need one. Expected cost is 1,467,378 Kina under the lowest listing. Selling one earns 467,378 Kina after 5% tax.')
+    expect(segments(result).filter((segment) => segment.kind !== 'text')).toEqual([
+      { kind: 'kina', text: '1,467,378' },
+      { kind: 'kina', text: '467,378' },
+      { kind: 'percent', text: '5%' },
+    ])
   })
 
   it('says buy when the lowest listing is under the expected cost', () => {

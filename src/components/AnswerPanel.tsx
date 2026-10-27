@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ItemId, PlanResult } from '../domain/types.ts'
-import { answerOf, sentenceOf, stepSummary, type Answer } from '../state/answer.ts'
+import { answerOf, sentenceOf, stepSummary, type Answer, type Segment } from '../state/answer.ts'
 import { itemName, type Craftable } from '../state/craftables.ts'
 import { kina, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
 import { SIDE } from '../market/worlds.ts'
@@ -32,9 +32,8 @@ interface FigureProps {
   children: ReactNode
 }
 
-function MonoDigits({ text }: { text: string }) {
-  return text.split(/([+−]?\d+(?:[.,]\d+)*%?)/).map((part, index) => (index % 2 === 1 ? <span className="mono" key={index}>{part}</span> : part))
-}
+const typeset = (segments: readonly Segment[]) =>
+  segments.map((segment, index) => (segment.kind === 'text' ? segment.text : <span className="mono" key={index}>{segment.text}</span>))
 
 function Figure({ label, value, empty, tone, children }: FigureProps) {
   return (
@@ -156,7 +155,7 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
 
   return (
     <>
-      <p className="verdict" aria-live="polite"><MonoDigits text={sentenceOf(verdict, { itemName: nameOf, worldName: world.name, taxRate })} /></p>
+      <p className="verdict" aria-live="polite">{typeset(sentenceOf(verdict, { itemName: nameOf, worldName: world.name, taxRate }))}</p>
       <dl className="figures">
         <Figure label="craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
         <Figure label="buy" value={buy === null ? null : kina(buy)} empty="No listing">{buyNote}</Figure>

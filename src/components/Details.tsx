@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { Acquisition, ItemId, PlanResult, Recipe, StepPlan } from '../domain/types.ts'
-import { buyList, childStep, estimateGap, stepCount, stepSummary, successNote, type BuyLine } from '../state/answer.ts'
+import { buyList, childStep, estimateGap, stepCount, stepSummary, successNote, type BuyLine, type BuyList } from '../state/answer.ts'
 import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
@@ -32,7 +32,8 @@ interface Props {
 export function Details({ plan, planning, overrides, tab, onTab }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
-  const counts: Record<DetailTab, number | null> = { buy: buyList(plan).lines.length, steps: stepCount(plan.root), rates: null }
+  const list = buyList(plan)
+  const counts: Record<DetailTab, number | null> = { buy: list.lines.length, steps: stepCount(plan.root), rates: null }
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0
@@ -69,8 +70,8 @@ export function Details({ plan, planning, overrides, tab, onTab }: Props) {
         ))}
       </div>
       <div className="tab-panel" role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab}`}>
-        {tab === 'buy' && <WhatToBuy plan={plan} planning={planning} overrides={overrides} />}
-        {tab === 'steps' && <HowItIsMade key={plan.target.itemId} plan={plan} planning={planning} overrides={overrides} />}
+        {tab === 'buy' && <WhatToBuy plan={plan} list={list} planning={planning} overrides={overrides} />}
+        {tab === 'steps' && <HowItIsMade key={plan.target.itemId} plan={plan} credit={list.credit} planning={planning} overrides={overrides} />}
         {tab === 'rates' && <Rates plan={plan} planning={planning} />}
       </div>
     </section>
@@ -89,15 +90,16 @@ const creditFooter = (credit: number, note: string) => ({
 
 interface WhatToBuyProps {
   plan: PlanResult
+  list: BuyList
   planning: Planning
   overrides: PriceOverrides
 }
 
 const MISSING = <span className="is-warn">no price yet</span>
 
-function WhatToBuy({ plan, planning, overrides }: WhatToBuyProps) {
+function WhatToBuy({ plan, list, planning, overrides }: WhatToBuyProps) {
   const { catalog, prices, market } = planning
-  const { lines, credit } = buyList(plan)
+  const { lines, credit } = list
 
   const source = (itemId: ItemId) => {
     const quote = prices.quote(itemId)
@@ -201,11 +203,10 @@ function howText({ acquisition }: LadderRow, recipeOf: (step: StepPlan) => Recip
   return `${verb}, ${stepSummary(acquisition.step, recipeOf(acquisition.step), planning.mastery)}`
 }
 
-function HowItIsMade({ plan, planning, overrides }: { plan: PlanResult; planning: Planning; overrides: PriceOverrides }) {
+function HowItIsMade({ plan, credit, planning, overrides }: { plan: PlanResult; credit: number; planning: Planning; overrides: PriceOverrides }) {
   const { catalog } = planning
   const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(['root']))
   const rows = flatten(plan, open)
-  const { credit } = buyList(plan)
   const recipeOf = (step: StepPlan) => catalog.recipes.get(step.recipeId)
 
   const toggle = (key: string) =>
