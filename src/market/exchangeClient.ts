@@ -110,8 +110,10 @@ export async function fetchQuotes(serverId: number, itemIds: readonly ItemId[]):
   return quotes
 }
 
+// 404 means the exchange holds no market data for the item, which is an answer and not a failure.
 export async function fetchPriceHistory(itemId: ItemId, serverId: number, range = '7d', bucket = '6h'): Promise<PricePoint[]> {
-  const body = await getJson(`/items/${itemId}/prices?range=${range}&bucket=${bucket}&server=${serverId}`)
+  const body = await findJson(`/items/${itemId}/prices?range=${range}&bucket=${bucket}&server=${serverId}`)
+  if (body === null) return []
   return list(body.points, 'points').map((raw) => {
     const p = record(raw, 'point')
     return {

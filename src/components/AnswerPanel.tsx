@@ -16,6 +16,7 @@ import { ItemIcon } from './ItemIcon.tsx'
 import { PriceCell } from './PriceCell.tsx'
 import { PriceStatus } from './PriceStatus.tsx'
 import { Segmented } from './Segmented.tsx'
+import { Sparkline } from './Sparkline.tsx'
 
 interface Props {
   craftable: Craftable
@@ -140,7 +141,10 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, onPrice }: Figure
       <p className="verdict" aria-live="polite">{typeset(sentenceOf(verdict, { itemName: nameOf, worldName: world.name, taxRate }))}</p>
       <dl className="figures">
         <Figure label="craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
-        <Figure label="buy" value={buy === null ? null : kina(buy)} empty="No listing">{buyNote}</Figure>
+        <Figure label="buy" value={buy === null ? null : kina(buy)} empty="No listing">
+          {buyNote}
+          {market !== null && <Sparkline itemId={itemId} worldId={world.id} />}
+        </Figure>
         <Figure label="margin" value={margin === null ? null : signedKina(margin)} empty="No margin" tone={toneOf(margin, 'kina')}>{marginNote}</Figure>
       </dl>
     </>
