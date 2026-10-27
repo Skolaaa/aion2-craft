@@ -1520,6 +1520,21 @@ input[type='range'] {
   }
 }
 
+/* With the list view in the nav, the one-row status line only fits at the page's 1280 px cap with the mastery chip collapsed. */
+@media (min-width: 1280px) {
+  .top-bar-inner:has(.nav-item[data-view='list']) .mastery-chip > .chip-key {
+    display: inline;
+  }
+
+  .top-bar-inner:has(.nav-item[data-view='list']) .mastery-pairs {
+    display: none;
+  }
+
+  .top-bar-inner:has(.nav-item[data-view='list']) .mastery-collapsed {
+    display: inline;
+  }
+}
+
 @media (min-width: 640px) and (max-width: 1279.98px) {
   .top-bar-inner {
     flex-wrap: wrap;

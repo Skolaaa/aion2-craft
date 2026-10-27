@@ -37,6 +37,7 @@ export function TopBar({ view, onView, context, listCount = 0 }: Props) {
               key={id}
               type="button"
               className="nav-item"
+              data-view={id}
               aria-current={view === id ? 'page' : undefined}
               aria-label={id === 'list' && listCount > 0 ? `list, ${listCount} ${listCount === 1 ? 'item' : 'items'}` : undefined}
               disabled={onView === undefined}
