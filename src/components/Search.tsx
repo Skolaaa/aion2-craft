@@ -101,6 +101,7 @@ export function Search({ craftables, autoFocus, onPick }: Props) {
                 role="option"
                 aria-selected={index === active}
                 className="search-option"
+                data-grade={craftable.item.grade}
                 onMouseMove={() => setActive(index)}
                 onClick={() => pick(craftable.item.id)}
               >

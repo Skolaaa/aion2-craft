@@ -112,8 +112,11 @@ function WhatToBuy({ plan, planning, overrides }: WhatToBuyProps) {
     {
       key: 'item',
       header: 'Item',
-      render: (row) => <ItemCell item={catalog.items.get(row.itemId)} meta={source(row.itemId)} narrowMeta={`${decimal(row.expected)} needed`} />,
+      render: (row) => (
+        <ItemCell item={catalog.items.get(row.itemId)} narrowMeta={<>{source(row.itemId)}, {decimal(row.expected)} needed</>} />
+      ),
     },
+    { key: 'source', header: 'Source', hideNarrow: true, render: (row) => <span className="meta">{source(row.itemId)}</span> },
     { key: 'expected', header: 'Expected', numeric: true, hideNarrow: true, render: (row) => decimal(row.expected) },
     {
       key: 'unit',

@@ -180,7 +180,7 @@ a {
 }
 
 .is-warn {
-  color: var(--gold-hi);
+  color: var(--gold);
 }
 
 .app {
@@ -1136,6 +1136,10 @@ input[type='range'] {
   background: var(--raised);
 }
 
+.search-option .item-text > :first-child {
+  color: var(--grade, var(--text));
+}
+
 .search-note {
   padding: var(--space-2) var(--space-3);
   font-size: 13px;
@@ -1271,8 +1275,8 @@ input[type='range'] {
 }
 
 .figure-value.is-empty {
-  font-size: 20px;
-  line-height: 31px;
+  font: 400 18px / 31px var(--sans);
+  letter-spacing: 0;
   color: var(--muted);
 }
 
@@ -1341,7 +1345,7 @@ input[type='range'] {
 .nav-item[aria-current='page'],
 .tab[aria-selected='true'] {
   color: var(--text);
-  border-bottom-color: var(--gold);
+  border-bottom-color: var(--text);
 }
 
 .rate-text .meta {
