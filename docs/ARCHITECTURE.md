@@ -38,13 +38,76 @@ plan.blocked         // recipes in the tree above the player's mastery
 | `src/domain/planCraft.ts` | the expected-value engine, pure, memoised cheapest acquisition per item |
 | `src/domain/priceBook.ts` | merges manual overrides, market quotes and NPC prices into `PriceBook` |
 | `src/data/catalog.ts` | `catalogFor(race)`: the bundled JSON as a `Catalog`, built once per race |
-| `src/market/exchangeClient.ts` | fetch wrappers over `/ex/api/*` (proxied), batch by 100 keys, localStorage cache with `capturedAt` |
-| `src/state/` | React state: selected world, mastery, overrides, target, persisted in localStorage |
-| `src/components/` | UI |
+| `src/market/exchangeClient.ts` | fetch wrappers over `/ex/api/*` (proxied), batch by 100 keys, localStorage cache with `capturedAt`; `fetchWorlds()` parses `game_server_key` and returns a `WorldDirectory` |
+| `src/market/worlds.ts` | `World`, `Listed { world, match }`, `WorldDirectory`, `SIDE`, `PAIRING`, `directoryOf`, `resolveWorld`; pure |
+| `src/state/setup.ts` | `Setup` (world, recent worlds, mastery, tax, plan flags), `parseSetup` at the storage boundary, `setWorld`, `PROFESSIONS`, `PLAN_FLAGS` |
+| `src/state/chips.ts` | `statusChips(setup, current)`: every string the status line shows |
+| `src/state/openSetting.ts` | the `Setting` union and `useOpenSetting()`, the one owner of which setting is open and of focus return |
+| `src/state/picker.ts` | `pickerView`, `moveActive`, `initialActive`, `groupNote`, `currentNote` for the world list; pure |
+| `src/state/heat.ts` | `heatOf(marginPct)`: the margin heat colour and its ink; pure |
+| `src/state/` (rest) | React state: worlds, prices, overrides, target, scan rows, persisted in localStorage |
+| `src/components/TopBar.tsx` | wordmark, views, the context chips and `FreshnessPill` |
+| `src/components/SettingHost.tsx` | renders zero or one `Surface` for the open `Setting`: `WorldPicker`, `MasteryForm`, `TaxForm` or `PlanSettings` |
+| `src/components/Surface.tsx` | the one native `<dialog>` for every in-place setting |
+| `src/components/` (rest) | calculator, scanner, tables, cells |
 | `vite.config.ts` | `server.proxy` and `preview.proxy`: `/ex` → `https://aion2.exchange`, `/a2t` → `https://aion2t.com` (icons) |
 
 `src/domain/` imports its own files with `.ts` extensions and only `import type` for types, so
 Node 24 runs it without a build step (`verify-model.mjs` does).
+
+## The status line and its settings
+
+Every value in the status line is a chip that opens its own setting in place. `App` renders
+`TopBar` with `statusChips(setup, current)` and `SettingHost` right after it, so tabbing out of
+a popover lands in the page.
+
+```ts
+const surface = useOpenSetting()            // { opened: { setting, anchor } | null, open, close }
+surface.open({ kind: 'world', from: 'region' }, chip)   // the same chip again closes it
+surface.close()                             // focus returns to the chip after the surface unmounts
+surface.close(false)                        // the user clicked or tabbed elsewhere; focus stays there
+```
+
+- `Setting` is `{ kind: 'world', from: 'region' | 'world' } | { kind: 'mastery' } | { kind: 'tax' } | { kind: 'plan' }`.
+  One value means two settings can never be open together. `SettingHost` switches over `kind`
+  with a `never` default, so a new kind fails `tsc` there.
+- `Surface` takes `placement: 'popover' | 'drawer'`. A popover on a screen 640 px or wider opens
+  with `show()`, sits under its chip, and closes on Escape, on a pointerdown outside it and its
+  chip, and when focus leaves it. Under 640 px the same popover opens with `showModal()` as a
+  bottom sheet, and it closes if the viewport crosses 640 px while open. The drawer is modal at
+  every width, 400 px from the right and full width on phones.
+- The world list is one component for the region and world chips. The region chip presets the
+  region filter, and the first typed letter clears it, since the search spans all 106 worlds.
+  `pickerView(directory, query, recent)` filters by text, region and side and
+  returns the recent rows, the region groups and the flat keyboard order. The search field keeps
+  focus and points at the active row with `aria-activedescendant`.
+
+### Worlds and their enemy worlds
+
+aion2.exchange sends each world with `game_server_key` = side × 1000 + region × 100 + n.
+`directoryOf` pairs a key with the same key on the other side, and accepts the partner only when
+it is the other race in the same region; otherwise `match` is `null`. The rule reproduces all 53
+pairs in NC's notice of 2026-10-04, and `worlds.test.ts` holds that notice as a fixture
+(`docs/explorations/worlds.json`). NC rotates pairs, so when the fixture test fails, the fix is
+an override table inside `PAIRING` and a new `since`. The key never leaves `src/market`.
+
+`Setup.world` keeps the six-field `World` it always had, and `match` is never stored, so a stale
+pairing cannot load from storage. `resolveWorld(directory, saved)` returns the directory's copy
+once the list loads and wraps the saved world with `match: null` before that. `Setup.recent`
+holds up to three world ids, newest first, and only `setWorld(setup, world)` writes it, together
+with `world`. Forms change the rest through `SetupPatch`, which excludes both.
+
+### Side colour and margin heat
+
+`.app` carries `data-side={race}`, which sets `--side` and `--side-l` to the Elyos blue or the
+Asmodian violet. A picker row and a matched-world name carry their own `data-side`, so no
+component picks a side colour in code.
+
+`heatOf(marginPct)` blends `#B35317` to `#FFDC8F` with alpha 0.14 to 1 over `--page` and returns
+the opaque background with a black or white ink, whichever contrasts more. The scale is absolute:
+`HEAT_CAP = 1`, so +100% and above saturate. Losses and margins shown as 0.0% get no heat.
+`heat.test.ts` checks 4.5:1 for every shown tenth of a percent and fails when `--page` in
+`styles.css` drifts from `HEAT_BASE`. `HeatChip` renders it in the scanner and the answer panel.
 
 ## Types
 
@@ -217,3 +280,5 @@ export interface PlanResult {
 | Rate data | metabot.gg's client curves per recipe + family fallback, gamewith.ai tables as a check | gamewith.ai tables per product id | metabot covers every craft recipe of both races at full precision and is keyed by recipe id; gamewith has pages for 79 Elyos products and rounds to 0.1% |
 | Recipe data | generated JSON in repo | fetch at runtime | offline use, and aion2t.com could gate it any day |
 | Engine | expected value per step with cheapest acquisition memo | Monte Carlo | same mean, deterministic, instant in the UI |
+| In-place settings | one native `<dialog>`, non-modal on wide screens | Base UI Popover, Drawer and Combobox | Base UI needs a popover tree and a drawer tree per setting and a width switch in JS for phones; the native dialog makes the sheet a stylesheet rule and adds no dependency |
+| Enemy world | derived from `game_server_key`, pinned by a fixture of NC's notice | a hand-entered table of 53 pairs | the table equals the rule today; it stays the planned override when NC rotates pairs |
