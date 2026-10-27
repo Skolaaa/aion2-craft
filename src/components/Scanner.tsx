@@ -5,6 +5,7 @@ import type { Planning } from '../state/planning.ts'
 import { DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanSort } from '../state/scan.ts'
 import { PROFESSIONS } from '../state/setup.ts'
 import type { Freshness } from '../state/useFreshness.ts'
+import { useNarrow } from '../state/useNarrow.ts'
 import { useScan } from '../state/useScan.ts'
 import { Button } from './Button.tsx'
 import { PriceStatus } from './PriceStatus.tsx'
@@ -25,15 +26,32 @@ export function Scanner({ planning, freshness, onOpen }: Props) {
   const [name, setName] = useState('')
   const [showHidden, setShowHidden] = useState(false)
   const [sort, setSort] = useState<ScanSort>(DEFAULT_SCAN_SORT)
+  const narrow = useNarrow()
   const filter = useDeferredValue(name)
   const view = useMemo(() => viewScan(rows, { profession, name: filter, showHidden, sort }), [rows, profession, filter, showHidden, sort])
+
+  const hiddenNote = view.hidden > 0 && (
+    <p className="hidden-note meta">
+      <span>
+        {view.hidden} {plural(view.hidden, 'recipe needs', 'recipes need')} a price or more mastery
+        {showHidden ? '.' : ' and stay hidden.'}
+      </span>
+      <Button className="button-small" aria-pressed={showHidden} onClick={() => setShowHidden((shown) => !shown)}>
+        {showHidden ? 'Hide them' : 'Show them'}
+      </Button>
+    </p>
+  )
 
   return (
     <section className="stack scanner" aria-labelledby="scanner-title">
       <div className="stack-tight">
         <h1 className="section-title" id="scanner-title"><span>Every recipe on {world.name}</span></h1>
-        <p className="meta">Margins after {taxLabel(options.taxRate)} tax at your mastery. Click a row to open it in the calculator.</p>
-        <PriceStatus freshness={freshness} worldName={world.name} />
+        {!narrow && (
+          <>
+            <p className="meta">Margins after {taxLabel(options.taxRate)} tax at your mastery. Click a row to open it in the calculator.</p>
+            <PriceStatus freshness={freshness} worldName={world.name} />
+          </>
+        )}
       </div>
 
       <div className="scan-layout">
@@ -61,17 +79,7 @@ export function Scanner({ planning, freshness, onOpen }: Props) {
                 onChange={(event) => setName(event.target.value)}
               />
             </label>
-            {view.hidden > 0 && (
-              <p className="hidden-note meta">
-                <span>
-                  {view.hidden} {plural(view.hidden, 'recipe needs', 'recipes need')} a price or more mastery
-                  {showHidden ? '.' : ' and stay hidden.'}
-                </span>
-                <Button className="button-small" aria-pressed={showHidden} onClick={() => setShowHidden((shown) => !shown)}>
-                  {showHidden ? 'Hide them' : 'Show them'}
-                </Button>
-              </p>
-            )}
+            {!narrow && hiddenNote}
           </div>
 
           <ScanTable
@@ -82,6 +90,7 @@ export function Scanner({ planning, freshness, onOpen }: Props) {
             onSort={(key) => setSort((previous) => nextSort(previous, key))}
             empty={freshness.pending ? 'Prices are loading.' : 'No recipe matches these filters.'}
           />
+          {narrow && hiddenNote}
         </div>
       </div>
     </section>

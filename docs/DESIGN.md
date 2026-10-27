@@ -170,14 +170,15 @@ gathered, dropped, crafted or sold. The glyph turns gold on hover and focus, and
 reads "Where to get Orichalcum Ore, on AION2 Hub". The scanner and the drawer keep plain names.
 On a phone the glyph can drop to its own line when the name fills the last one.
 
-Scanner: Ledger's left rail (All plus five professions with counts; a horizontal chip strip
-under 900 px), the name filter, the hidden-rows line with "Show them", and one table: Item
+Scanner: Ledger's left rail (All plus five professions with counts; chips that wrap under
+900 px), the name filter, the hidden-rows line with "Show them", and one table: Item
 (icon, grade-coloured name, profession and level in mono), Craft cost, Market lowest, Margin,
 Margin % as the heat column. The sorted header is gold with an arrow. Hidden rows, when shown,
 are dimmed with a `needs a price` or `needs mastery 55` pill in the Market lowest cell. On
-phones the table keeps Item, Margin and Margin %, and a `sort by` chip row replaces the headers.
-It offers every sortable column, including Craft cost and Market lowest, which phones hide.
-No sparkline: it would cost one history request per row.
+phones the title is followed by the chips and the filter alone (the top bar already shows the
+tax and the price age), the table keeps Item, Margin and `%` with the same tappable sort
+headers, names end in an ellipsis instead of wrapping, rows are 52 px, and the hidden-rows
+line moves under the list. No sparkline: it would cost one history request per row.
 
 Settings drawer: plan options with their one-line notes, then "Your prices on Kaisinel" with
 reset, as today, then "What you have on Kaisinel": the counts entered under Have in the buy
