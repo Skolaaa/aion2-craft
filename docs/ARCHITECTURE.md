@@ -55,7 +55,7 @@ plan.alternatives    // per item met: one entry per method with its unit cost, I
 | `src/state/heat.ts` | `heatOf(marginPct)`: the margin heat colour and its ink; pure |
 | `src/state/format.ts` | number and date text; `shownTenths`, the one rule for when a fraction shows as 0.0%, used by `toneOf` and `heatOf` |
 | `src/state/useItemMap.ts` | `useItemMap(key, parse)`: a value per item in localStorage, parsed at the storage boundary and again on save, the one hook behind `useOverrides` (prices), `useOwned` (counts held) and `useSources` (the chosen method), each per world; `parseEntries` |
-| `src/state/sources.ts` | `sourceUrl(itemId)`: the AION2 Hub page of an item, the one place that names the host; pure. Not `useSources`, which holds the buy, craft or morph choice |
+| `src/state/itemPage.ts` | `itemPageUrl(itemId)`: the AION2 Hub page of an item, the one place that names the host; pure. Not `useSources`, which holds the buy, craft or morph choice |
 | `src/state/useSources.ts` | `useSources(worldId)`: the method the player insists on per item, as the planner's `Forced` map; `parseMethod` accepts only `buy`, `craft` and `morph` |
 | `src/state/usePersistentState.ts` | `usePersistentState(key, fallback, parse, seed?)`: one slot in localStorage. A `seed` shows in place of the stored value and reaches storage only through the top-level fields a change touches (`step`); `peekPersisted` reads a slot outside React |
 | `src/state/shareLink.ts` | the share link query: `encodeLink(plan)` writes a key only where the plan differs from a frozen `BASELINE`; `openLink(search, stored, directory)` turns a query into a `Seed` for the three slots, `'waiting'` while only the world list can name its world, and a `LinkNote` for an unknown world or item; `noteText`; pure |
@@ -66,7 +66,7 @@ plan.alternatives    // per item met: one entry per method with its unit cost, I
 | `src/components/SettingHost.tsx` | renders zero or one `Surface` for the open `Setting`, framed from a `Record<Setting['kind'], …>` of title, placement and width: `WorldPicker`, `MasteryForm`, `TaxForm` or `PlanSettings` |
 | `src/components/Surface.tsx` | the one native `<dialog>` for every in-place setting; `SHEET_BELOW = 640` |
 | `src/components/Segmented.tsx` | the one segmented control (a radio group, an option may be disabled with its reason as `title`): Normal and Splendent, the picker's regions and sides, the source choice under steps |
-| `src/components/ItemCell.tsx` | icon, name and notes of one item. An optional `href` adds a link glyph after the name that opens in a new tab and stops the click from reaching the row; only the buy table and the steps rows set it, with `sourceUrl` |
+| `src/components/ItemCell.tsx` | icon, name and notes of one item. An optional `href` adds a link glyph after the name that opens in a new tab and stops the click from reaching the row; only the buy table and the steps rows set it, with `itemPageUrl` |
 | `src/components/SourceCell.tsx` | buy, craft or morph for one row under steps, built from `plan.alternatives`; a way at Infinity is disabled with `blockedNote` |
 | `src/components/PriceStatus.tsx` | `PriceStatus`, the capture time or the stale or missing warning as text, plus one sentence when the plan's oldest ladder is stale against the prices, and `FreshnessPill` |
 | `src/components/Notice.tsx` | `Notice` with its Try again button, `WorldsFailed` for the world list, and `LinkNotice` with Dismiss for a link that did not fully apply |
