@@ -21,6 +21,7 @@ either closes a gap those tools have already filled, or widens that edge.
 - Multi-craft list: several items on one per-world list, planned in one pass with stock spent once and bulk prices for the total, as one buy table, one Copy list text and a link that carries the list.
 - Price history: a seven-day line of the lowest listing under the buy figure with the week's low and high, so a margin reads as a trend or a one-hour blip, and behind it the full chart over 7 or 30 days with the low-high band and a readout per bucket.
 - Cost at risk: under the craft figure, the cost nine runs in ten come in under, from a seeded Monte Carlo over the plan tree that rolls every step's attempts and spends stock in tree order, and under rates the attempts nine runs in ten finish within.
+- Watchlist: a Watch button next to Add to list pins an item, and a Watching table above Best margins on the calculator home shows the pinned items' margins on every price refresh, held per world like the stock.
 
 ## Next: widen the edge
 
@@ -32,11 +33,6 @@ Nothing for Aion 2 does any of these. Each one uses data the app already fetches
 which metabot.gg publishes next to the curves `fetch-rates.mjs` already scrapes. Then a
 planner that picks recipes by Kina per EXP at each level, with the player's stock and
 prices. The biggest single feature here, and the one WoW and FFXIV sites built audiences on.
-
-### 8. Watchlist (S)
-
-Pin items and see their margin on every price refresh, on a small table above Best margins.
-Persisted per world like the stock.
 
 ## Later
 
