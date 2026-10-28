@@ -1,6 +1,7 @@
 import { useId, useMemo, useState } from 'react'
+import { costAtRisk, type CostAtRisk } from '../domain/costAtRisk.ts'
 import type { ItemId, PlanResult, TargetPlan } from '../domain/types.ts'
-import { answerOf, depthCapturedAt, listSentenceOf, lockedStep, stepCount, stepSummary, targetStatus, usesStock, type Answer } from '../state/answer.ts'
+import { answerOf, depthCapturedAt, listSentenceOf, lockedStep, riskNote, stepCount, stepSummary, targetStatus, usesStock, type Answer } from '../state/answer.ts'
 import { itemName } from '../state/craftables.ts'
 import { kina, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
 import type { ListState } from '../state/list.ts'
@@ -41,6 +42,10 @@ export function ListView({ planning, freshness, requestLadders, list, overrides,
     () => (list.wanted.size > 0 ? planWanted(planning, list.wanted, owned.counts, sources.choices) : null),
     [planning, list.wanted, owned.counts, sources.choices],
   )
+  const risk = useMemo(
+    () => (plan && Number.isFinite(plan.cost) ? costAtRisk(plan, { catalog: planning.catalog, owned: owned.counts }) : null),
+    [plan, planning.catalog, owned.counts],
+  )
   useBulkLadders(plan, planning.prices, freshness, requestLadders)
 
   return (
@@ -61,7 +66,7 @@ export function ListView({ planning, freshness, requestLadders, list, overrides,
       ) : (
         <>
           <Lines plan={plan} planning={planning} list={list} onOpen={onOpen} />
-          {!freshness.pending && <ListFigures plan={plan} planning={planning} />}
+          {!freshness.pending && <ListFigures plan={plan} risk={risk} planning={planning} />}
           {!freshness.pending && (
             <Details plan={plan} planning={planning} overrides={overrides} owned={owned} sources={sources} link={link} tab={tab} onTab={setTab} />
           )}
@@ -143,7 +148,7 @@ function Lines({ plan, planning, list, onOpen }: LinesProps) {
   )
 }
 
-function ListFigures({ plan, planning }: { plan: PlanResult; planning: Planning }) {
+function ListFigures({ plan, risk, planning }: { plan: PlanResult; risk: CostAtRisk | null; planning: Planning }) {
   const { catalog, mastery, world, options } = planning
   const { taxRate } = options
   const answer: Answer = answerOf(plan, { catalog, mastery })
@@ -177,7 +182,7 @@ function ListFigures({ plan, planning }: { plan: PlanResult; planning: Planning 
     <div className="stack-tight">
       <p className="verdict" aria-live="polite">{typeset(listSentenceOf(plan, verdict, { itemName: nameOf, worldName: world.name, taxRate }))}</p>
       <dl className="figures">
-        <Figure label="craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
+        <Figure label="craft" value={craft === null ? null : kina(craft)} empty="No total" sub={riskNote(risk)}>{craftNote}</Figure>
         <Figure label="buy" value={buy === null ? null : kina(buy)} empty="No total">{buyNote}</Figure>
         <Figure label="margin" value={margin === null ? null : signedKina(margin)} empty="No margin" tone={toneOf(margin, 'kina')}>{marginNote}</Figure>
       </dl>

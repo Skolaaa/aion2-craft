@@ -109,9 +109,13 @@ the chip, bottom sheet under 640 px with a sticky search field:
   Closing it keeps the default world and it does not open again.
 
 Calculator answer: as the Ledger prototype, with Atlas's item hero (grade-framed 48 px icon,
-Cinzel name in the grade colour) and its diamond-ruled figure strip. The margin percentage is a
-heat chip, the same visual word the scanner uses. Detail tabs are mono with counts: `buy 9`,
-`steps 5`, `rates`. The buy table gets a cost-share bar column on desktop.
+Cinzel name in the grade colour) and its diamond-ruled figure strip. Under the craft amount, a
+13 px mono line in the muted colour reads "9 in 10 under 64,464,921", the cost nine simulated
+runs in ten come in under; it stays on one line on desktop and wraps on phones. The margin
+percentage is a heat chip, the same visual word the scanner uses. Detail tabs are mono with
+counts: `buy 9`, `steps 5`, `rates`. The buy table gets a cost-share bar column on desktop.
+The rates tab follows Expected attempts with "Attempts, 9 in 10", the attempts nine runs in
+ten finish within, from the same simulation.
 
 Steps: one row per part at the 36 px row height. A How column between Item and Expected
 holds the `buy | craft | morph` control for a part the plan could get more than one way, then

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { costAtRisk } from '../domain/costAtRisk.ts'
 import type { ItemId } from '../domain/types.ts'
 import { taxLabel } from '../state/format.ts'
 import type { ListState } from '../state/list.ts'
@@ -42,6 +43,11 @@ export function Calculator({ planning, freshness, requestLadders, target, overri
     [planning, craftable, target.quantity, owned.counts, sources.choices],
   )
 
+  const risk = useMemo(
+    () => (plan && Number.isFinite(plan.cost) ? costAtRisk(plan, { catalog: planning.catalog, owned: owned.counts }) : null),
+    [plan, planning.catalog, owned.counts],
+  )
+
   useBulkLadders(plan, planning.prices, freshness, requestLadders)
 
   return (
@@ -54,6 +60,7 @@ export function Calculator({ planning, freshness, requestLadders, target, overri
           <AnswerPanel
             craftable={craftable}
             plan={plan}
+            risk={risk}
             planning={planning}
             freshness={freshness}
             quantity={target.quantity}
@@ -73,6 +80,7 @@ export function Calculator({ planning, freshness, requestLadders, target, overri
               tab={tab}
               onTab={setTab}
               rates={plan.targets[0]}
+              risk={risk}
             />
           )}
         </>

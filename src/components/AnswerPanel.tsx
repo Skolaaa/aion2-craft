@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
+import type { CostAtRisk } from '../domain/costAtRisk.ts'
 import type { ItemId, PlanResult } from '../domain/types.ts'
-import { answerOf, depthCapturedAt, depthNote, sentenceOf, stepSummary, usesStock, type Answer } from '../state/answer.ts'
+import { answerOf, depthCapturedAt, depthNote, riskNote, sentenceOf, stepSummary, usesStock, type Answer } from '../state/answer.ts'
 import { itemName, type Craftable } from '../state/craftables.ts'
 import { kina, plural, signedKina, taxLabel, toneOf } from '../state/format.ts'
 import { gradeName } from '../state/grade.ts'
@@ -22,6 +23,8 @@ import { Sparkline } from './Sparkline.tsx'
 interface Props {
   craftable: Craftable
   plan: PlanResult | null
+  /** The plan's cost at risk, or null while it has no finite cost. */
+  risk: CostAtRisk | null
   planning: Planning
   freshness: Freshness
   quantity: number
@@ -33,7 +36,7 @@ interface Props {
   after?: ReactNode
 }
 
-export function AnswerPanel({ craftable, plan, planning, freshness, quantity, overrides, surface, onTarget, after }: Props) {
+export function AnswerPanel({ craftable, plan, risk, planning, freshness, quantity, overrides, surface, onTarget, after }: Props) {
   const { catalog, world, index, mastery, prices } = planning
   const { item } = craftable
   const recipe = plan ? catalog.recipes.get(plan.targets[0].root.recipeId) : undefined
@@ -75,6 +78,7 @@ export function AnswerPanel({ craftable, plan, planning, freshness, quantity, ov
         <Figures
           answer={answerOf(plan, { catalog, mastery })}
           plan={plan}
+          risk={risk}
           planning={planning}
           stepNote={stepSummary(plan.targets[0].root, recipe, mastery, 1)}
           surface={surface}
@@ -91,6 +95,7 @@ export function AnswerPanel({ craftable, plan, planning, freshness, quantity, ov
 interface FiguresProps {
   answer: Answer
   plan: PlanResult
+  risk: CostAtRisk | null
   planning: Planning
   stepNote: string
   ownPrice: boolean
@@ -98,7 +103,7 @@ interface FiguresProps {
   onPrice(price: number | null): void
 }
 
-function Figures({ answer, plan, planning, stepNote, ownPrice, surface, onPrice }: FiguresProps) {
+function Figures({ answer, plan, risk, planning, stepNote, ownPrice, surface, onPrice }: FiguresProps) {
   const { catalog, world } = planning
   const { taxRate } = planning.options
   const { verdict, craft, buy, margin, marginPct } = answer
@@ -145,7 +150,7 @@ function Figures({ answer, plan, planning, stepNote, ownPrice, surface, onPrice 
     <>
       <p className="verdict" aria-live="polite">{typeset(sentenceOf(verdict, { itemName: nameOf, worldName: world.name, taxRate }))}</p>
       <dl className="figures">
-        <Figure label="craft" value={craft === null ? null : kina(craft)} empty="No total">{craftNote}</Figure>
+        <Figure label="craft" value={craft === null ? null : kina(craft)} empty="No total" sub={riskNote(risk)}>{craftNote}</Figure>
         <Figure label="buy" value={buy === null ? null : kina(buy)} empty="No listing">
           {buyNote}
           {market !== null && <Sparkline itemId={itemId} worldId={world.id} surface={surface} />}
