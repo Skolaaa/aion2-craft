@@ -184,6 +184,12 @@ tax and the price age), the table keeps Item, Margin and `%` with the same tappa
 headers, names end in an ellipsis instead of wrapping, rows are 52 px, and the hidden-rows
 line moves under the list. No sparkline: it would cost one history request per row.
 
+Watchlist: a small `Watch` button follows `Add to list` and reads `Stop watching` once the item is
+pinned. With one item or more pinned, the calculator home shows `Watching on Kaisinel` above Best
+margins, in the same scan table with sortable headers and a `Clear all` button from two items up.
+Every price refresh updates its margins, and a pinned item that lost its price stays with its pill.
+The section is absent while nothing is pinned on the world.
+
 Settings drawer: plan options with their one-line notes, then "Your prices on Kaisinel" with
 reset, as today, then "What you have on Kaisinel": the counts entered under You have in the buy
 table, each with Clear. The buy table's You have column edits in place like a unit price; a
