@@ -20,17 +20,11 @@ either closes a gap those tools have already filled, or widens that edge.
 - Where to get it: each item in the buy table and under steps links to its AION2 Hub page, which lists where it is gathered, dropped, crafted or sold.
 - Multi-craft list: several items on one per-world list, planned in one pass with stock spent once and bulk prices for the total, as one buy table, one Copy list text and a link that carries the list.
 - Price history: a seven-day line of the lowest listing under the buy figure with the week's low and high, so a margin reads as a trend or a one-hour blip, and behind it the full chart over 7 or 30 days with the low-high band and a readout per bucket.
+- Cost at risk: under the craft figure, the cost nine runs in ten come in under, from a seeded Monte Carlo over the plan tree that rolls every step's attempts and spends stock in tree order, and under rates the attempts nine runs in ten finish within.
 
 ## Next: widen the edge
 
 Nothing for Aion 2 does any of these. Each one uses data the app already fetches or ships.
-
-### 6. Cost at risk (M)
-
-Failures eat materials, so a craft with 4 expected attempts can take 9. Show the cost at
-the 90th percentile next to the expected cost. For one step this is the negative binomial;
-for nested steps a small Monte Carlo over the plan tree. Pure function in `src/domain/`,
-tested against the closed form on single steps.
 
 ### 7. Profession leveling planner (L)
 
