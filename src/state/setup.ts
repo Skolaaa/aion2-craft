@@ -1,3 +1,4 @@
+import { MAX_MASTERY } from '../domain/leveling.ts'
 import type { Mastery, Profession } from '../domain/types.ts'
 import type { World, WorldId } from '../market/worlds.ts'
 import { clamp } from './number.ts'
@@ -14,7 +15,7 @@ export const PROFESSIONS: readonly { id: Profession; label: string; inGame: stri
 export const PLAN_FLAGS = ['allowCraft', 'allowMorph', 'byproductCredit'] as const
 export type PlanFlag = (typeof PLAN_FLAGS)[number]
 
-export const MAX_MASTERY = 100
+export { MAX_MASTERY }
 export const DEFAULT_TAX = 0.05
 export const MAX_RECENT = 3
 
