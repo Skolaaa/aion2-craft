@@ -48,6 +48,8 @@ export interface Catalog {
   curves: Map<RecipeId, RateCurve>
   families: Record<RateFamily, RateCurve>
   npcPrices: Map<ItemId, number>
+  /** The mastery EXP one successful single craft gives, where someone measured it. */
+  craftExp: Map<RecipeId, number>
 }
 
 export interface MarketQuote {
