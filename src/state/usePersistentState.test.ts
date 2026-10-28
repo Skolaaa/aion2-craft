@@ -34,7 +34,7 @@ describe('step', () => {
     expect(next.stored).toEqual({ ...mine, taxRate: 0.07 })
   })
 
-  it('adopts the whole mastery record when one profession changes, as MasteryForm patches it', () => {
+  it('adopts the whole mastery record when one profession changes, as MasteryStats patches it', () => {
     const next = step(seededEntry(mine, linked), (previous) => ({ ...previous, mastery: { ...previous.mastery, Blacksmithing: 90 } }))
     expect(next.stored).toEqual({ ...mine, mastery: { ...linked.mastery, Blacksmithing: 90 } })
   })

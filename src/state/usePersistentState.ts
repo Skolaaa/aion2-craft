@@ -42,7 +42,7 @@ export interface Entry<T> {
 }
 
 // A seed reaches storage one top-level field at a time, as the player changes that field. The forms
-// patch whole fields (MasteryForm sends the full mastery record), so editing one profession adopts all five.
+// patch whole fields (MasteryStats sends the full mastery record), so editing one profession adopts all five.
 function commit<T>(stored: T, before: T, after: T): T {
   if (after === before) return stored
   if (!isRecord(stored) || !isRecord(before) || !isRecord(after)) return after

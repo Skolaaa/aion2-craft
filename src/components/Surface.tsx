@@ -11,7 +11,7 @@ interface Props {
   anchor: HTMLElement
   placement: Placement
   title: string
-  width?: number
+  width: number
   flush?: boolean
   onClose(focusAnchor: boolean): void
   children: ReactNode
@@ -22,7 +22,7 @@ const inside = (node: EventTarget | null, ...parents: HTMLElement[]) => node ins
 
 // A popover on a wide screen is non-modal, so one click moves from one setting to the next and the
 // page stays readable.
-export function Surface({ anchor, placement, title, width = 320, flush = false, onClose, children, footer }: Props) {
+export function Surface({ anchor, placement, title, width, flush = false, onClose, children, footer }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const close = useRef(onClose)

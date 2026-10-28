@@ -14,13 +14,13 @@ interface Props {
   directory: WorldDirectory
   current: Listed
   recent: readonly WorldId[]
-  from: 'region' | 'world' | 'first'
+  from: 'world' | 'first'
   onChoose(world: World): void
 }
 
 export function WorldPicker({ directory, current, recent, from, onChoose }: Props) {
   const listId = useId()
-  const [query, setQuery] = useState<PickerQuery>({ text: '', region: from === 'region' ? current.world.region : null, race: null })
+  const [query, setQuery] = useState<PickerQuery>({ text: '', region: null, race: null })
   const view = useMemo(() => pickerView(directory, query, recent), [directory, query, recent])
   const ids = view.keyboardOrder.map((option) => option.domId)
   const { activeId, hover, reset, onKeyDown } = useCombobox(

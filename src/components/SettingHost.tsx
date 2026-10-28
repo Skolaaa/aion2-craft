@@ -9,12 +9,11 @@ import type { OwnedStock } from '../state/useOwned.ts'
 import type { Sources } from '../state/useSources.ts'
 import type { WorldsState } from '../state/useWorlds.ts'
 import { Button } from './Button.tsx'
-import { MasteryForm } from './MasteryForm.tsx'
+import { MasteryStats, TaxStat } from './MasteryStats.tsx'
 import { WorldsFailed } from './Notice.tsx'
 import { PlanSettings } from './PlanSettings.tsx'
 import { PriceChart } from './PriceChart.tsx'
 import { Surface, type Placement } from './Surface.tsx'
-import { TaxForm } from './TaxForm.tsx'
 import { WorldPicker } from './WorldPicker.tsx'
 
 interface Props {
@@ -31,15 +30,13 @@ interface Props {
   sources: Sources
 }
 
-const FRAME: Record<Setting['kind'], { placement: Placement; width?: number }> = {
+const FRAME: Record<Setting['kind'], { placement: Placement; width: number }> = {
   world: { placement: 'popover', width: 440 },
-  mastery: { placement: 'popover', width: 360 },
-  tax: { placement: 'popover', width: 320 },
-  plan: { placement: 'drawer' },
+  settings: { placement: 'drawer', width: 440 },
   history: { placement: 'popover', width: 560 },
 }
 
-const TITLE: Record<Exclude<Setting['kind'], 'history'>, string> = { world: 'World', mastery: 'Mastery', tax: 'Market tax', plan: 'Settings' }
+const TITLE: Record<Exclude<Setting['kind'], 'history'>, string> = { world: 'World', settings: 'Settings' }
 const FIRST_VISIT_TITLE = 'Which world do you play on?'
 
 const titleOf = (setting: Setting, catalog: Catalog) =>
@@ -76,12 +73,14 @@ export function SettingHost({ surface, worlds, retryWorlds, current, setup, patc
         ) : (
           <p className="meta" role="status">Loading the world list from aion2.exchange.</p>
         )
-      case 'mastery':
-        return <MasteryForm mastery={setup.mastery} patch={patch} />
-      case 'tax':
-        return <TaxForm taxRate={setup.taxRate} patch={patch} />
-      case 'plan':
-        return <PlanSettings setup={setup} patch={patch} planning={planning} overrides={overrides} owned={owned} sources={sources} />
+      case 'settings':
+        return (
+          <>
+            <MasteryStats mastery={setup.mastery} patch={patch} />
+            <TaxStat taxRate={setup.taxRate} patch={patch} />
+            <PlanSettings setup={setup} patch={patch} planning={planning} overrides={overrides} owned={owned} sources={sources} />
+          </>
+        )
       case 'history':
         return <PriceChart itemId={setting.itemId} worldId={planning.world.id} />
       default: {
@@ -98,7 +97,7 @@ export function SettingHost({ surface, worlds, retryWorlds, current, setup, patc
       {...FRAME[setting.kind]}
       title={titleOf(setting, planning.catalog)}
       flush={setting.kind === 'world' && worlds.status === 'ready'}
-      footer={setting.kind === 'plan' ? <Button variant="primary" onClick={() => close()}>Done</Button> : undefined}
+      footer={setting.kind === 'settings' ? <Button variant="primary" onClick={() => close()}>Done</Button> : undefined}
       onClose={close}
     >
       {body()}

@@ -1,5 +1,6 @@
 import { age as ageOf, isStale, timeOf } from '../state/format.ts'
 import type { Freshness } from '../state/useFreshness.ts'
+import { useNarrow } from '../state/useNarrow.ts'
 import { useNow } from '../state/useNow.ts'
 
 interface Props {
@@ -26,9 +27,24 @@ export function PriceStatus({ freshness, worldName, depthCapturedAt }: Props) {
   return <p className={`price-status meta ${stale ? 'is-stale' : ''}`}>{text}{depthText}</p>
 }
 
+interface Words {
+  lead?: string
+  value: string
+  tail?: string
+}
+
+/** On a phone only `value` shows; `lead` and `tail` stay for screen readers. */
 export function FreshnessPill({ freshness }: { freshness: Freshness }) {
   const { pending, age, stale, refreshing, note, refresh } = freshness
-  const label = pending ? 'prices loading' : refreshing ? 'refreshing' : age === null ? 'no prices yet' : `prices ${age} ago`
+  const narrow = useNarrow()
+  const { lead, value, tail }: Words = pending
+    ? { lead: 'prices ', value: 'loading' }
+    : refreshing
+      ? { value: 'refreshing' }
+      : age === null
+        ? { value: 'no prices', tail: ' yet' }
+        : { lead: 'prices ', value: age, tail: ' ago' }
+  const supporting = narrow ? 'sr-only' : undefined
   return (
     <>
       <button
@@ -39,7 +55,9 @@ export function FreshnessPill({ freshness }: { freshness: Freshness }) {
         onClick={() => void refresh()}
       >
         <span className="fresh-dot" aria-hidden="true" />
-        {label}
+        {lead && <span className={supporting}>{lead}</span>}
+        {value}
+        {tail && <span className={supporting}>{tail}</span>}
       </button>
       <span className="sr-only" role="status">{note}</span>
     </>
