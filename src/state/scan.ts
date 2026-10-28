@@ -87,6 +87,8 @@ function compare(sort: ScanSort) {
   }
 }
 
+export const sortScan = (rows: readonly ScanRow[], sort: ScanSort): ScanRow[] => [...rows].sort(compare(sort))
+
 // counts holds the rows each profession would show under the same name filter; null counts them all.
 export function viewScan(rows: readonly ScanRow[], { profession, name, showHidden, sort }: ScanQuery) {
   const terms = termsOf(name)
@@ -99,7 +101,7 @@ export function viewScan(rows: readonly ScanRow[], { profession, name, showHidde
   }
   const matching = named.filter((row) => profession === null || row.profession === profession)
   const hidden = matching.filter((row) => row.status !== 'ready').length
-  return { rows: matching.filter(visible).sort(compare(sort)), hidden, counts }
+  return { rows: sortScan(matching.filter(visible), sort), hidden, counts }
 }
 
 export function bestMargins(rows: readonly ScanRow[], count: number): ScanRow[] {

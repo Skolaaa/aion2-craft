@@ -18,18 +18,24 @@ interface Context {
 interface Props {
   view: View
   onView?(view: View): void
+  /** Clears the open item and shows the calculator home. The wordmark is plain text without it. */
+  onHome?(): void
   context?: Context
   /** Lines on the list. The list view is offered once it has one, or while it is open. */
   listCount?: number
 }
 
 /** Without `onView` the views show but cannot be switched, as while a link waits for the world list. */
-export function TopBar({ view, onView, context, listCount = 0 }: Props) {
+export function TopBar({ view, onView, onHome, context, listCount = 0 }: Props) {
   const views = VIEWS.filter((id) => id !== 'list' || listCount > 0 || view === 'list')
   return (
     <header className="top-bar">
       <div className="top-bar-inner">
-        <p className="brand">Aion Forge</p>
+        {onHome ? (
+          <button type="button" className="brand" title="Calculator home" onClick={onHome}>Aion Forge</button>
+        ) : (
+          <p className="brand">Aion Forge</p>
+        )}
         <nav className="nav" aria-label="Views">
           {views.map((id) => (
             <button

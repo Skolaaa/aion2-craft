@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PlanResult, Profession } from '../domain/types.ts'
 import type { TargetStatus, Verdict } from './answer.ts'
-import { bestMargins, DEFAULT_SCAN_SORT, nextSort, viewScan, type ScanQuery, type ScanRow } from './scan.ts'
+import { bestMargins, DEFAULT_SCAN_SORT, nextSort, sortScan, viewScan, type ScanQuery, type ScanRow } from './scan.ts'
 
 const VERDICT: Record<TargetStatus, Verdict> = {
   ready: { kind: 'even' },
@@ -67,6 +67,21 @@ describe('viewScan', () => {
   it('keeps rows without a value last in both directions', () => {
     expect(names({ sort: { key: 'margin', direction: 'asc' } })).toEqual(['Silk Robe', 'Iron Sword', 'Steel Sword', 'Bread'])
     expect(names({ sort: { key: 'item', direction: 'asc' } })).toEqual(['Bread', 'Iron Sword', 'Silk Robe', 'Steel Sword'])
+  })
+})
+
+describe('sortScan', () => {
+  it('orders a copy by the sort, hidden rows included, and leaves the input alone', () => {
+    const before = ROWS.map((r) => r.item.name)
+    expect(sortScan(ROWS, { key: 'margin', direction: 'asc' }).map((r) => r.item.name)).toEqual([
+      'Silk Robe',
+      'Iron Sword',
+      'Steel Sword',
+      'Bread',
+      'Dragon Sword',
+      'Healing Potion',
+    ])
+    expect(ROWS.map((r) => r.item.name)).toEqual(before)
   })
 })
 

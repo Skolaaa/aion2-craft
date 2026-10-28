@@ -28,6 +28,7 @@ import { hasPersisted, usePersistentState } from './state/usePersistentState.ts'
 import { usePrices, type PriceFeed } from './state/usePrices.ts'
 import { useAddressBar, useLinkOpening } from './state/useShareLink.ts'
 import { useSources } from './state/useSources.ts'
+import { useWatchlist } from './state/watchlist.ts'
 import { readyDirectory, useWorlds, type WorldsState } from './state/useWorlds.ts'
 
 const NO_QUOTES: ReadonlyMap<ItemId, MarketQuote> = new Map()
@@ -145,6 +146,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
   const overrides = useOverrides(world.id)
   const owned = useOwned(world.id)
   const sources = useSources(world.id)
+  const watchlist = useWatchlist(world.id)
   const surface = useOpenSetting()
 
   const offered = useRef(false)
@@ -201,6 +203,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
             link={link}
             onTarget={patchTarget}
             list={list}
+            watchlist={watchlist}
             onView={onView}
           />
         )
