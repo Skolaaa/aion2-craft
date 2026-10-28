@@ -529,7 +529,7 @@ function Rates({ target, attemptsAtRisk, planning }: RatesProps) {
     rows.push({
       key: 'attempts-at-risk',
       label: 'Attempts, 9 in 10',
-      value: decimal(attemptsAtRisk),
+      value: decimal(attemptsAtRisk, 0),
       note: 'Nine runs in ten finish within this many attempts. A material budget for this covers a bad streak.',
     })
   }
