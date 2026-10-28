@@ -188,7 +188,8 @@ Watchlist: a small `Watch` button follows `Add to list` and reads `Stop watching
 pinned. With one item or more pinned, the calculator home shows `Watching on Kaisinel` above Best
 margins, in the same scan table with sortable headers and a `Clear all` button from two items up.
 Every price refresh updates its margins, and a pinned item that lost its price stays with its pill.
-The section is absent while nothing is pinned on the world.
+The section is absent while nothing is pinned on the world. The wordmark is a button that
+clears the open item and shows this home, since the open item is otherwise kept across visits.
 
 Settings drawer: plan options with their one-line notes, then "Your prices on Kaisinel" with
 reset, as today, then "What you have on Kaisinel": the counts entered under You have in the buy

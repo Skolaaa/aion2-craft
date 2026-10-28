@@ -187,6 +187,13 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
     window.scrollTo({ top: 0 })
   }
 
+  /** The wordmark's home: the calculator with no item open, where the watchlist and the best margins are. */
+  const goHome = () => {
+    updateTarget((previous) => ({ ...previous, itemId: null }))
+    onView('calculator')
+    window.scrollTo({ top: 0 })
+  }
+
   const body = () => {
     switch (view) {
       case 'calculator':
@@ -236,6 +243,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
       <TopBar
         view={view}
         onView={onView}
+        onHome={goHome}
         listCount={list.wanted.size}
         context={{ world: worldChip(current), freshness, opened: surface.opened?.setting ?? null, open: surface.open, link }}
       />

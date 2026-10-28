@@ -21,8 +21,5 @@ export function useWatchlist(worldId: WorldId): Watchlist {
 
 /** The scan rows of the watched items, in `sort` order, hidden ones included so a watched item that lost its price stays visible with its pill. */
 export function watchedRows(rows: readonly ScanRow[], watched: ReadonlySet<ItemId>, sort: ScanSort): ScanRow[] {
-  return sortScan(
-    rows.filter((row) => watched.has(row.item.id)),
-    sort,
-  )
+  return sortScan(rows.filter((row) => watched.has(row.item.id)), sort)
 }

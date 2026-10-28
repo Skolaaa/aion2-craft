@@ -74,7 +74,7 @@ crafted and never feeds another wanted item.
 | `src/state/useShareLink.ts` | `useLinkOpening(worlds)`, the boot gate, which keeps its first answer; `useAddressBar(query)`, the only `history.replaceState` caller, half a second behind the plan and flushed on `pagehide` |
 | `src/state/useClipboard.ts` | `useClipboard()`: the clipboard write and the two-second `copied` state behind Copy list and Copy link |
 | `src/state/` (rest) | React state: worlds, prices, overrides, target, scan rows, persisted in localStorage |
-| `src/components/TopBar.tsx` | wordmark, views (`list` only once the list has a line or the view is open, with a count badge phones hide), the context chips, `FreshnessPill` (the only refresh button) and Copy link |
+| `src/components/TopBar.tsx` | wordmark (a button to the calculator home when `onHome` is given), views (`list` only once the list has a line or the view is open, with a count badge phones hide), the context chips, `FreshnessPill` (the only refresh button) and Copy link |
 | `src/components/ListView.tsx` | the list view: each line with its quantity field, cost and Remove, the list sentence over the craft, buy and margin strip, and `Details` over the merged plan without the rates tab; a line's name reopens the item in the calculator at its quantity |
 | `src/components/WatchButton.tsx` | the control after `Add to list` that pins the open item, reading `Watch` or `Stop watching` (`aria-pressed`) |
 | `src/components/AddToList.tsx` | the one control that puts the open item on the list, reading `Add to list`, `In list` (opens the list) or `Update list to N`, disabled when the list is full |
