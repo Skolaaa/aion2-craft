@@ -29,7 +29,7 @@ export function TopBar({ view, onView, context, listCount = 0 }: Props) {
   return (
     <header className="top-bar">
       <div className="top-bar-inner">
-        <p className="brand">Craft or buy</p>
+        <p className="brand">Aion Forge</p>
         <nav className="nav" aria-label="Views">
           {views.map((id) => (
             <button

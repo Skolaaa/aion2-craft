@@ -49,7 +49,7 @@ crafted and never feeds another wanted item.
 | `src/market/exchangeClient.ts` | fetch wrappers over `/ex/api/*` (proxied), batch by 100 keys, localStorage cache with `capturedAt`; depth ladders one item at a time per world, one store per world in memory and in localStorage for an hour; `directoryFromServers(body)` parses `/servers` (faction names from `SIDE`, `game_server_key`) into a `WorldDirectory`, and `fetchWorlds()` calls it |
 | `src/market/worlds.ts` | `World`, `Listed { world, match }`, `WorldDirectory`, `SIDE`, `PAIRING`, `directoryOf`, `resolveWorld`; pure |
 | `src/state/setup.ts` | `Setup` (world, recent worlds, mastery, tax, plan flags), `parseSetup` at the storage boundary, `PlanSettings` and `settingsOf` (the part a link carries), `peekSetup`, `setWorld`, `PROFESSIONS`, `PLAN_FLAGS` |
-| `src/state/chips.ts` | `statusChips(setup, current)`: every string the status line shows |
+| `src/state/chips.ts` | `statusChips(current)`: the world chip's name, side badge, region and match note |
 | `src/state/openSetting.ts` | the `Setting` union (`history` carries its item id), the `SETTINGS` each chip opens and `first`, the world picker `Workspace` opens by itself on a first visit, `settingKey`, and `useOpenSetting()`, the one owner of which setting is open and of focus return |
 | `src/state/picker.ts` | `pickerView`, `withText`, `initialActive`, `groupNote`, `pairingNote`, `currentNote` for the world list; pure |
 | `src/state/combobox.ts` | `moveActive(ids, active, step)` and `useCombobox(ids, onPick, initial, scrollToInitial)`: the active option, arrow keys, Enter and scrolling into view (not to `initial` when `scrollToInitial` is false), shared by `WorldPicker` and `Search` |
@@ -78,7 +78,7 @@ crafted and never feeds another wanted item.
 | `src/components/Figure.tsx` | `Figure`, one cell of the figure strip, and `typeset`, the sentence with its amounts in mono, shared by the answer panel and the list view |
 | `src/components/Sparkline.tsx` | the seven-day line of the lowest listing as a button that opens the `history` setting, with its "7 d: low, high" text, under the buy figure's note in the answer panel when something is listed; renders nothing without two known lows |
 | `src/components/PriceChart.tsx` | the body of the `history` surface: the `Segmented` range, the SVG from `chartModel` with the selected bucket in `useState` (the pointer and the arrow keys move it, the last bucket to start), the readout line and the range's summary line; the loading and empty lines |
-| `src/components/SettingHost.tsx` | renders zero or one `Surface` for the open `Setting`, framed from a `Record<Setting['kind'], …>` of placement and width with a title per kind, the item's name for `history`: `WorldPicker`, `MasteryForm`, `TaxForm`, `PlanSettings` or `PriceChart` |
+| `src/components/SettingHost.tsx` | renders zero or one `Surface` for the open `Setting`, framed from a `Record<Setting['kind'], …>` of placement and width with a title per kind, the item's name for `history`: `WorldPicker`, `MasteryStats`, `TaxStat`, `PlanSettings` or `PriceChart` |
 | `src/components/Surface.tsx` | the one native `<dialog>` for every in-place setting |
 | `src/state/useNarrow.ts` | `NARROW_BELOW = 640`, the one copy of the phone breakpoint in code, and `useNarrow()`, which `Details`, `Scanner` and `ScanTable` read when a phone needs a different tree (buy cards instead of the table, the source control under the name, the hidden-rows line under the list) rather than a stylesheet rule |
 | `src/components/Segmented.tsx` | the one segmented control (a radio group, an option may be disabled with its reason as `title`): Normal and Splendent, the picker's regions and sides, the source choice under steps, the chart's range |
@@ -95,18 +95,18 @@ Node 24 runs it without a build step (`verify-model.mjs` does).
 
 ## The status line and its settings
 
-Every value in the status line is a chip that opens its own setting in place. `App` renders
-`TopBar` with `statusChips(setup, current)` and `SettingHost` right after it, so tabbing out of
+The world chip opens the world picker and the Settings button opens the settings drawer. `App`
+renders `TopBar` with `statusChips(current)` and `SettingHost` right after it, so tabbing out of
 a popover lands in the page.
 
 ```ts
 const surface = useOpenSetting()            // { opened: { setting, anchor } | null, open, close }
-surface.open({ kind: 'world', from: 'region' }, chip)   // the same chip again closes it
+surface.open({ kind: 'world', from: 'world' }, chip)    // the same chip again closes it
 surface.close()                             // focus returns to the chip after the surface unmounts
 surface.close(false)                        // the user clicked or tabbed elsewhere; focus stays there
 ```
 
-- `Setting` is `{ kind: 'world', from: 'region' | 'world' | 'first' } | { kind: 'mastery' } | { kind: 'tax' } | { kind: 'plan' }`.
+- `Setting` is `{ kind: 'world', from: 'world' | 'first' } | { kind: 'settings' } | { kind: 'history', itemId }`.
   One value means two settings can never be open together. `SettingHost` frames the surface from
   a `Record` over `kind` and picks the body in a switch with a `never` default, so a new kind
   fails `tsc` in both places.
@@ -114,15 +114,15 @@ surface.close(false)                        // the user clicked or tabbed elsewh
   with `show()`, sits under its chip, and closes on Escape, on a pointerdown outside it and its
   chip, and when focus leaves it. Under 640 px the same popover opens with `showModal()` as a
   bottom sheet, and it closes if the viewport crosses 640 px while open. The drawer is modal at
-  every width, 400 px from the right and full width on phones. A modal surface closes on Escape
+  every width, 440 px from the right and full width on phones. A modal surface closes on Escape
   through the dialog's `cancel` event and a popover through a document keydown, never both.
   `NARROW_BELOW` in `useNarrow.ts` is the one copy of the breakpoint in code, and `Surface.test.ts`
   fails when the `640px` and `639.98px` media queries in `styles.css` drift from it.
-- Each chip names itself with `aria-label` (`region EU`, `world Kaisinel, Elyos`, `mastery
-  Blacksmithing 100; …`), so the visible key can be `display: none` at a breakpoint.
-- The world list is one component for the region and world chips. The region chip presets the
-  region filter, and `withText(query, text)` clears it on the first typed letter, since the
-  search spans all 106 worlds; a region picked after that still narrows the search.
+- The world chip names itself with `aria-label` (`world Kaisinel, Elyos, EU`), and the Settings
+  button carries `aria-label="Settings"`, so its word can be `display: none` on phones.
+- The world list opens from the world chip. `withText(query, text)` clears a picked region on the
+  first typed letter, since the search spans all 106 worlds; a region picked after that still
+  narrows the search.
   `pickerView(directory, query, recent)` filters by text, region and side and returns the recent
   rows, the region groups and `keyboardOrder`. The search field keeps focus and points at the
   active row with `aria-activedescendant` through `useCombobox`, which scrolls the active row
