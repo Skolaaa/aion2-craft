@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseKina, percent, rate, shownTenths, signedKina, toneOf } from './format.ts'
+import { parseKina, percent, rate, shownTenths, signedKina, toneOf, decimal } from './format.ts'
 import { heatOf } from './heat.ts'
 
 describe('parseKina', () => {
@@ -45,5 +45,12 @@ describe('number text', () => {
   it('drops a trailing zero from rates', () => {
     expect(rate(0.968372)).toBe('96.8%')
     expect(rate(1)).toBe('100%')
+  })
+})
+
+describe('decimal', () => {
+  it('renders a negative with a real minus and a whole number without fraction digits', () => {
+    expect(decimal(-69.94, 1)).toBe('−69.9')
+    expect(decimal(12, 1)).toBe('12')
   })
 })

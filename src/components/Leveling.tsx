@@ -1,9 +1,9 @@
 import { useDeferredValue, useMemo } from 'react'
 import { planLeveling, type LevelingSegment } from '../domain/leveling.ts'
-import type { Item, Recipe } from '../domain/types.ts'
+import { MAX_MASTERY, type Item, type Recipe } from '../domain/types.ts'
 import { MASTERY_EXP } from '../data/mastery.ts'
 import { decimal, kina, signedKina, taxLabel, toneOf } from '../state/format.ts'
-import { DEFAULT_LEVELING, expOf, levelRange, levelingCandidates, netKinaPerAttempt, parseLevelingView } from '../state/leveling.ts'
+import { craftRecipes, DEFAULT_LEVELING, expOf, levelRange, levelingCandidates, netKinaPerAttempt, parseLevelingView } from '../state/leveling.ts'
 import { itemName } from '../state/craftables.ts'
 import type { Planning } from '../state/planning.ts'
 import { PROFESSIONS } from '../state/setup.ts'
@@ -31,14 +31,12 @@ interface Step extends LevelingSegment {
 type RouteKey = 'recipe' | 'crafts' | 'kina' | 'perExp' | 'exp'
 type ExpKey = 'recipe' | 'exp' | 'source'
 
-const MINUS = '−'
-
 // Kina spent is positive. A negative figure is a gain, so it reads signed and in the gain tone.
 function spent(value: number) {
   return Math.round(value) < 0 ? <span className={toneOf(-value, 'kina')}>{signedKina(value)}</span> : kina(value)
 }
 
-const perExp = (spentKina: number, exp: number) => (exp > 0 ? decimal(spentKina / exp, 1).replace('-', MINUS) : null)
+const perExp = (spentKina: number, exp: number) => (exp > 0 ? decimal(spentKina / exp, 1) : null)
 
 export function Leveling({ planning, freshness }: Props) {
   const { world, catalog, options } = planning
@@ -60,12 +58,10 @@ export function Leveling({ planning, freshness }: Props) {
 
   const deferred = useDeferredValue(planning)
   const { yours } = craftExp
-  const plan = useMemo(() => {
-    const candidates = levelingCandidates(deferred, profession, yours)
-    const byId = new Map(candidates.map((recipe) => [recipe.id, recipe]))
-    return {
-      candidates,
-      result: planLeveling({
+  const candidates = useMemo(() => levelingCandidates(deferred, profession, yours), [deferred, profession, yours])
+  const result = useMemo(
+    () =>
+      planLeveling({
         profession,
         from,
         to,
@@ -73,17 +69,13 @@ export function Leveling({ planning, freshness }: Props) {
         catalog: deferred.catalog,
         table: MASTERY_EXP,
         candidates,
-        expOf: (recipeId) => expOf(deferred.catalog, yours, recipeId) ?? 0,
-        kinaPerAttempt: (recipeId, level) => {
-          const recipe = byId.get(recipeId)
-          return recipe ? netKinaPerAttempt(deferred, recipe, level, sell) : Infinity
-        },
+        expOf: (recipe) => expOf(deferred.catalog, yours, recipe.id) ?? 0,
+        kinaPerAttempt: (recipe, level) => netKinaPerAttempt(deferred, recipe, level, sell),
       }),
-    }
-  }, [deferred, profession, from, to, sell, yours])
+    [deferred, candidates, profession, from, to, sell, yours],
+  )
 
   const loading = freshness.pending
-  const { result } = plan
   const steps = useMemo<Step[]>(
     () =>
       loading
@@ -96,7 +88,7 @@ export function Leveling({ planning, freshness }: Props) {
   )
   const crafts = steps.reduce((sum, step) => sum + step.crafts, 0)
   const { stuckAt } = result
-  const unpriced = stuckAt !== null && plan.candidates.some((recipe) => recipe.masteryLevel <= stuckAt)
+  const unpriced = stuckAt !== null && candidates.some((recipe) => recipe.masteryLevel <= stuckAt)
 
   const routeColumns: Column<Step, RouteKey>[] = [
     {
@@ -111,10 +103,7 @@ export function Leveling({ planning, freshness }: Props) {
   ]
 
   const known = useMemo(
-    () =>
-      [...catalog.recipes.values()]
-        .filter((recipe) => recipe.section === 'craft' && recipe.profession === profession && recipe.masteryLevel >= 1 && recipe.masteryLevel < to)
-        .sort((a, b) => a.masteryLevel - b.masteryLevel || a.id - b.id),
+    () => craftRecipes(catalog, profession).filter((recipe) => recipe.masteryLevel >= 1 && recipe.masteryLevel < to),
     [catalog, profession, to],
   )
 
@@ -176,11 +165,11 @@ export function Leveling({ planning, freshness }: Props) {
         <div className="leveling-fields">
           <label className="leveling-field" htmlFor="leveling-from">
             <span className="lookup-key">from</span>
-            <NumberInput id="leveling-from" value={from} min={1} max={99} onChange={setFrom} />
+            <NumberInput id="leveling-from" value={from} min={1} max={MAX_MASTERY - 1} onChange={setFrom} />
           </label>
           <label className="leveling-field" htmlFor="leveling-to">
             <span className="lookup-key">to</span>
-            <NumberInput id="leveling-to" value={to} min={2} max={100} onChange={setTo} />
+            <NumberInput id="leveling-to" value={to} min={2} max={MAX_MASTERY} onChange={setTo} />
           </label>
           <label className="check">
             <input type="checkbox" checked={sell} onChange={(event) => update((previous) => ({ ...previous, sell: event.target.checked }))} />

@@ -4,6 +4,7 @@ export type Race = 'Light' | 'Dark'
 export type Profession = 'Blacksmithing' | 'Tailoring' | 'Jewelcrafting' | 'Alchemy' | 'Cooking'
 export type Section = 'craft' | 'succession' | 'conversion'
 export type Mastery = Record<Profession, number>
+export const MAX_MASTERY = 100
 export type Grade = 'Common' | 'Rare' | 'Legend' | 'Unique' | 'Epic' | 'Mythic' | 'Special'
 
 export interface Item {

@@ -95,7 +95,8 @@ crafted and never feeds another wanted item.
 | `src/components/SourceCell.tsx` | buy, craft or morph for one row under steps, built from `plan.alternatives`; a way at Infinity is disabled with `blockedNote` |
 | `src/components/PriceStatus.tsx` | `PriceStatus`, the capture time or the stale or missing warning as text, plus one sentence when the plan's oldest ladder is stale against the prices, and `FreshnessPill` |
 | `src/components/Notice.tsx` | `Notice` with its Try again button, `WorldsFailed` for the world list, and `LinkNotice` with Dismiss for a link that did not fully apply |
-| `src/components/CountCell.tsx` | the Have count, a number edited in place like `PriceCell`; zero or empty clears it |
+| `src/components/NumberCell.tsx` | the one small always-visible number field: saves on blur or Enter, reverts on Escape, `is-set` once the player's value is in; `CountCell` and `ExpCell` are its two configurations |
+| `src/components/CountCell.tsx` | the Have count, a `NumberCell`; zero or empty clears it |
 | `src/components/Leveling.tsx` | the leveling view: the profession, level and sell controls (one `leveling` slot in localStorage, parsed by `parseLevelingView`), the route table from `planLeveling` over `levelingCandidates` and `netKinaPerAttempt`, computed on the deferred planning, and the `EXP per craft` table |
 | `src/components/ExpCell.tsx` | the mastery EXP of one craft, a number edited in place like `CountCell`; shows the player's value or the measured one, empty or zero clears the player's |
 | `src/components/` (rest) | calculator, scanner, tables, cells |

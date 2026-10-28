@@ -51,8 +51,8 @@ function plan(route: Route, from: number, to: number) {
     catalog: catalogOf(route.recipes, route.curves, route.codes),
     table: TABLE,
     candidates: route.recipes,
-    expOf: (recipeId) => route.exp[recipeId],
-    kinaPerAttempt: typeof route.kina === 'function' ? route.kina : (recipeId) => (route.kina as Record<RecipeId, number>)[recipeId],
+    expOf: (recipe) => route.exp[recipe.id],
+    kinaPerAttempt: (recipe, level) => (typeof route.kina === 'function' ? route.kina(recipe.id, level) : (route.kina as Record<RecipeId, number>)[recipe.id]),
   }
   return planLeveling(input)
 }

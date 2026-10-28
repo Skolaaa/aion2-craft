@@ -1,5 +1,5 @@
-import { MAX_MASTERY, QUEST_LEVEL } from '../domain/leveling.ts'
-import type { Catalog, Mastery, Profession, Recipe, RecipeId } from '../domain/types.ts'
+import { QUEST_LEVEL } from '../domain/leveling.ts'
+import { MAX_MASTERY, type Catalog, type Mastery, type Profession, type Recipe, type RecipeId } from '../domain/types.ts'
 import { clamp } from './number.ts'
 import { planWanted, type Planning } from './planning.ts'
 import { PROFESSIONS } from './setup.ts'
@@ -9,16 +9,21 @@ import { isFiniteNumber, isRecord, type Parse } from './usePersistentState.ts'
 export const expOf = (catalog: Catalog, yours: ReadonlyMap<RecipeId, number>, recipeId: RecipeId): number | null =>
   yours.get(recipeId) ?? catalog.craftExp.get(recipeId) ?? null
 
+/** The craft recipes of `profession` on this catalog, by mastery level then id. */
+export const craftRecipes = (catalog: Catalog, profession: Profession): Recipe[] =>
+  [...catalog.recipes.values()]
+    .filter((recipe) => recipe.section === 'craft' && recipe.profession === profession)
+    .sort((a, b) => a.masteryLevel - b.masteryLevel || a.id - b.id)
+
 /** The craft recipes of `profession` with a known EXP, one per product and count (the lowest id), by mastery level. */
 export function levelingCandidates(planning: Planning, profession: Profession, yours: ReadonlyMap<RecipeId, number>): Recipe[] {
   const byProduct = new Map<string, Recipe>()
-  for (const recipe of planning.catalog.recipes.values()) {
-    if (recipe.section !== 'craft' || recipe.profession !== profession || expOf(planning.catalog, yours, recipe.id) === null) continue
+  for (const recipe of craftRecipes(planning.catalog, profession)) {
+    if (expOf(planning.catalog, yours, recipe.id) === null) continue
     const key = `${recipe.product.itemId}x${recipe.product.count}`
-    const held = byProduct.get(key)
-    if (!held || recipe.id < held.id) byProduct.set(key, recipe)
+    if (!byProduct.has(key)) byProduct.set(key, recipe)
   }
-  return [...byProduct.values()].sort((a, b) => a.masteryLevel - b.masteryLevel || a.id - b.id)
+  return [...byProduct.values()]
 }
 
 /**

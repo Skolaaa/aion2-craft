@@ -1,7 +1,6 @@
 import { stepRates, type StepRates } from './rates.ts'
 import type { Catalog, Mastery, Profession, Recipe, RecipeId } from './types.ts'
 
-export const MAX_MASTERY = 100
 export const QUEST_LEVEL = 50
 
 // Measured on the Korean client: a failed craft gives 30% of the success EXP, a combo 130%, a failed combo 30% of that.
@@ -30,8 +29,8 @@ export interface LevelingInput {
   catalog: Catalog
   table: readonly number[]
   candidates: readonly Recipe[]
-  expOf(recipeId: RecipeId): number
-  kinaPerAttempt(recipeId: RecipeId, level: number): number
+  expOf(recipe: Recipe): number
+  kinaPerAttempt(recipe: Recipe, level: number): number
 }
 
 export interface LevelingSegment {
@@ -67,8 +66,8 @@ function pickAt(input: LevelingInput, level: number): Pick | null {
   let best: Pick | null = null
   for (const recipe of input.candidates) {
     if (recipe.masteryLevel > level) continue
-    const exp = expPerAttempt(input.expOf(recipe.id), stepRates(recipe, mastery, input.catalog), recipe.combo?.chance ?? 0)
-    const kina = input.kinaPerAttempt(recipe.id, level)
+    const exp = expPerAttempt(input.expOf(recipe), stepRates(recipe, mastery, input.catalog), recipe.combo?.chance ?? 0)
+    const kina = input.kinaPerAttempt(recipe, level)
     if (exp <= 0 || !Number.isFinite(kina)) continue
     const score = kina / exp
     if (!best || score < best.score || (score === best.score && recipe.id < best.recipeId)) best = { recipeId: recipe.id, exp, kina, score }

@@ -1,7 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react'
 import type { Mastery } from '../domain/types.ts'
 import { taxPercent } from '../state/format.ts'
-import { MAX_MASTERY, PROFESSIONS, type SetupPatch } from '../state/setup.ts'
+import { MAX_MASTERY } from '../domain/types.ts'
+import { PROFESSIONS, type SetupPatch } from '../state/setup.ts'
 import { NumberInput } from './NumberInput.tsx'
 
 interface StatProps {
