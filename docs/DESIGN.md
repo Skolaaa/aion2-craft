@@ -184,6 +184,19 @@ tax and the price age), the table keeps Item, Margin and `%` with the same tappa
 headers, names end in an ellipsis instead of wrapping, rows are 52 px, and the hidden-rows
 line moves under the list. No sparkline: it would cost one history request per row.
 
+Leveling: the title `Level a profession on Kaisinel`, then one row of controls. The profession is a
+`Segmented`, `from` and `to` are small mono fields, and `Count selling what you make` is a checkbox,
+on by default. Under it one line says the prices are after tax at each level's success rate, that a result
+sells at the lower of the lowest listing and the 28-day average and only where it sold in 28 days,
+and that the route uses single crafts. The route table lists one recipe per stretch of levels (name, `level 5 to 50`
+in mono, Crafts, Kina, Kina per EXP, EXP) with a totals row. A negative Kina is a gain, so it reads
+signed and green. A line follows when the route crosses level 50, which needs the upgrade quest, or
+stops where no recipe with a known EXP unlocks. `EXP per craft` is a second table of every recipe of
+the profession below the end level, each with an EXP field (gold once the player entered it) and a
+source of `yours`, `measured` or `unknown`. On phones the profession segments stay on one row, the
+fields and the checkbox wrap under them, and the tables keep Recipe and Kina or EXP with names ending
+in an ellipsis.
+
 Watchlist: a small `Watch` button follows `Add to list` and reads `Stop watching` once the item is
 pinned. With one item or more pinned, the calculator home shows `Watching on Kaisinel` above Best
 margins, in the same scan table with sortable headers and a `Clear all` button, the one way to drop a

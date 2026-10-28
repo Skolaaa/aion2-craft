@@ -34,8 +34,9 @@ export const parseGrade = (grade: string): Grade => (Object.prototype.hasOwnProp
 const numericKeys = <T>(record: Record<string, T>): [number, T][] =>
   Object.entries(record).map(([key, value]) => [Number(key), value])
 
-export function buildCatalog(race: Race, recipesFile: RecipesFile, ratesFile: RatesFile): Catalog {
+export function buildCatalog(race: Race, recipesFile: RecipesFile, ratesFile: RatesFile, craftExp: Readonly<Record<string, number>> = {}): Catalog {
   const recipes = recipesFile.recipes.filter((r) => r.race === race)
+  const byId = new Map(recipes.map((r) => [r.id, r]))
   const byProduct = new Map<ItemId, Recipe[]>()
   const yields = (itemId: ItemId, recipe: Recipe) => {
     const list = byProduct.get(itemId) ?? []
@@ -65,12 +66,13 @@ export function buildCatalog(race: Race, recipesFile: RecipesFile, ratesFile: Ra
   return {
     race,
     items: new Map(numericKeys(recipesFile.items).map(([id, item]) => [id, { id, ...item, grade: parseGrade(item.grade) }])),
-    recipes: new Map(recipes.map((r) => [r.id, r])),
+    recipes: byId,
     byProduct,
     boundOf,
     curves,
     families,
     npcPrices: new Map(numericKeys(recipesFile.npcPrices)),
+    craftExp: new Map(numericKeys(craftExp).filter(([id]) => byId.has(id))),
   }
 }
 

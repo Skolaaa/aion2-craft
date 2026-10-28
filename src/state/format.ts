@@ -31,7 +31,7 @@ export function rate(fraction: number) {
 }
 
 export const decimal = (value: number, digits = 2) =>
-  value.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(value) ? 0 : digits, maximumFractionDigits: digits })
+  value.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(value) ? 0 : digits, maximumFractionDigits: digits }).replace('-', MINUS)
 
 export const plural = (count: number, one: string, many: string) => (count === 1 ? one : many)
 

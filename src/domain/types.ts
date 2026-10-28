@@ -4,6 +4,7 @@ export type Race = 'Light' | 'Dark'
 export type Profession = 'Blacksmithing' | 'Tailoring' | 'Jewelcrafting' | 'Alchemy' | 'Cooking'
 export type Section = 'craft' | 'succession' | 'conversion'
 export type Mastery = Record<Profession, number>
+export const MAX_MASTERY = 100
 export type Grade = 'Common' | 'Rare' | 'Legend' | 'Unique' | 'Epic' | 'Mythic' | 'Special'
 
 export interface Item {
@@ -48,6 +49,8 @@ export interface Catalog {
   curves: Map<RecipeId, RateCurve>
   families: Record<RateFamily, RateCurve>
   npcPrices: Map<ItemId, number>
+  /** The mastery EXP one successful single craft gives, where someone measured it. */
+  craftExp: Map<RecipeId, number>
 }
 
 export interface MarketQuote {

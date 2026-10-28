@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Calculator } from './components/Calculator.tsx'
 import { Footer } from './components/Footer.tsx'
+import { Leveling } from './components/Leveling.tsx'
 import { ListView } from './components/ListView.tsx'
 import { LinkNotice, Notice, WorldsFailed } from './components/Notice.tsx'
 import { Scanner } from './components/Scanner.tsx'
@@ -231,6 +232,8 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
         )
       case 'scanner':
         return <Scanner planning={planning} freshness={freshness} onOpen={openItem} />
+      case 'leveling':
+        return <Leveling planning={planning} freshness={freshness} />
       default: {
         const unknown: never = view
         return unknown

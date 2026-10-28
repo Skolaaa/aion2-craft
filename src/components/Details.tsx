@@ -7,7 +7,7 @@ import {
 import { itemName } from '../state/craftables.ts'
 import { age, decimal, kina, percent, plural, signedKina } from '../state/format.ts'
 import type { Planning } from '../state/planning.ts'
-import { MAX_MASTERY } from '../state/setup.ts'
+import { MAX_MASTERY } from '../domain/types.ts'
 import { shoppingText } from '../state/shopping.ts'
 import { itemPageUrl } from '../state/itemPage.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
