@@ -773,13 +773,19 @@ input[type='checkbox'] {
   gap: var(--space-2);
 }
 
-.input-count {
+.input-count,
+.input-exp {
   width: 56px;
   min-height: 28px;
   padding: 0 6px;
 }
 
-.input-count.is-set {
+.input-exp {
+  width: 76px;
+}
+
+.input-count.is-set,
+.input-exp.is-set {
   color: var(--gold);
 }
 
@@ -1653,6 +1659,37 @@ input[type='checkbox'] {
   gap: var(--space-2);
 }
 
+.leveling-controls,
+.leveling-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+}
+
+.leveling-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.leveling-field .input {
+  width: 72px;
+}
+
+.leveling-field .input,
+.leveling-fields .check {
+  min-height: 36px;
+}
+
+.leveling-fields .check {
+  align-items: center;
+}
+
+.leveling-fields .check input {
+  margin: 0;
+}
+
 .scan-tools {
   display: flex;
   flex-wrap: wrap;
@@ -1800,15 +1837,33 @@ input[type='checkbox'] {
     justify-content: space-between;
   }
 
-  .scan-table {
+  .scan-table,
+  .leveling-table {
     table-layout: fixed;
   }
 
-  .scan-table td {
+  .scan-table td,
+  .leveling-table td {
     height: 52px;
   }
 
+  .leveling-controls {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .leveling-fields {
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .leveling-controls .segment {
+    flex: 1 1 auto;
+    padding: 0 2px;
+    font-size: 11px;
+  }
+
   .scan-table .item-open,
+  .leveling-table .item-name-cell,
   .buy-line .item-name-cell {
     overflow: hidden;
     white-space: nowrap;

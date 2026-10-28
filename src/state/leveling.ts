@@ -1,5 +1,9 @@
-import type { Catalog, Profession, Recipe, RecipeId } from '../domain/types.ts'
+import { MAX_MASTERY, QUEST_LEVEL } from '../domain/leveling.ts'
+import type { Catalog, Mastery, Profession, Recipe, RecipeId } from '../domain/types.ts'
+import { clamp } from './number.ts'
 import { planWanted, type Planning } from './planning.ts'
+import { PROFESSIONS } from './setup.ts'
+import { isFiniteNumber, isRecord, type Parse } from './usePersistentState.ts'
 
 /** The success EXP of one craft: what the player measured, else the seed, else null. */
 export const expOf = (catalog: Catalog, yours: ReadonlyMap<RecipeId, number>, recipeId: RecipeId): number | null =>
@@ -44,4 +48,37 @@ export function netKinaPerAttempt(planning: Planning, recipe: Recipe, level: num
   const normalShare = (1 - (combo?.chance ?? 0)) * root.successRate
   const sales = normalShare * product.count * afterTax(product.itemId) + (combo ? root.comboRate * combo.count * afterTax(combo.itemId) : 0)
   return cost - sales
+}
+
+/** What the leveling view remembers. A null level follows the default for the profession, so the mastery on the Setup shows until the player picks one. */
+export interface LevelingView {
+  profession: Profession
+  from: number | null
+  to: number | null
+  sell: boolean
+}
+
+export const DEFAULT_LEVELING: LevelingView = { profession: 'Blacksmithing', from: null, to: null, sell: true }
+
+const isLevel = (raw: unknown, low: number, high: number): raw is number => isFiniteNumber(raw) && Number.isInteger(raw) && raw >= low && raw <= high
+
+export const parseLevelingView: Parse<LevelingView> = (raw) => {
+  if (!isRecord(raw)) return null
+  const profession = PROFESSIONS.find(({ id }) => id === raw.profession)?.id
+  if (!profession) return null
+  const { from, to } = raw
+  const bounded = isLevel(from, 1, MAX_MASTERY - 1) && isLevel(to, 2, MAX_MASTERY) && to > from
+  return {
+    profession,
+    from: bounded ? from : null,
+    to: bounded ? to : null,
+    sell: typeof raw.sell === 'boolean' ? raw.sell : DEFAULT_LEVELING.sell,
+  }
+}
+
+/** The levels the route spans: the view's own, else from the player's mastery to the quest gate, or to the cap once past it. */
+export function levelRange({ profession, from, to }: LevelingView, mastery: Mastery): { from: number; to: number } {
+  const start = from ?? clamp(mastery[profession], 1, MAX_MASTERY - 1)
+  const end = to ?? (start < QUEST_LEVEL ? QUEST_LEVEL : MAX_MASTERY)
+  return { from: start, to: Math.max(end, start + 1) }
 }

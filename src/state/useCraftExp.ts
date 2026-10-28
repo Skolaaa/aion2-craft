@@ -2,7 +2,7 @@ import type { RecipeId } from '../domain/types.ts'
 import { useItemMap } from './useItemMap.ts'
 import { isFiniteNumber, type Parse } from './usePersistentState.ts'
 
-const MAX_EXP = 99_999
+export const MAX_EXP = 99_999
 
 /** A whole number of EXP from 1 to 99,999, as the craft log shows it. */
 export const parseExp: Parse<number> = (raw) => (isFiniteNumber(raw) && Number.isInteger(raw) && raw >= 1 && raw <= MAX_EXP ? raw : null)

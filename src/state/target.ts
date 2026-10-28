@@ -3,7 +3,7 @@ import { clamp } from './number.ts'
 import { isFiniteNumber, isRecord, type Parse } from './usePersistentState.ts'
 
 /** The one list of views, in nav order. Workspace switches over it with a `never` default, so a new view fails the build where it is not handled. */
-export const VIEWS = ['calculator', 'list', 'scanner'] as const
+export const VIEWS = ['calculator', 'list', 'scanner', 'leveling'] as const
 export type View = (typeof VIEWS)[number]
 
 export interface Target {

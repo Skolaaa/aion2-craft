@@ -4,7 +4,7 @@ import { makePriceBook } from '../domain/priceBook.ts'
 import type { MarketQuote, Mastery, PlanOptions, Recipe } from '../domain/types.ts'
 import type { World } from '../market/worlds.ts'
 import { craftIndexFor } from './craftables.ts'
-import { expOf, levelingCandidates, netKinaPerAttempt } from './leveling.ts'
+import { DEFAULT_LEVELING, expOf, levelRange, levelingCandidates, netKinaPerAttempt, parseLevelingView } from './leveling.ts'
 import type { Planning } from './planning.ts'
 
 const ORE = 1
@@ -137,5 +137,37 @@ describe('netKinaPerAttempt', () => {
     const planning = planningOf(RECIPES, MARKET, SEED, { ...OPTIONS, byproductCredit: true })
     expect(netKinaPerAttempt(planning, GUARD_RECIPE, 5, false)).toBeCloseTo(600)
     expect(netKinaPerAttempt(planning, GUARD_RECIPE, 5, true)).toBeCloseTo(600 - 1080 - 1125)
+  })
+})
+
+describe('parseLevelingView', () => {
+  it('keeps a profession, a level pair and the sell flag', () => {
+    expect(parseLevelingView({ profession: 'Alchemy', from: 63, to: 70, sell: false })).toEqual({ profession: 'Alchemy', from: 63, to: 70, sell: false })
+  })
+
+  it('drops a level pair that is out of range or not ascending, and keeps the rest', () => {
+    for (const levels of [{ from: 70, to: 63 }, { from: 0, to: 50 }, { from: 1, to: 101 }, { from: 1.5, to: 50 }, { from: 50, to: 50 }]) {
+      expect(parseLevelingView({ profession: 'Cooking', ...levels })).toEqual({ profession: 'Cooking', from: null, to: null, sell: true })
+    }
+  })
+
+  it('rejects an unknown profession and non-records', () => {
+    expect(parseLevelingView({ profession: 'Fishing', from: 1, to: 50 })).toBeNull()
+    expect(parseLevelingView(null)).toBeNull()
+  })
+})
+
+describe('levelRange', () => {
+  const at = (level: number): Mastery => ({ ...MASTERY, Blacksmithing: level })
+
+  it('starts at the mastery and ends at the quest gate, or at the cap once past it', () => {
+    expect(levelRange(DEFAULT_LEVELING, at(0))).toEqual({ from: 1, to: 50 })
+    expect(levelRange(DEFAULT_LEVELING, at(30))).toEqual({ from: 30, to: 50 })
+    expect(levelRange(DEFAULT_LEVELING, at(50))).toEqual({ from: 50, to: 100 })
+    expect(levelRange(DEFAULT_LEVELING, at(100))).toEqual({ from: 99, to: 100 })
+  })
+
+  it('prefers the levels the view holds levels', () => {
+    expect(levelRange({ ...DEFAULT_LEVELING, from: 63, to: 70 }, at(10))).toEqual({ from: 63, to: 70 })
   })
 })
