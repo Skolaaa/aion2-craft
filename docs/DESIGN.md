@@ -186,7 +186,8 @@ line moves under the list. No sparkline: it would cost one history request per r
 
 Watchlist: a small `Watch` button follows `Add to list` and reads `Stop watching` once the item is
 pinned. With one item or more pinned, the calculator home shows `Watching on Kaisinel` above Best
-margins, in the same scan table with sortable headers and a `Clear all` button from two items up.
+margins, in the same scan table with sortable headers and a `Clear all` button, the one way to drop a
+pinned item whose recipe a data refresh removed.
 Every price refresh updates its margins, and a pinned item that lost its price stays with its pill.
 The section is absent while nothing is pinned on the world. The wordmark is a button that
 clears the open item and shows this home, since the open item is otherwise kept across visits.

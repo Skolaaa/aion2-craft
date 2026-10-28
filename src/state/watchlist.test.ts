@@ -1,34 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import type { PlanResult } from '../domain/types.ts'
-import type { TargetStatus, Verdict } from './answer.ts'
-import { DEFAULT_SCAN_SORT, type ScanRow } from './scan.ts'
+import { DEFAULT_SCAN_SORT } from './scan.ts'
+import { scanRow } from './scanRow.fixture.ts'
 import { parseEntries } from './useItemMap.ts'
 import { parseWatched, watchedRows } from './watchlist.ts'
 
-const VERDICT: Record<TargetStatus, Verdict> = {
-  ready: { kind: 'even' },
-  unpriced: { kind: 'missing', items: [] },
-  locked: { kind: 'blocked', itemId: 0, profession: 'Blacksmithing', level: 50, mastery: 10 },
-}
-
-function row(id: number, name: string, margin: number | null, status: TargetStatus = 'ready'): ScanRow {
-  return {
-    item: { id, name, grade: 'Rare', icon: null },
-    profession: 'Blacksmithing',
-    level: 10,
-    plan: {} as PlanResult,
-    verdict: VERDICT[status],
-    status,
-    cost: 1000,
-    lowest: margin === null ? null : 1000 + margin,
-    sold: null,
-    listings: 1,
-    margin,
-    marginPct: margin === null ? null : margin / 1000,
-  }
-}
-
-const ROWS = [row(1, 'Iron Sword', 300), row(2, 'Silk Robe', -50), row(3, 'Steel Sword', 900), row(4, 'Healing Potion', null, 'unpriced')]
+const ROWS = [
+  scanRow({ id: 1, name: 'Iron Sword', margin: 300 }),
+  scanRow({ id: 2, name: 'Silk Robe', margin: -50 }),
+  scanRow({ id: 3, name: 'Steel Sword', margin: 900 }),
+  scanRow({ id: 4, name: 'Healing Potion', margin: null, status: 'unpriced' }),
+]
 
 describe('parseWatched', () => {
   it('accepts only true', () => {

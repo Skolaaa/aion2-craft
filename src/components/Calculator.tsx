@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { costAtRisk } from '../domain/costAtRisk.ts'
 import type { ItemId } from '../domain/types.ts'
 import { taxLabel } from '../state/format.ts'
 import type { ListState } from '../state/list.ts'
 import type { OpenSetting } from '../state/openSetting.ts'
 import { planWanted, type Planning } from '../state/planning.ts'
-import { bestMargins, DEFAULT_SCAN_SORT, nextSort, type ScanRow, type ScanSort } from '../state/scan.ts'
+import { bestMargins, DEFAULT_SCAN_SORT, nextSort, type ScanKey, type ScanRow, type ScanSort } from '../state/scan.ts'
 import type { Target, View } from '../state/target.ts'
 import type { PriceOverrides } from '../state/useOverrides.ts'
 import type { OwnedStock } from '../state/useOwned.ts'
@@ -107,71 +107,79 @@ interface HomeProps {
   onOpen(itemId: ItemId): void
 }
 
+/** The calculator with no item open: the watchlist, then the five best margins, over one scan. */
 function Home({ planning, loading, watchlist, onOpen }: HomeProps) {
+  const { world, options } = planning
   const scan = useScan(planning)
+  const best = useMemo(() => bestMargins(scan, 5), [scan])
+  const shared = { world: world.name, loading, onOpen }
   return (
     <>
-      {watchlist.watched.size > 0 && <Watching planning={planning} scan={scan} loading={loading} watchlist={watchlist} onOpen={onOpen} />}
-      <BestMargins planning={planning} scan={scan} loading={loading} onOpen={onOpen} />
+      {watchlist.watched.size > 0 && <Watching {...shared} scan={scan} tax={options.taxRate} watchlist={watchlist} />}
+      <HomeSection
+        {...shared}
+        id="best"
+        title="Best margins"
+        meta={`After ${taxLabel(options.taxRate)} tax at your mastery. Open one, or search for any craftable item.`}
+        rows={best}
+        empty="No recipe has a margin with these prices yet."
+      />
     </>
   )
 }
 
-interface WatchingProps {
-  planning: Planning
+interface WatchingProps extends Omit<SectionProps, 'id' | 'title' | 'meta' | 'rows' | 'empty'> {
   scan: readonly ScanRow[]
-  loading: boolean
+  tax: number
   watchlist: Watchlist
-  onOpen(itemId: ItemId): void
 }
 
-function Watching({ planning, scan, loading, watchlist, onOpen }: WatchingProps) {
-  const { world, options } = planning
+function Watching({ scan, tax, watchlist, ...shared }: WatchingProps) {
   const [sort, setSort] = useState<ScanSort>(DEFAULT_SCAN_SORT)
   const rows = useMemo(() => watchedRows(scan, watchlist.watched, sort), [scan, watchlist.watched, sort])
   return (
-    <section className="stack" aria-labelledby="watching-title">
-      <div className="stack-tight">
-        <div className="group-head">
-          <h2 className="section-title" id="watching-title"><span>Watching on {world.name}</span></h2>
-          {watchlist.watched.size > 1 && <Button className="button-small" onClick={watchlist.resetAll}>Clear all</Button>}
-        </div>
-        <p className="meta">Margins after {taxLabel(options.taxRate)} tax at your mastery, with every price refresh. Stop watching an item from its page.</p>
-      </div>
-      <ScanTable
-        label={`Watching on ${world.name}`}
-        rows={loading ? [] : rows}
-        onOpen={onOpen}
-        sort={sort}
-        onSort={(key) => setSort((previous) => nextSort(previous, key))}
-        empty={loading ? 'Loading prices from aion2.exchange.' : 'None of these items has a recipe on this world.'}
-      />
-    </section>
+    <HomeSection
+      {...shared}
+      id="watching"
+      title="Watching"
+      action={<Button className="button-small" onClick={watchlist.resetAll}>Clear all</Button>}
+      meta={`Margins after ${taxLabel(tax)} tax at your mastery, with every price refresh. Stop watching an item from its page.`}
+      rows={rows}
+      sort={sort}
+      onSort={(key) => setSort((previous) => nextSort(previous, key))}
+      empty="None of these items has a recipe on this world."
+    />
   )
 }
 
-interface BestProps {
-  planning: Planning
-  scan: readonly ScanRow[]
+interface SectionProps {
+  id: string
+  /** Shown as "<title> on <world>". */
+  title: string
+  world: string
+  action?: ReactNode
+  meta: string
+  rows: readonly ScanRow[]
   loading: boolean
+  /** What the table says once prices are in and no row is left. */
+  empty: string
+  sort?: ScanSort
+  onSort?(key: ScanKey): void
   onOpen(itemId: ItemId): void
 }
 
-function BestMargins({ planning, scan, loading, onOpen }: BestProps) {
-  const { world, options } = planning
-  const best = useMemo(() => bestMargins(scan, 5), [scan])
+function HomeSection({ id, title, world, action, meta, rows, loading, empty, sort, onSort, onOpen }: SectionProps) {
+  const heading = `${title} on ${world}`
   return (
-    <section className="stack" aria-labelledby="best-title">
+    <section className="stack" aria-labelledby={`${id}-title`}>
       <div className="stack-tight">
-        <h2 className="section-title" id="best-title"><span>Best margins on {world.name}</span></h2>
-        <p className="meta">After {taxLabel(options.taxRate)} tax at your mastery. Open one, or search for any craftable item.</p>
+        <div className="group-head">
+          <h2 className="section-title" id={`${id}-title`}><span>{heading}</span></h2>
+          {action}
+        </div>
+        <p className="meta">{meta}</p>
       </div>
-      <ScanTable
-        label={`Best margins on ${world.name}`}
-        rows={loading ? [] : best}
-        onOpen={onOpen}
-        empty={loading ? 'Loading prices from aion2.exchange.' : 'No recipe has a margin with these prices yet.'}
-      />
+      <ScanTable label={heading} rows={loading ? [] : rows} onOpen={onOpen} sort={sort} onSort={onSort} empty={loading ? 'Loading prices from aion2.exchange.' : empty} />
     </section>
   )
 }

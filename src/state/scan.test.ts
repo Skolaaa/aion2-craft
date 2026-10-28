@@ -1,39 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import type { PlanResult, Profession } from '../domain/types.ts'
-import type { TargetStatus, Verdict } from './answer.ts'
-import { bestMargins, DEFAULT_SCAN_SORT, nextSort, sortScan, viewScan, type ScanQuery, type ScanRow } from './scan.ts'
-
-const VERDICT: Record<TargetStatus, Verdict> = {
-  ready: { kind: 'even' },
-  unpriced: { kind: 'missing', items: [] },
-  locked: { kind: 'blocked', itemId: 0, profession: 'Blacksmithing', level: 50, mastery: 10 },
-}
-
-let nextId = 1
-function row(name: string, profession: Profession, margin: number | null, status: TargetStatus = 'ready', cost: number | null = 1000): ScanRow {
-  return {
-    item: { id: nextId++, name, grade: 'Rare', icon: null },
-    profession,
-    level: 10,
-    plan: {} as PlanResult,
-    verdict: VERDICT[status],
-    status,
-    cost,
-    lowest: margin === null ? null : cost === null ? null : cost + margin,
-    sold: null,
-    listings: 1,
-    margin,
-    marginPct: margin === null || cost === null ? null : margin / cost,
-  }
-}
+import { bestMargins, DEFAULT_SCAN_SORT, nextSort, sortScan, viewScan, type ScanQuery } from './scan.ts'
+import { scanRow } from './scanRow.fixture.ts'
 
 const ROWS = [
-  row('Iron Sword', 'Blacksmithing', 300),
-  row('Silk Robe', 'Tailoring', -50),
-  row('Steel Sword', 'Blacksmithing', 900),
-  row('Healing Potion', 'Alchemy', null, 'unpriced', null),
-  row('Dragon Sword', 'Blacksmithing', null, 'locked', null),
-  row('Bread', 'Cooking', null),
+  scanRow({ name: 'Iron Sword', margin: 300 }),
+  scanRow({ name: 'Silk Robe', profession: 'Tailoring', margin: -50 }),
+  scanRow({ name: 'Steel Sword', margin: 900 }),
+  scanRow({ name: 'Healing Potion', profession: 'Alchemy', margin: null, status: 'unpriced', cost: null }),
+  scanRow({ name: 'Dragon Sword', margin: null, status: 'locked', cost: null }),
+  scanRow({ name: 'Bread', profession: 'Cooking', margin: null }),
 ]
 
 const query = (change: Partial<ScanQuery> = {}): ScanQuery => ({ profession: null, name: '', showHidden: false, sort: DEFAULT_SCAN_SORT, ...change })
