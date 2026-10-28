@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 
 interface Props {
   className: string
@@ -20,8 +20,14 @@ const textOf = (value: number | null) => (value === null ? '' : String(value))
 export function NumberCell({ className, label, placeholder, max, shown, current, parse, onSave }: Props) {
   const [text, setText] = useState(textOf(shown))
   useEffect(() => setText(textOf(shown)), [shown])
+  // Escape blurs, and the blur handler still closes over the old text, so it has to know to skip the save.
+  const reverting = useRef(false)
 
   const commit = () => {
+    if (reverting.current) {
+      reverting.current = false
+      return
+    }
     const next = parse(text)
     if (next !== current) onSave(next)
     else setText(textOf(shown))
@@ -34,6 +40,7 @@ export function NumberCell({ className, label, placeholder, max, shown, current,
     } else if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
+      reverting.current = true
       setText(textOf(shown))
       event.currentTarget.blur()
     }
