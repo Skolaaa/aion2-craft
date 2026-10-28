@@ -1,3 +1,4 @@
+import type { CostAtRisk } from '../domain/costAtRisk.ts'
 import { stepRates } from '../domain/rates.ts'
 import type {
   Acquisition, Alternative, Catalog, Depth, ItemId, Mastery, Method, PlanResult, PriceBook, Profession, RateFamily, Recipe, RecipeId, StepPlan, TargetPlan,
@@ -76,6 +77,9 @@ function totalOf(targets: readonly TargetPlan[], value: (target: TargetPlan) => 
   }
   return total
 }
+
+/** The craft figure's second line: the cost nine runs in ten come in under, or nothing while the plan has no finite cost. */
+export const riskNote = (risk: CostAtRisk | null) => (risk !== null && Number.isFinite(risk.cost) ? `9 in 10 under ${kina(risk.cost)}` : null)
 
 /** Craft is the plan's cost, buy is every target bought outright, margin is every target sold at its lowest listing. */
 export function answerOf(plan: PlanResult, context: AnswerContext): Answer {

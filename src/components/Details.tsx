@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import type { CostAtRisk } from '../domain/costAtRisk.ts'
 import type { Acquisition, ItemId, Method, PlanResult, Recipe, StepPlan, TargetPlan } from '../domain/types.ts'
 import {
   buyList, childStep, depthNote, estimateGap, extraCost, stepCount, stepSummary, successNote, type BuyLine, type BuyList,
@@ -43,9 +44,11 @@ interface Props {
   onTab(tab: DetailTab): void
   /** The target whose rates to show. The tab is offered only when given, since rates are per item. */
   rates?: TargetPlan
+  /** The plan's cost at risk, for the attempts row of the rates tab. */
+  risk?: CostAtRisk | null
 }
 
-export function Details({ plan, planning, overrides, owned, sources, link, tab, onTab, rates }: Props) {
+export function Details({ plan, planning, overrides, owned, sources, link, tab, onTab, rates, risk = null }: Props) {
   const base = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const narrow = useNarrow()
@@ -109,7 +112,7 @@ export function Details({ plan, planning, overrides, owned, sources, link, tab, 
             narrow={narrow}
           />
         )}
-        {tab === 'rates' && rates && <Rates target={rates} planning={planning} />}
+        {tab === 'rates' && rates && <Rates target={rates} attemptsAtRisk={risk?.attempts[plan.targets.indexOf(rates)] ?? null} planning={planning} />}
       </div>
     </section>
   )
@@ -475,7 +478,14 @@ interface RateRow {
   note: string
 }
 
-function Rates({ target, planning }: { target: TargetPlan; planning: Planning }) {
+interface RatesProps {
+  target: TargetPlan
+  /** The root's attempts nine runs in ten finish within, or null without a finite plan. */
+  attemptsAtRisk: number | null
+  planning: Planning
+}
+
+function Rates({ target, attemptsAtRisk, planning }: RatesProps) {
   const now = useNow()
   const { catalog, mastery, world } = planning
   const { root } = target
@@ -512,6 +522,15 @@ function Rates({ target, planning }: { target: TargetPlan; planning: Planning })
       label: 'Expected attempts',
       value: decimal(root.attempts),
       note: `For ${root.outputs} ${itemName(catalog, root.itemId)}. A failed attempt uses up every material.`,
+    })
+  }
+
+  if (attemptsAtRisk !== null && Number.isFinite(attemptsAtRisk)) {
+    rows.push({
+      key: 'attempts-at-risk',
+      label: 'Attempts, 9 in 10',
+      value: decimal(attemptsAtRisk),
+      note: 'Nine runs in ten finish within this many attempts. A material budget for this covers a bad streak.',
     })
   }
 
