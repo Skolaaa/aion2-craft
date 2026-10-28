@@ -9,12 +9,11 @@ import type { OwnedStock } from '../state/useOwned.ts'
 import type { Sources } from '../state/useSources.ts'
 import type { WorldsState } from '../state/useWorlds.ts'
 import { Button } from './Button.tsx'
-import { MasteryForm } from './MasteryForm.tsx'
+import { MasteryStats, TaxStat } from './MasteryStats.tsx'
 import { WorldsFailed } from './Notice.tsx'
 import { PlanSettings } from './PlanSettings.tsx'
 import { PriceChart } from './PriceChart.tsx'
 import { Surface, type Placement } from './Surface.tsx'
-import { TaxForm } from './TaxForm.tsx'
 import { WorldPicker } from './WorldPicker.tsx'
 
 interface Props {
@@ -77,8 +76,8 @@ export function SettingHost({ surface, worlds, retryWorlds, current, setup, patc
       case 'settings':
         return (
           <>
-            <MasteryForm mastery={setup.mastery} patch={patch} />
-            <TaxForm taxRate={setup.taxRate} patch={patch} />
+            <MasteryStats mastery={setup.mastery} patch={patch} />
+            <TaxStat taxRate={setup.taxRate} patch={patch} />
             <PlanSettings setup={setup} patch={patch} planning={planning} overrides={overrides} owned={owned} sources={sources} />
           </>
         )
