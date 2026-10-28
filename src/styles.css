@@ -257,15 +257,11 @@ a {
 }
 
 .context {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   min-width: 0;
-}
-
-.context .chip {
-  min-height: 26px;
-  gap: 6px;
 }
 
 .chip-key,
@@ -292,18 +288,29 @@ a {
   font: 600 11px / 1 var(--mono);
 }
 
-.mastery-pairs {
+.settings-button {
   display: inline-flex;
-  gap: var(--space-3);
-}
-
-.mastery-pair {
-  display: inline-flex;
+  align-items: center;
   gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--radius);
+  background: var(--raised);
+  color: var(--text);
+  font: 600 12px / 1 var(--mono);
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
-.mastery-collapsed {
-  display: none;
+.settings-button:hover,
+.settings-button[aria-expanded='true'] {
+  color: var(--gold-hi);
+}
+
+.settings-button[aria-expanded='true'] {
+  border-color: var(--gold);
 }
 
 .fresh {
@@ -870,7 +877,7 @@ input[type='range'] {
 .surface[data-placement='drawer'] {
   position: fixed;
   inset: 0 0 0 auto;
-  width: 400px;
+  width: var(--surface-width);
   max-width: 100%;
   height: 100dvh;
   max-height: 100dvh;
@@ -1652,6 +1659,7 @@ input[type='range'] {
 @media (prefers-reduced-motion: no-preference) {
   .button,
   .chip,
+  .settings-button,
   .nav-item,
   .tab,
   .sort,
@@ -1673,28 +1681,7 @@ input[type='range'] {
   }
 }
 
-@media (min-width: 1280px), (max-width: 639.98px) {
-  .mastery-chip > .chip-key {
-    display: none;
-  }
-}
-
-/* With the list view in the nav, the one-row status line only fits at the page's 1280 px cap with the mastery chip collapsed. */
-@media (min-width: 1280px) {
-  .top-bar-inner:has(.nav-item[data-view='list']) .mastery-chip > .chip-key {
-    display: inline;
-  }
-
-  .top-bar-inner:has(.nav-item[data-view='list']) .mastery-pairs {
-    display: none;
-  }
-
-  .top-bar-inner:has(.nav-item[data-view='list']) .mastery-collapsed {
-    display: inline;
-  }
-}
-
-@media (min-width: 640px) and (max-width: 1279.98px) {
+@media (min-width: 640px) and (max-width: 899.98px) {
   .top-bar-inner {
     flex-wrap: wrap;
     row-gap: 0;
@@ -1705,17 +1692,8 @@ input[type='range'] {
   }
 
   .context {
-    order: 3;
     flex-basis: 100%;
     padding-bottom: var(--space-2);
-  }
-
-  .mastery-pairs {
-    display: none;
-  }
-
-  .mastery-collapsed {
-    display: inline;
   }
 }
 
@@ -1798,33 +1776,24 @@ input[type='range'] {
 
   .context {
     flex-basis: 100%;
-    flex-wrap: wrap;
     gap: 6px;
     padding: var(--space-2) 0;
     border-top: 1px solid var(--rule);
   }
 
-  .fresh,
-  .copy-link {
-    margin-bottom: var(--space-2);
-  }
-
-  .context .chip {
+  /* The pill, the link and the gear keep their width; a long world name gives way. */
+  .world-chip {
+    min-width: 0;
     min-height: 32px;
   }
 
-  .context .chip:is(:first-child, :nth-child(2)) > .chip-key {
+  .world-chip .chip-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .settings-label {
     display: none;
-  }
-
-  .mastery-chip {
-    order: 1;
-    flex-basis: 100%;
-  }
-
-  .mastery-pairs {
-    flex: 1;
-    justify-content: space-between;
   }
 
   .table th,

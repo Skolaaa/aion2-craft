@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import type { StatusChips } from '../state/chips.ts'
 import { SETTINGS, settingKey, type Setting } from '../state/openSetting.ts'
 import { VIEWS, type View } from '../state/target.ts'
@@ -48,11 +47,44 @@ export function TopBar({ view, onView, context, listCount = 0 }: Props) {
             </button>
           ))}
         </nav>
-        {context && <ContextChips {...context} />}
-        {context && <FreshnessPill freshness={context.freshness} />}
-        {context && <CopyLinkButton link={context.link} />}
+        {context && <ContextRow {...context} />}
       </div>
     </header>
+  )
+}
+
+function ContextRow({ chips: { world }, freshness, opened, open, link }: Context) {
+  return (
+    <div className="context">
+      <button
+        type="button"
+        className="chip world-chip"
+        data-chip={settingKey(SETTINGS.world)}
+        title={world.title}
+        aria-label={`world ${world.value}, ${world.side}, ${world.region}`}
+        aria-haspopup="dialog"
+        aria-expanded={opened?.kind === 'world'}
+        onClick={(event) => open(SETTINGS.world, event.currentTarget)}
+      >
+        <span className="chip-value">{world.value}</span>
+        <span className="side-badge">{world.badge}</span>
+        <span className="chip-key">{world.region}</span>
+      </button>
+      <FreshnessPill freshness={freshness} />
+      <CopyLinkButton link={link} />
+      <button
+        type="button"
+        className="settings-button"
+        data-chip={settingKey(SETTINGS.settings)}
+        aria-label="Settings"
+        aria-haspopup="dialog"
+        aria-expanded={opened?.kind === 'settings'}
+        onClick={(event) => open(SETTINGS.settings, event.currentTarget)}
+      >
+        <Glyph name="gear" />
+        <span className="settings-label">Settings</span>
+      </button>
+    </div>
   )
 }
 
@@ -66,64 +98,5 @@ function CopyLinkButton({ link }: { link: string }) {
       </Button>
       <span className="sr-only" role="status">{state === 'idle' ? '' : label}</span>
     </>
-  )
-}
-
-interface ChipProps extends Pick<Context, 'opened' | 'open'> {
-  setting: Setting
-  label: string
-  spoken: string
-  title: string
-  className?: string
-  children: ReactNode
-}
-
-function Chip({ setting, label, spoken, title, className = '', opened, open, children }: ChipProps) {
-  return (
-    <button
-      type="button"
-      className={`chip ${className}`}
-      data-chip={settingKey(setting)}
-      title={title}
-      aria-label={`${label} ${spoken}`}
-      aria-haspopup="dialog"
-      aria-expanded={opened !== null && (settingKey(opened) === settingKey(setting) || (opened.kind === 'world' && opened.from === 'first' && setting.kind === 'world' && setting.from === 'world'))}
-      onClick={(event) => open(setting, event.currentTarget)}
-    >
-      <span className="chip-key">{label}</span>
-      {children}
-    </button>
-  )
-}
-
-function ContextChips({ chips, opened, open }: Context) {
-  const state = { opened, open }
-  return (
-    <div className="context" role="group" aria-label="Plan context">
-      <Chip {...state} setting={SETTINGS.region} label="region" spoken={chips.region.value} title={chips.region.title}>
-        <span className="chip-value">{chips.region.value}</span>
-      </Chip>
-      <Chip {...state} setting={SETTINGS.world} label="world" spoken={`${chips.world.value}, ${chips.world.side}`} title={chips.world.title}>
-        <span className="chip-value">{chips.world.value}</span>
-        <span className="side-badge">{chips.world.badge}</span>
-      </Chip>
-      <Chip {...state} setting={SETTINGS.tax} label="tax" spoken={chips.tax.value} title={chips.tax.title}>
-        <span className="chip-value">{chips.tax.value}</span>
-      </Chip>
-      <Chip {...state} setting={SETTINGS.mastery} label="mastery" spoken={chips.mastery.spoken} title={chips.mastery.title} className="mastery-chip">
-        <span className="mastery-pairs">
-          {chips.mastery.pairs.map(({ abbr, value, title }) => (
-            <span className="mastery-pair" key={abbr} title={title}>
-              <span className="chip-key">{abbr}</span>
-              <span className="chip-value">{value}</span>
-            </span>
-          ))}
-        </span>
-        <span className="chip-value mastery-collapsed">{chips.mastery.collapsed}</span>
-      </Chip>
-      <Chip {...state} setting={SETTINGS.plan} label="plan" spoken={chips.plan.value} title={chips.plan.title}>
-        <span className="chip-value">{chips.plan.value}</span>
-      </Chip>
-    </div>
   )
 }

@@ -234,7 +234,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
         view={view}
         onView={onView}
         listCount={list.wanted.size}
-        context={{ chips: statusChips(setup, current), freshness, opened: surface.opened?.setting ?? null, open: surface.open, link }}
+        context={{ chips: statusChips(current), freshness, opened: surface.opened?.setting ?? null, open: surface.open, link }}
       />
       <SettingHost
         surface={surface}
