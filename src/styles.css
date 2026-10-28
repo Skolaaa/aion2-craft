@@ -275,6 +275,16 @@ a {
   font-weight: 600;
 }
 
+/* The pill, the link and the gear keep their width; a long world name gives way. */
+.world-chip {
+  min-width: 0;
+}
+
+.world-chip .chip-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .chip[aria-expanded='true'] {
   border-color: var(--rule-2);
   background: var(--raised);
@@ -288,29 +298,9 @@ a {
   font: 600 11px / 1 var(--mono);
 }
 
-.settings-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--rule-2);
-  border-radius: var(--radius);
-  background: var(--raised);
-  color: var(--text);
-  font: 600 12px / 1 var(--mono);
-  white-space: nowrap;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.settings-button:hover,
-.settings-button[aria-expanded='true'] {
-  color: var(--gold-hi);
-}
-
 .settings-button[aria-expanded='true'] {
   border-color: var(--gold);
+  color: var(--gold-hi);
 }
 
 .fresh {
@@ -449,12 +439,6 @@ a {
 
 .glyph.is-up {
   transform: rotate(180deg);
-}
-
-.label {
-  font: 400 12px / 1.4 var(--mono);
-  color: var(--muted);
-  padding: 0;
 }
 
 .input {
@@ -1126,7 +1110,6 @@ input[type='checkbox'] {
 
 .stat-big .input {
   width: calc(4ch + var(--space-2));
-  min-height: 32px;
   padding: 0 var(--space-1);
   border-color: transparent;
   background: none;
@@ -1146,6 +1129,8 @@ input[type='checkbox'] {
 }
 
 .level-track {
+  --track: linear-gradient(to right, var(--gold) var(--fill), var(--rule) var(--fill));
+  --thumb: 14px;
   grid-column: 1 / -1;
   width: 100%;
   height: 14px;
@@ -1158,20 +1143,20 @@ input[type='checkbox'] {
 .level-track::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 2px;
-  background: linear-gradient(to right, var(--gold) var(--fill), var(--rule) var(--fill));
+  background: var(--track);
 }
 
 .level-track::-moz-range-track {
   height: 4px;
   border-radius: 2px;
-  background: linear-gradient(to right, var(--gold) var(--fill), var(--rule) var(--fill));
+  background: var(--track);
 }
 
 .level-track::-webkit-slider-thumb {
   appearance: none;
   box-sizing: border-box;
-  width: 14px;
-  height: 14px;
+  width: var(--thumb);
+  height: var(--thumb);
   margin-top: -5px;
   border: 2px solid var(--page);
   border-radius: 50%;
@@ -1180,8 +1165,8 @@ input[type='checkbox'] {
 
 .level-track::-moz-range-thumb {
   box-sizing: border-box;
-  width: 14px;
-  height: 14px;
+  width: var(--thumb);
+  height: var(--thumb);
   border: 2px solid var(--page);
   border-radius: 50%;
   background: var(--gold-hi);
@@ -1716,7 +1701,6 @@ input[type='checkbox'] {
 @media (prefers-reduced-motion: no-preference) {
   .button,
   .chip,
-  .settings-button,
   .nav-item,
   .tab,
   .sort,
@@ -1740,7 +1724,6 @@ input[type='checkbox'] {
 
 @media (min-width: 640px) and (max-width: 899.98px) {
   .top-bar-inner {
-    flex-wrap: wrap;
     row-gap: 0;
   }
 
@@ -1749,12 +1732,19 @@ input[type='checkbox'] {
   }
 
   .context {
-    flex-basis: 100%;
     padding-bottom: var(--space-2);
   }
 }
 
 @media (max-width: 899.98px) {
+  .top-bar-inner {
+    flex-wrap: wrap;
+  }
+
+  .context {
+    flex-basis: 100%;
+  }
+
   .scan-layout {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-3);
@@ -1814,7 +1804,6 @@ input[type='checkbox'] {
   }
 
   .top-bar-inner {
-    flex-wrap: wrap;
     gap: 0 var(--space-3);
   }
 
@@ -1832,31 +1821,13 @@ input[type='checkbox'] {
   }
 
   .context {
-    flex-basis: 100%;
     gap: 6px;
     padding: var(--space-2) 0;
     border-top: 1px solid var(--rule);
   }
 
-  /* The pill, the link and the gear keep their width; a long world name gives way. */
   .world-chip {
-    min-width: 0;
     min-height: 32px;
-  }
-
-  .world-chip .chip-value {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Row 2 at 390 px holds the chip, the age, the link and Settings with its word only when the pill drops to the age. */
-  .fresh-word {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
   }
 
   .table th,

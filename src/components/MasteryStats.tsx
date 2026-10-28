@@ -1,14 +1,40 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { Mastery } from '../domain/types.ts'
 import { taxPercent } from '../state/format.ts'
 import { MAX_MASTERY, PROFESSIONS, type SetupPatch } from '../state/setup.ts'
 import { NumberInput } from './NumberInput.tsx'
 
-interface Props {
+interface StatProps {
+  inputId: string
+  label: string
+  note?: string
+  unit: ReactNode
+  input: ReactNode
+  children?: ReactNode
+}
+
+function Stat({ inputId, label, note, unit, input, children }: StatProps) {
+  return (
+    <div className="stat">
+      <div className="stat-name">
+        <label htmlFor={inputId} id={`${inputId}-label`}>{label}</label>
+        {note && <span className="meta" id={`${inputId}-hint`}>{note}</span>}
+      </div>
+      <div className="stat-big">
+        {input}
+        <small>{unit}</small>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+interface MasteryProps {
+  mastery: Mastery
   patch(change: SetupPatch): void
 }
 
-export function MasteryStats({ mastery, patch }: Props & { mastery: Mastery }) {
+export function MasteryStats({ mastery, patch }: MasteryProps) {
   const set = (id: keyof Mastery, value: number) => patch({ mastery: { ...mastery, [id]: Math.round(value) } })
   return (
     <fieldset className="settings-group">
@@ -18,49 +44,49 @@ export function MasteryStats({ mastery, patch }: Props & { mastery: Mastery }) {
       </p>
       {PROFESSIONS.map(({ id, label, inGame }) => {
         const inputId = `mastery-${id}`
-        const labelId = `${inputId}-label`
         return (
-          <div className="stat" key={id}>
-            <div className="stat-name">
-              <label htmlFor={inputId} id={labelId}>{label}</label>
-              {inGame && <span className="meta">{inGame} in game</span>}
-            </div>
-            <div className="stat-big">
-              <NumberInput id={inputId} value={mastery[id]} min={0} max={MAX_MASTERY} onChange={(value) => set(id, value)} />
-              <small>of {MAX_MASTERY}</small>
-            </div>
+          <Stat
+            key={id}
+            inputId={inputId}
+            label={label}
+            note={inGame ? `${inGame} in game` : undefined}
+            unit={`of ${MAX_MASTERY}`}
+            input={<NumberInput id={inputId} value={mastery[id]} min={0} max={MAX_MASTERY} onChange={(value) => set(id, value)} />}
+          >
             <input
               type="range"
               className="level-track"
-              style={{ '--fill': `${mastery[id]}%` } as CSSProperties}
+              style={{ '--fill': `${(mastery[id] / MAX_MASTERY) * 100}%` } as CSSProperties}
               min={0}
               max={MAX_MASTERY}
               step={1}
               value={mastery[id]}
-              aria-labelledby={labelId}
+              aria-labelledby={`${inputId}-label`}
               onChange={(event) => set(id, event.target.valueAsNumber)}
             />
-          </div>
+          </Stat>
         )
       })}
     </fieldset>
   )
 }
 
-export function TaxStat({ taxRate, patch }: Props & { taxRate: number }) {
+interface TaxProps {
+  taxRate: number
+  patch(change: SetupPatch): void
+}
+
+export function TaxStat({ taxRate, patch }: TaxProps) {
   return (
     <fieldset className="settings-group">
       <legend className="section-title"><span>Market tax</span></legend>
-      <div className="stat">
-        <div className="stat-name">
-          <label htmlFor="tax">Tax on each sale</label>
-          <span className="meta" id="tax-hint">Market screen in game, top right. Lowers what a sale pays out, so it moves the margin.</span>
-        </div>
-        <div className="stat-big">
-          <NumberInput id="tax" describedBy="tax-hint" value={taxPercent(taxRate)} min={0} max={50} step={0.1} onChange={(value) => patch({ taxRate: value / 100 })} />
-          <small>%</small>
-        </div>
-      </div>
+      <Stat
+        inputId="tax"
+        label="Tax on each sale"
+        note="Market screen in game, top right. Lowers what a sale pays out, so it moves the margin."
+        unit="%"
+        input={<NumberInput id="tax" describedBy="tax-hint" value={taxPercent(taxRate)} min={0} max={50} step={0.1} onChange={(value) => patch({ taxRate: value / 100 })} />}
+      />
     </fieldset>
   )
 }

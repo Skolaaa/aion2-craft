@@ -1,4 +1,4 @@
-import type { StatusChips } from '../state/chips.ts'
+import type { WorldChip } from '../state/chips.ts'
 import { SETTINGS, settingKey, type Setting } from '../state/openSetting.ts'
 import { VIEWS, type View } from '../state/target.ts'
 import { useClipboard } from '../state/useClipboard.ts'
@@ -8,7 +8,7 @@ import { Glyph } from './Glyph.tsx'
 import { FreshnessPill } from './PriceStatus.tsx'
 
 interface Context {
-  chips: StatusChips
+  world: WorldChip
   freshness: Freshness
   opened: Setting | null
   open(setting: Setting, anchor: HTMLElement): void
@@ -53,7 +53,7 @@ export function TopBar({ view, onView, context, listCount = 0 }: Props) {
   )
 }
 
-function ContextRow({ chips: { world }, freshness, opened, open, link }: Context) {
+function ContextRow({ world, freshness, opened, open, link }: Context) {
   return (
     <div className="context">
       <button
@@ -72,18 +72,16 @@ function ContextRow({ chips: { world }, freshness, opened, open, link }: Context
       </button>
       <FreshnessPill freshness={freshness} />
       <CopyLinkButton link={link} />
-      <button
-        type="button"
-        className="settings-button"
-        data-chip={settingKey(SETTINGS.settings)}
+      <Button
+        className="button-small settings-button"
         aria-label="Settings"
         aria-haspopup="dialog"
         aria-expanded={opened?.kind === 'settings'}
         onClick={(event) => open(SETTINGS.settings, event.currentTarget)}
       >
         <Glyph name="gear" />
-        <span className="settings-label">Settings</span>
-      </button>
+        <span>Settings</span>
+      </Button>
     </div>
   )
 }

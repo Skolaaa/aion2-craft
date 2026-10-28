@@ -49,7 +49,7 @@ crafted and never feeds another wanted item.
 | `src/market/exchangeClient.ts` | fetch wrappers over `/ex/api/*` (proxied), batch by 100 keys, localStorage cache with `capturedAt`; depth ladders one item at a time per world, one store per world in memory and in localStorage for an hour; `directoryFromServers(body)` parses `/servers` (faction names from `SIDE`, `game_server_key`) into a `WorldDirectory`, and `fetchWorlds()` calls it |
 | `src/market/worlds.ts` | `World`, `Listed { world, match }`, `WorldDirectory`, `SIDE`, `PAIRING`, `directoryOf`, `resolveWorld`; pure |
 | `src/state/setup.ts` | `Setup` (world, recent worlds, mastery, tax, plan flags), `parseSetup` at the storage boundary, `PlanSettings` and `settingsOf` (the part a link carries), `peekSetup`, `setWorld`, `PROFESSIONS`, `PLAN_FLAGS` |
-| `src/state/chips.ts` | `statusChips(current)`: the world chip's name, side badge, region and match note |
+| `src/state/chips.ts` | `worldChip(current)`: the world chip's name, side badge, region and match note |
 | `src/state/openSetting.ts` | the `Setting` union (`history` carries its item id), the `SETTINGS` each chip opens and `first`, the world picker `Workspace` opens by itself on a first visit, `settingKey`, and `useOpenSetting()`, the one owner of which setting is open and of focus return |
 | `src/state/picker.ts` | `pickerView`, `withText`, `initialActive`, `groupNote`, `pairingNote`, `currentNote` for the world list; pure |
 | `src/state/combobox.ts` | `moveActive(ids, active, step)` and `useCombobox(ids, onPick, initial, scrollToInitial)`: the active option, arrow keys, Enter and scrolling into view (not to `initial` when `scrollToInitial` is false), shared by `WorldPicker` and `Search` |
@@ -96,7 +96,7 @@ Node 24 runs it without a build step (`verify-model.mjs` does).
 ## The status line and its settings
 
 The world chip opens the world picker and the Settings button opens the settings drawer. `App`
-renders `TopBar` with `statusChips(current)` and `SettingHost` right after it, so tabbing out of
+renders `TopBar` with `worldChip(current)` and `SettingHost` right after it, so tabbing out of
 a popover lands in the page.
 
 ```ts
@@ -119,7 +119,8 @@ surface.close(false)                        // the user clicked or tabbed elsewh
   `NARROW_BELOW` in `useNarrow.ts` is the one copy of the breakpoint in code, and `Surface.test.ts`
   fails when the `640px` and `639.98px` media queries in `styles.css` drift from it.
 - The world chip names itself with `aria-label` (`world Kaisinel, Elyos, EU`), and the Settings
-  button carries `aria-label="Settings"`, so its word can be `display: none` on phones.
+  button carries `aria-label="Settings"`. The Settings word stays on phones. The freshness pill
+  drops to the age instead, and `useNarrow` marks the rest of its text `sr-only`.
 - The world list opens from the world chip. `withText(query, text)` clears a picked region on the
   first typed letter, since the search spans all 106 worlds; a region picked after that still
   narrows the search.

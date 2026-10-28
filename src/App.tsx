@@ -10,7 +10,7 @@ import { catalogFor } from './data/catalog.ts'
 import { makePriceBook } from './domain/priceBook.ts'
 import type { ItemId, MarketQuote, PlanOptions } from './domain/types.ts'
 import { resolveWorld, type Listed, type World } from './market/worlds.ts'
-import { statusChips } from './state/chips.ts'
+import { worldChip } from './state/chips.ts'
 import { craftIndexFor, itemFor } from './state/craftables.ts'
 import { age } from './state/format.ts'
 import { useList, type List } from './state/list.ts'
@@ -234,7 +234,7 @@ function Workspace({ current, worlds, retryWorlds, notes, setup, updateSetup, vi
         view={view}
         onView={onView}
         listCount={list.wanted.size}
-        context={{ chips: statusChips(current), freshness, opened: surface.opened?.setting ?? null, open: surface.open, link }}
+        context={{ world: worldChip(current), freshness, opened: surface.opened?.setting ?? null, open: surface.open, link }}
       />
       <SettingHost
         surface={surface}
