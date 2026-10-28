@@ -1,8 +1,8 @@
 import { access, mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 
-const USER_AGENT =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+// Names the caller so a site operator can see who fetches and where to reach us.
+const USER_AGENT = 'AionForge/0.1 (+https://github.com/Skolaaa/aion2-craft)'
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
