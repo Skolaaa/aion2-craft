@@ -39,6 +39,7 @@ crafted and never feeds another wanted item.
 |---|---|
 | `scripts/fetch-recipes.mjs` | pulls aion2t.com recipe lists + details and aion2.exchange's crafting model, writes `src/data/recipes.json` (items, recipes, Bound substitutes, NPC prices) |
 | `scripts/fetch-rates.mjs` | pulls metabot.gg's rate curves (from the game client, one pair of codes per recipe), writes `src/data/rates.json` |
+| `scripts/fetch-mastery.mjs` | pulls questlog.gg's crafting mastery table, writes `src/data/mastery.json` (`expToNext[level - 1]`, 0 at the level 50 quest gate and at 100) |
 | `scripts/verify-model.mjs` | compares the planner with aion2.exchange's cost breakdowns, and the curves with gamewith.ai's tables |
 | `src/domain/types.ts` | the typed model below |
 | `src/domain/catalog.ts` | `buildCatalog(race, recipesFile, ratesFile)`: indexes by recipe id and by product, resolves each craft recipe's curve by recipe id, parses each item's grade with `parseGrade` (unknown grades become `Common`); `tradeableItems(catalog)` |
@@ -47,6 +48,7 @@ crafted and never feeds another wanted item.
 | `src/domain/costAtRisk.ts` | `costAtRisk(plan, { catalog, owned, runs, seed })`: a seeded Monte Carlo over the plan tree, pure; each run keeps the plan's choices, rolls every step's attempts until the wanted units are made (attempt by attempt up to 2000 expected attempts, the renewal normal approximation above), spends `owned` in tree order and pays the plan's unit price for the rest; returns the 90th percentile of cost and, per target, of the root's attempts |
 | `src/domain/priceBook.ts` | merges manual overrides, market quotes, depth ladders and NPC prices into `PriceBook`; `ladderCost(ladder, units)` |
 | `src/data/catalog.ts` | `catalogFor(race)`: the bundled JSON as a `Catalog`, built once per race |
+| `src/data/mastery.ts` | `MASTERY_EXP`: the mastery table as `readonly number[]`, 100 entries |
 | `src/market/exchangeClient.ts` | fetch wrappers over `/ex/api/*` (proxied), batch by 100 keys, localStorage cache with `capturedAt`; depth ladders one item at a time per world, one store per world in memory and in localStorage for an hour; `directoryFromServers(body)` parses `/servers` (faction names from `SIDE`, `game_server_key`) into a `WorldDirectory`, and `fetchWorlds()` calls it |
 | `src/market/worlds.ts` | `World`, `Listed { world, match }`, `WorldDirectory`, `SIDE`, `PAIRING`, `directoryOf`, `resolveWorld`; pure |
 | `src/state/setup.ts` | `Setup` (world, recent worlds, mastery, tax, plan flags), `parseSetup` at the storage boundary, `PlanSettings` and `settingsOf` (the part a link carries), `peekSetup`, `setWorld`, `PROFESSIONS`, `PLAN_FLAGS` |

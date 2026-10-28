@@ -27,17 +27,19 @@ Open the URL that `npm run dev` prints, usually http://localhost:5173. The page 
 
 ## Refresh the recipe and rate data
 
-`src/data/recipes.json` and `src/data/rates.json` are generated and committed. To rebuild them, run the two scripts in this order:
+`src/data/recipes.json`, `src/data/rates.json` and `src/data/mastery.json` are generated and committed. To rebuild them, run the scripts in this order:
 
 ```sh
 node scripts/fetch-recipes.mjs
 node scripts/fetch-rates.mjs
+node scripts/fetch-mastery.mjs
 ```
 
 The scripts keep every download in `.cache/`, which git ignores. They fetch only the files that `.cache/` lacks, wait 200 ms between requests, and write the same output when nothing changed. To pick up a change on a source site, delete the matching file in `.cache/` and run the scripts again.
 
 - `fetch-recipes.mjs` reads the craft, transfer (succession) and Substance Morph (conversion) recipes of both races from aion2t.com. It also reads aion2.exchange's crafting model for the 400 Kina price of the NPC-sold Bound reagents.
 - `fetch-rates.mjs` reads the success and combo curves that metabot.gg publishes from the game client, one curve per recipe, indexed by level difference.
+- `fetch-mastery.mjs` reads the crafting mastery table from questlog.gg, the EXP each level needs to reach the next, and checks it against the sums metabot.gg's guide states.
 
 ## Check the model
 
