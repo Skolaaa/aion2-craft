@@ -44,7 +44,12 @@ export function netKinaPerAttempt(planning: Planning, recipe: Recipe, level: num
   const [{ root }] = plan.targets
   const cost = plan.cost / root.attempts
   if (!sell) return cost
-  const afterTax = (itemId: number) => (planning.market.get(itemId)?.lowest ?? 0) * (1 - planning.options.taxRate)
+  const afterTax = (itemId: number) => {
+    const quote = planning.market.get(itemId)
+    // Dozens of crafts sell into real demand, not one listing: the lower of the lowest listing and the 28-day average, and nothing without a sale in 28 days.
+    if (!quote || quote.lowest === null || quote.soldAvg === null) return 0
+    return Math.min(quote.lowest, quote.soldAvg) * (1 - planning.options.taxRate)
+  }
   const normalShare = (1 - (combo?.chance ?? 0)) * root.successRate
   const sales = normalShare * product.count * afterTax(product.itemId) + (combo ? root.comboRate * combo.count * afterTax(combo.itemId) : 0)
   return cost - sales
@@ -78,7 +83,8 @@ export const parseLevelingView: Parse<LevelingView> = (raw) => {
 
 /** The levels the route spans: the view's own, else from the player's mastery to the quest gate, or to the cap once past it. */
 export function levelRange({ profession, from, to }: LevelingView, mastery: Mastery): { from: number; to: number } {
-  const start = from ?? clamp(mastery[profession], 1, MAX_MASTERY - 1)
+  // Mastery at the cap is the setup default more often than a maxed profession, so the route starts at 1.
+  const start = from ?? (mastery[profession] >= MAX_MASTERY ? 1 : clamp(mastery[profession], 1, MAX_MASTERY - 1))
   const end = to ?? (start < QUEST_LEVEL ? QUEST_LEVEL : MAX_MASTERY)
   return { from: start, to: Math.max(end, start + 1) }
 }

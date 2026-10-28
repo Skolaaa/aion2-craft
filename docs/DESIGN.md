@@ -186,8 +186,9 @@ line moves under the list. No sparkline: it would cost one history request per r
 
 Leveling: the title `Level a profession on Kaisinel`, then one row of controls. The profession is a
 `Segmented`, `from` and `to` are small mono fields, and `Count selling what you make` is a checkbox,
-on by default. Under it one line says the prices are after tax at each level's success rate and the
-route uses single crafts. The route table lists one recipe per stretch of levels (name, `level 5 to 50`
+on by default. Under it one line says the prices are after tax at each level's success rate, that a result
+sells at the lower of the lowest listing and the 28-day average and only where it sold in 28 days,
+and that the route uses single crafts. The route table lists one recipe per stretch of levels (name, `level 5 to 50`
 in mono, Crafts, Kina, Kina per EXP, EXP) with a totals row. A negative Kina is a gain, so it reads
 signed and green. A line follows when the route crosses level 50, which needs the upgrade quest, or
 stops where no recipe with a known EXP unlocks. `EXP per craft` is a second table of every recipe of

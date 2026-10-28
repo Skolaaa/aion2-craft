@@ -191,7 +191,7 @@ export function Leveling({ planning, freshness }: Props) {
 
       <div className="stack-tight">
         <p className="meta">
-          Prices on {world.name} after {taxLabel(options.taxRate)} tax at each level's success rate. Single crafts only, a batch of ten gives less EXP.
+          Prices on {world.name} after {taxLabel(options.taxRate)} tax at each level's success rate. What you make sells at the lower of the lowest listing and the 28-day average, and only where it sold in the last 28 days. Single crafts only, a batch of ten gives less EXP.
         </p>
         {!loading && result.quest && <p className="meta">Level 50 needs the profession's upgrade quest before you can go on.</p>}
         {!loading && stuckAt !== null && (

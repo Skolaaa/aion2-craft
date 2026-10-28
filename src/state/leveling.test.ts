@@ -54,9 +54,14 @@ function catalogOf(recipes: Recipe[], craftExp: Record<string, number> = {}) {
   return buildCatalog('Light', recipesFile, ratesFile, craftExp)
 }
 
-function planningOf(recipes: Recipe[], listed: Record<number, number>, craftExp = SEED, options = OPTIONS): Planning {
+function planningOf(recipes: Recipe[], listed: Record<number, number | { lowest: number; soldAvg: number | null }>, craftExp = SEED, options = OPTIONS): Planning {
   const catalog = catalogOf(recipes, craftExp)
-  const market = new Map<number, MarketQuote>(Object.entries(listed).map(([id, lowest]) => [Number(id), { lowest, listings: 3, soldAvg: null, capturedAt: '' }]))
+  const market = new Map<number, MarketQuote>(
+    Object.entries(listed).map(([id, quote]) => {
+      const { lowest, soldAvg } = typeof quote === 'number' ? { lowest: quote, soldAvg: quote } : quote
+      return [Number(id), { lowest, listings: 3, soldAvg, capturedAt: '' }]
+    }),
+  )
   const prices = makePriceBook({ manual: new Map(), market, npc: new Map() })
   return { world: WORLD, catalog, index: craftIndexFor(catalog), mastery: MASTERY, options, prices, market }
 }
@@ -128,6 +133,12 @@ describe('netKinaPerAttempt', () => {
     expect(netKinaPerAttempt(planningOf(RECIPES, MARKET), GUARD_RECIPE, 5, true)).toBeCloseTo(600 - 1080 - 1125)
   })
 
+  it('sells at the 28-day average when it is under the lowest listing, and for nothing where nothing sold in 28 days', () => {
+    const cheaper = planningOf(RECIPES, { ...MARKET, [GUARD]: { lowest: 2000, soldAvg: 1000 }, [SPLENDENT]: { lowest: 10000, soldAvg: null } })
+    // 600 - 0.75 * 0.8 * 1000 * 0.9, the combo result has not sold
+    expect(netKinaPerAttempt(cheaper, GUARD_RECIPE, 5, true)).toBeCloseTo(600 - 540)
+  })
+
   it('sells a result without a listing for nothing', () => {
     const planning = planningOf(RECIPES, { [ORE]: 100, [INGOT]: 500, [GUARD]: 2000 })
     expect(netKinaPerAttempt(planning, GUARD_RECIPE, 5, true)).toBeCloseTo(600 - 1080)
@@ -164,7 +175,8 @@ describe('levelRange', () => {
     expect(levelRange(DEFAULT_LEVELING, at(0))).toEqual({ from: 1, to: 50 })
     expect(levelRange(DEFAULT_LEVELING, at(30))).toEqual({ from: 30, to: 50 })
     expect(levelRange(DEFAULT_LEVELING, at(50))).toEqual({ from: 50, to: 100 })
-    expect(levelRange(DEFAULT_LEVELING, at(100))).toEqual({ from: 99, to: 100 })
+    expect(levelRange(DEFAULT_LEVELING, at(99))).toEqual({ from: 99, to: 100 })
+    expect(levelRange(DEFAULT_LEVELING, at(100))).toEqual({ from: 1, to: 50 })
   })
 
   it('prefers the levels the view holds levels', () => {

@@ -24,11 +24,7 @@ either closes a gap those tools have already filled, or widens that edge.
 - Watchlist: a Watch button next to Add to list pins an item, and a Watching table above Best margins on the calculator home shows the pinned items' margins on every price refresh, held per world like the stock.
 - Profession leveling planner: the `leveling` view prices the cheapest route between two mastery levels per profession on the player's world, picking the recipe with the lowest Kina per EXP at each level, with the quest gate at 50 called out. EXP per craft is not published anywhere, so the planner ships the values measured on the Korean client and takes the player's own, per recipe, in a table under the route.
 
-## Next: widen the edge
-
-Nothing for Aion 2 does any of these. Each one uses data the app already fetches or ships.
-
-## Later
+## Next
 
 ### 9. UI cleanup pass (S)
 
