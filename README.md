@@ -10,7 +10,7 @@ The top bar shows the world, its side and its region. The world chip opens the w
 
 ![The calculator with the status line, the answer and what to buy](docs/screenshots/calculator-desktop.png)
 
-More screenshots in `docs/screenshots/`: the scanner, the world list, the mastery popover, a phone at 390 px with the world list as a bottom sheet, and a recipe with missing prices. `docs/ROADMAP.md` lists what comes next, in order.
+More screenshots in `docs/screenshots/`: the scanner, the world list, the settings drawer, a phone at 390 px with the world list as a bottom sheet, and a recipe with missing prices. `docs/ROADMAP.md` lists what comes next, in order.
 
 ## Run it
 

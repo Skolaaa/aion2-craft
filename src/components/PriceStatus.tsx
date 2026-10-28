@@ -28,7 +28,7 @@ export function PriceStatus({ freshness, worldName, depthCapturedAt }: Props) {
 
 export function FreshnessPill({ freshness }: { freshness: Freshness }) {
   const { pending, age, stale, refreshing, note, refresh } = freshness
-  const label = pending ? 'prices loading' : refreshing ? 'refreshing' : age === null ? 'no prices yet' : `prices ${age} ago`
+  const label = pending ? 'prices loading' : refreshing ? 'refreshing' : age === null ? 'no prices yet' : null
   return (
     <>
       <button
@@ -39,7 +39,7 @@ export function FreshnessPill({ freshness }: { freshness: Freshness }) {
         onClick={() => void refresh()}
       >
         <span className="fresh-dot" aria-hidden="true" />
-        {label}
+        {label ?? <><span className="fresh-word">prices </span>{age}<span className="fresh-word"> ago</span></>}
       </button>
       <span className="sr-only" role="status">{note}</span>
     </>

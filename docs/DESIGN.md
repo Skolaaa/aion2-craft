@@ -74,20 +74,14 @@ cells are split by the same rules and finials. Nothing else is ornamented.
 +----------------------------------------------------------------------------------------------+
 ```
 
-The status line is the plan's context, and every value in it is a chip that opens its own
-setting in place (Arena's idea on Ledger's line):
-- `region EU` and `world Kaisinel [EL]` both open the world picker. The world chip carries the
-  side badge in the side colour, so the side never needs its own chip.
-- `tax 5.0%` opens a popover: the number input, "Market screen in game, top right", and "Lowers
-  what a sale pays out, so it moves the margin".
-- The mastery group shows five mono pairs `BS 100` with the full profession name and the
-  in-game name on hover and as screen-reader text. It opens a popover with five rows (name,
-  in-game name, number input, slider). Under 1280 px the five pairs collapse to one chip
-  `mastery 5×100` or `mastery 100/60/…`.
-- `plan 3/3` opens the settings drawer (plan options and your prices), from the right, 400 px.
-- The freshness pill at the right shows age and a dot (gold when fresh, loss colour when stale);
-  it is the only refresh button. The line under the answer and under the scanner title states the
-  capture time, or the stale or missing warning, as text.
+The bar holds the plan's context and one door to everything else (Arena's idea on Ledger's line):
+- `Kaisinel [EL] EU` is the one chip. It opens the world picker. It carries the side badge in the
+  side colour and the region in muted mono, so neither needs a chip of its own.
+- `Settings` at the right edge, a gear and the word, opens the settings drawer from the right,
+  440 px. Inside, Mastery is five stat blocks (profession, the in-game name under it, the level as
+  a big gold number out of 100, and a gold-filled track to drag), then Market tax as one block with
+  a big number and `%`, then the plan options, your prices, what you have and your sources.
+  Levels and tax are never in the bar; the chips `BS 100` and `tax 5.0%` are gone.
 - Copy link sits right of the freshness pill as a link glyph, and shows a check for two seconds
   after it copies. The address bar always holds the same link: world, item, quantity, mastery
   off 100, tax off 5%, plan options off their defaults, the scanner view, and on the list view
@@ -201,8 +195,8 @@ if the list fails, the notice offers Try again and "Open your own plan instead".
 that is not on the list opens on the recipient's own world, and an item that side cannot craft
 opens no item. Each shows a notice with Dismiss, once, above the page.
 
-Mobile (under 640 px): the status line wraps to two rows (chips, then the mastery strip) with the
-freshness pill and Copy link on a short third row at the right, the
+Mobile (under 640 px): the bar wraps to two rows (wordmark and views, then the world chip with the
+freshness pill shortened to the age, Copy link and Settings at the right), the
 figures stack, the buy table becomes one card per line (name on one line, "Market, across 9
 listings of 224. 20.65 needed." under it, then You have, Unit price and Subtotal on a shared
 64 / 100 / rest grid under one label row) with Copy list at the right of the tab strip and the

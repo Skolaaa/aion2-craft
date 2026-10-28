@@ -1849,8 +1849,14 @@ input[type='checkbox'] {
     text-overflow: ellipsis;
   }
 
-  .settings-label {
-    display: none;
+  /* Row 2 at 390 px holds the chip, the age, the link and Settings with its word only when the pill drops to the age. */
+  .fresh-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .table th,

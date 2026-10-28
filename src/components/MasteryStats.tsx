@@ -16,7 +16,7 @@ export function MasteryStats({ mastery, patch }: Props & { mastery: Mastery }) {
       <p className="meta">
         Your level in each profession, 0 to {MAX_MASTERY}. Drag the bar or type the number. A recipe above your level cannot be crafted.
       </p>
-      {PROFESSIONS.map(({ id, label, inGame }, index) => {
+      {PROFESSIONS.map(({ id, label, inGame }) => {
         const inputId = `mastery-${id}`
         const labelId = `${inputId}-label`
         return (
@@ -26,7 +26,7 @@ export function MasteryStats({ mastery, patch }: Props & { mastery: Mastery }) {
               {inGame && <span className="meta">{inGame} in game</span>}
             </div>
             <div className="stat-big">
-              <NumberInput id={inputId} value={mastery[id]} min={0} max={MAX_MASTERY} initialFocus={index === 0} onChange={(value) => set(id, value)} />
+              <NumberInput id={inputId} value={mastery[id]} min={0} max={MAX_MASTERY} onChange={(value) => set(id, value)} />
               <small>of {MAX_MASTERY}</small>
             </div>
             <input
